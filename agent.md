@@ -5,6 +5,7 @@ Cập nhật nền: 11/11/2026, múi giờ Asia/Saigon. Tiến trình thay đổ
 ## Dự án và phạm vi thư mục
 
 - Dự án web xem phim VOD sử dụng backend Node.js, trải nghiệm xem quen thuộc như Netflix và các web phim phổ biến.
+- Git remote: https://github.com/dinhtung2722005/project_flim, nhánh main; Git được khởi tạo và source được push theo yêu cầu ngày 11/11/2026. Chỉ commit source/cấu hình mẫu, không commit local credential hoặc dữ liệu runtime.
 - Gốc dự án bắt buộc: E:\pj-Flim. Người dùng đã nhiều lần yêu cầu không viết công việc phim vào DocPrep/Docrep hoặc thư mục mặc định của công cụ.
 - Khi cwd của công cụ khác gốc dự án, đặt workdir rõ ràng cho mọi lệnh. Tuân thủ quyền filesystem của phiên; dùng cơ chế cấp quyền của môi trường khi cần ghi ngoài writable root.
 - Source, tài liệu và cấu hình dự án đều nằm dưới gốc này. Không sửa các file .docx hoặc dự án khác khi không được yêu cầu.

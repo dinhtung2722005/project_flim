@@ -217,3 +217,10 @@ Mỗi thay đổi quan trọng tiếp theo: cập nhật snapshot/công việc c
 - Cập nhật .gitignore: chỉ cấu hình mẫu được commit; bỏ local env/runtime, dependencies/build, video/log/backup và tài liệu docx cá nhân không liên quan ở gốc. Không sửa/xóa tài liệu cá nhân.
 - Rà soát 116 file dự kiến commit, khoảng 2 MB; không thấy credential đang dùng, private key/token GitHub hoặc file quá lớn. Link README tới file trong source đều hợp lệ. Bằng chứng riêng tư: .local/git/pre-push-review.json.
 - Lượt này thay tài liệu/Git ignore và chuẩn bị xuất bản source; không sửa logic backend hoặc chạy lại integration. Kết quả backend gần nhất vẫn 1.142 assertion ở lượt bỏ đăng nhập Swagger. Việc push và remote commit được xác minh sau bước commit.
+
+## Đã push GitHub ngày 11/11/2026
+
+- Source và README chi tiết đã được push thành công lên nhánh main tại https://github.com/dinhtung2722005/project_flim. Commit source đầu c994a1c939f4cda7f782bce7e43e458ad28e4134 đã đối chiếu bằng git ls-remote, khớp HEAD local.
+- Bản source gồm 117 file, có .gitattributes để thống nhất LF trong Git; README đã định dạng và kiểm link. git diff --cached --check đạt trước commit.
+- Local env, credential bootstrap/database/broker, video, backup, log, node_modules/dist và các file docx cá nhân không được commit. Không thay runtime credential hoặc logic backend; không chạy lại integration trong lượt tài liệu/Git này.
+- agent.md đã bổ sung remote và nhánh hiện hành. Hồ sơ rà soát/xuất bản nằm trong .local/git, không đưa lên GitHub. Commit tiếp theo chỉ đồng bộ ghi nhớ sau lần push thành công.
