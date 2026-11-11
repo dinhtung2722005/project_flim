@@ -1,0 +1,25 @@
+\set ON_ERROR_STOP on
+\set VERBOSITY terse
+\getenv owner_password PJ_FLIM_OWNER_PASSWORD
+\getenv api_password PJ_FLIM_API_PASSWORD
+\getenv worker_password PJ_FLIM_WORKER_PASSWORD
+BEGIN;
+SELECT format('CREATE ROLE %I NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS', role_name)
+FROM unnest(ARRAY['movie_api','movie_worker','movie_auditor','movie_retention']) AS role_name
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname=role_name)
+\gexec
+SELECT format('CREATE ROLE pj_flim_owner LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', :'owner_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='pj_flim_owner')
+\gexec
+SELECT format('CREATE ROLE pj_flim_api LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', :'api_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='pj_flim_api')
+\gexec
+SELECT format('CREATE ROLE pj_flim_worker LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', :'worker_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='pj_flim_worker')
+\gexec
+GRANT movie_api TO pj_flim_api;
+GRANT movie_worker TO pj_flim_worker;
+COMMIT;
+SELECT 'CREATE DATABASE pj_flim OWNER pj_flim_owner TEMPLATE template0 ENCODING ''UTF8'''
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='pj_flim')
+\gexec

@@ -1,0 +1,1025 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["movie"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model audit_exports {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requester_user_id  String     @db.Uuid
+  operation_id       String     @unique @db.Uuid
+  scope_filter       Json
+  status             String     @default("QUEUED")
+  private_object_ref String?
+  checksum_sha256    String?    @db.VarChar(64)
+  created_at         DateTime   @default(now()) @db.Timestamptz(6)
+  ready_at           DateTime?  @db.Timestamptz(6)
+  expires_at         DateTime?  @db.Timestamptz(6)
+  operations         operations @relation(fields: [operation_id], references: [id], onUpdate: NoAction)
+  users              users      @relation(fields: [requester_user_id], references: [id], onUpdate: NoAction)
+
+  @@index([expires_at], map: "audit_exports_expiry_idx", where: raw("(status = 'READY'::text)"))
+  @@index([requester_user_id, created_at(sort: Desc)], map: "audit_exports_requester_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model audit_logs {
+  id                                        BigInt      @id @default(autoincrement())
+  actor_user_id                             String?     @db.Uuid
+  initiator_user_id                         String?     @db.Uuid
+  actor_kind                                String
+  actor_role_codes_snapshot                 String[]    @default([])
+  operation_id                              String?     @db.Uuid
+  action                                    String      @db.VarChar(100)
+  resource_type                             String      @db.VarChar(80)
+  resource_id                               String
+  outcome                                   String
+  safe_diff                                 Json        @default("{}")
+  reason                                    String?     @db.VarChar(500)
+  error_code                                String?     @db.VarChar(100)
+  request_id                                String?     @db.VarChar(100)
+  trace_id                                  String?     @db.VarChar(100)
+  occurred_at                               DateTime    @default(now()) @db.Timestamptz(6)
+  users_audit_logs_actor_user_idTousers     users?      @relation("audit_logs_actor_user_idTousers", fields: [actor_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_audit_logs_initiator_user_idTousers users?      @relation("audit_logs_initiator_user_idTousers", fields: [initiator_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  operations                                operations? @relation(fields: [operation_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([action, occurred_at(sort: Desc)], map: "audit_logs_action_idx")
+  @@index([actor_user_id, occurred_at(sort: Desc)], map: "audit_logs_actor_idx")
+  @@index([initiator_user_id, occurred_at(sort: Desc)], map: "audit_logs_initiator_idx", where: raw("(initiator_user_id IS NOT NULL)"))
+  @@index([operation_id], map: "audit_logs_operation_idx", where: raw("(operation_id IS NOT NULL)"))
+  @@index([resource_type, resource_id, occurred_at(sort: Desc)], map: "audit_logs_resource_idx")
+  @@index([occurred_at(sort: Desc), id(sort: Desc)], map: "audit_logs_time_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model auth_replay_receipts {
+  id                                                                                               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id                                                                                       String                @db.Uuid
+  family_id                                                                                        String?               @db.Uuid
+  challenge_id                                                                                     String?               @db.Uuid
+  context_key                                                                                      String                @db.VarChar(180)
+  request_key_hash                                                                                 String
+  proof_fingerprint                                                                                String
+  input_refresh_token_id                                                                           String?               @db.Uuid
+  output_refresh_token_id                                                                          String?               @db.Uuid
+  encrypted_result                                                                                 Bytes?
+  encryption_key_id                                                                                String?               @db.VarChar(100)
+  created_at                                                                                       DateTime              @default(now()) @db.Timestamptz(6)
+  credential_expires_at                                                                            DateTime              @db.Timestamptz(6)
+  metadata_expires_at                                                                              DateTime              @db.Timestamptz(6)
+  mfa_challenges                                                                                   mfa_challenges?       @relation(fields: [challenge_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  refresh_tokens_auth_replay_receipts_input_refresh_token_id_family_id_session_idTorefresh_tokens  refresh_tokens?       @relation("auth_replay_receipts_input_refresh_token_id_family_id_session_idTorefresh_tokens", fields: [input_refresh_token_id, family_id, session_id], references: [id, family_id, session_id], onDelete: NoAction, onUpdate: NoAction)
+  refresh_tokens_auth_replay_receipts_output_refresh_token_id_family_id_session_idTorefresh_tokens refresh_tokens?       @relation("auth_replay_receipts_output_refresh_token_id_family_id_session_idTorefresh_tokens", fields: [output_refresh_token_id, family_id, session_id], references: [id, family_id, session_id], onDelete: NoAction, onUpdate: NoAction)
+  auth_sessions                                                                                    auth_sessions         @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+  idempotency_records                                                                              idempotency_records[]
+
+  @@unique([context_key, request_key_hash])
+  @@index([challenge_id], map: "auth_receipts_challenge_idx", where: raw("(challenge_id IS NOT NULL)"))
+  @@index([credential_expires_at], map: "auth_receipts_credentials_idx", where: raw("(encrypted_result IS NOT NULL)"))
+  @@index([input_refresh_token_id], map: "auth_receipts_input_idx", where: raw("(input_refresh_token_id IS NOT NULL)"))
+  @@index([metadata_expires_at], map: "auth_receipts_metadata_idx")
+  @@index([output_refresh_token_id], map: "auth_receipts_output_idx", where: raw("(output_refresh_token_id IS NOT NULL)"))
+  @@index([session_id, created_at(sort: Desc)], map: "auth_receipts_session_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model auth_sessions {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String                 @db.Uuid
+  state                String
+  auth_version         BigInt
+  mfa_verified_at      DateTime?              @db.Timestamptz(6)
+  step_up_at           DateTime?              @db.Timestamptz(6)
+  device_label         String?                @db.VarChar(200)
+  ip_hash              String?
+  user_agent_hash      String?
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  last_seen_at         DateTime               @default(now()) @db.Timestamptz(6)
+  idle_expires_at      DateTime               @db.Timestamptz(6)
+  absolute_expires_at  DateTime               @db.Timestamptz(6)
+  revoked_at           DateTime?              @db.Timestamptz(6)
+  revoke_reason        String?                @db.VarChar(80)
+  auth_replay_receipts auth_replay_receipts[]
+  users                users                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  mfa_challenges       mfa_challenges[]
+  refresh_tokens       refresh_tokens[]
+
+  @@unique([id, user_id])
+  @@index([absolute_expires_at], map: "auth_sessions_expiry_idx", where: raw("(state = ANY (ARRAY['ACTIVE'::text, 'PENDING_MFA'::text]))"))
+  @@index([user_id, created_at(sort: Desc)], map: "auth_sessions_user_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model content_reports {
+  id                                            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporter_user_id                              String?            @db.Uuid
+  playback_session_id                           String?            @db.Uuid
+  title_id                                      String             @db.Uuid
+  episode_id                                    String?            @db.Uuid
+  category                                      String
+  message                                       String             @db.VarChar(2000)
+  status                                        String             @default("OPEN")
+  handled_by                                    String?            @db.Uuid
+  resolution_note                               String?            @db.VarChar(2000)
+  version                                       BigInt             @default(1)
+  created_at                                    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                                    DateTime           @default(now()) @db.Timestamptz(6)
+  episodes                                      episodes?          @relation(fields: [episode_id, title_id], references: [id, title_id], onDelete: NoAction, onUpdate: NoAction)
+  users_content_reports_handled_byTousers       users?             @relation("content_reports_handled_byTousers", fields: [handled_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  playback_sessions                             playback_sessions? @relation(fields: [playback_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_content_reports_reporter_user_idTousers users?             @relation("content_reports_reporter_user_idTousers", fields: [reporter_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  titles                                        titles             @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@index([episode_id], map: "content_reports_episode_idx", where: raw("(episode_id IS NOT NULL)"))
+  @@index([handled_by], map: "content_reports_handler_idx", where: raw("(handled_by IS NOT NULL)"))
+  @@index([reporter_user_id], map: "content_reports_reporter_idx", where: raw("(reporter_user_id IS NOT NULL)"))
+  @@index([playback_session_id], map: "content_reports_session_idx", where: raw("(playback_session_id IS NOT NULL)"))
+  @@index([title_id, created_at(sort: Desc)], map: "content_reports_title_idx")
+  @@index([status, created_at, id], map: "content_reports_triage_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model credits {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id       String @db.Uuid
+  person_id      String @db.Uuid
+  role           String
+  character_name String @default("") @db.VarChar(200)
+  sort_order     Int    @default(0)
+  people         people @relation(fields: [person_id], references: [id], onUpdate: NoAction)
+  titles         titles @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@unique([title_id, person_id, role, character_name])
+  @@index([title_id, sort_order, id], map: "credits_display_idx")
+  @@index([person_id, role, title_id], map: "credits_person_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model email_verification_tokens {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String    @db.Uuid
+  email_normalized String    @db.VarChar(254)
+  token_hash       String    @unique
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at       DateTime  @db.Timestamptz(6)
+  consumed_at      DateTime? @db.Timestamptz(6)
+  users            users     @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([expires_at], map: "email_verification_expiry_idx")
+  @@index([user_id, created_at(sort: Desc)], map: "email_verification_user_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model episodes {
+  id                                                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id                                               String              @db.Uuid
+  season_id                                              String              @db.Uuid
+  number                                                 Int
+  name                                                   String              @db.VarChar(300)
+  synopsis                                               String              @default("")
+  publication_status                                     String              @default("DRAFT")
+  active_asset_id                                        String?             @db.Uuid
+  intro_start_seconds                                    Decimal?            @db.Decimal(12, 3)
+  intro_end_seconds                                      Decimal?            @db.Decimal(12, 3)
+  credits_start_seconds                                  Decimal?            @db.Decimal(12, 3)
+  published_at                                           DateTime?           @db.Timestamptz(6)
+  version                                                BigInt              @default(1)
+  created_at                                             DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                                             DateTime            @default(now()) @db.Timestamptz(6)
+  content_reports                                        content_reports[]
+  video_assets_episodes_active_asset_id_idTovideo_assets video_assets?       @relation("episodes_active_asset_id_idTovideo_assets", fields: [active_asset_id, id], references: [id, episode_id], onUpdate: NoAction, map: "episodes_active_asset_fk")
+  seasons                                                seasons             @relation(fields: [season_id, title_id], references: [id, title_id], onUpdate: NoAction)
+  playback_sessions                                      playback_sessions[]
+  resume_heads                                           resume_heads[]
+  upload_intents                                         upload_intents[]
+  video_assets_video_assets_episode_idToepisodes         video_assets[]      @relation("video_assets_episode_idToepisodes")
+  watch_progress                                         watch_progress[]
+
+  @@unique([id, title_id])
+  @@unique([season_id, number])
+  @@index([active_asset_id], map: "episodes_active_asset_idx", where: raw("(active_asset_id IS NOT NULL)"))
+  @@index([title_id, publication_status, id], map: "episodes_title_idx")
+  @@schema("movie")
+}
+
+model genres {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String         @unique @db.VarChar(100)
+  name         String         @db.VarChar(100)
+  title_genres title_genres[]
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model homepage_banners {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id        String    @db.Uuid
+  image_asset_ref String
+  headline        String?   @db.VarChar(300)
+  sort_order      Int       @default(0)
+  enabled         Boolean   @default(false)
+  starts_at       DateTime? @db.Timestamptz(6)
+  ends_at         DateTime? @db.Timestamptz(6)
+  version         BigInt    @default(1)
+  updated_by      String    @db.Uuid
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+  titles          titles    @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+  users           users     @relation(fields: [updated_by], references: [id], onUpdate: NoAction)
+
+  @@index([sort_order, id], map: "homepage_banners_display_idx", where: raw("enabled"))
+  @@index([updated_by], map: "homepage_banners_editor_idx")
+  @@index([title_id], map: "homepage_banners_title_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model idempotency_records {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_scope          String                @db.VarChar(180)
+  method               String                @db.VarChar(10)
+  route_key            String                @db.VarChar(500)
+  request_key_hash     String
+  request_fingerprint  String
+  state                String                @default("IN_PROGRESS")
+  resource_type        String?               @db.VarChar(80)
+  resource_id          String?               @db.Uuid
+  operation_id         String?               @db.Uuid
+  auth_receipt_id      String?               @db.Uuid
+  response_status      Int?                  @db.SmallInt
+  response_body        Json?
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  expires_at           DateTime              @db.Timestamptz(6)
+  auth_replay_receipts auth_replay_receipts? @relation(fields: [auth_receipt_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  operations           operations?           @relation(fields: [operation_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([actor_scope, method, route_key, request_key_hash])
+  @@index([expires_at], map: "idempotency_expiry_idx")
+  @@index([operation_id], map: "idempotency_operation_idx", where: raw("(operation_id IS NOT NULL)"))
+  @@index([auth_receipt_id], map: "idempotency_receipt_idx", where: raw("(auth_receipt_id IS NOT NULL)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model inbox_events {
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source              String          @db.VarChar(80)
+  dedup_key           String
+  payload_fingerprint String
+  verified_payload    Json
+  status              String          @default("RECEIVED")
+  attempt_id          String?         @db.Uuid
+  received_at         DateTime        @default(now()) @db.Timestamptz(6)
+  processed_at        DateTime?       @db.Timestamptz(6)
+  error_code          String?         @db.VarChar(100)
+  media_attempts      media_attempts? @relation(fields: [attempt_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([source, dedup_key])
+  @@index([attempt_id], map: "inbox_attempt_idx", where: raw("(attempt_id IS NOT NULL)"))
+  @@index([received_at, id], map: "inbox_pending_idx", where: raw("(status = 'RECEIVED'::text)"))
+  @@index([received_at], map: "inbox_retention_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model job_runs {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  handler         String      @db.VarChar(100)
+  logical_key     String      @db.VarChar(300)
+  operation_id    String?     @db.Uuid
+  state           String      @default("PENDING")
+  attempt_count   Int         @default(0)
+  next_attempt_at DateTime    @default(now()) @db.Timestamptz(6)
+  lease_owner     String?     @db.VarChar(150)
+  lease_until     DateTime?   @db.Timestamptz(6)
+  lease_token     BigInt      @default(0)
+  last_error_code String?     @db.VarChar(100)
+  checkpoint      Json        @default("{}")
+  created_at      DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime    @default(now()) @db.Timestamptz(6)
+  completed_at    DateTime?   @db.Timestamptz(6)
+  operations      operations? @relation(fields: [operation_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([handler, logical_key])
+  @@index([next_attempt_at, lease_until, id], map: "job_runs_due_idx", where: raw("(state = ANY (ARRAY['PENDING'::text, 'RUNNING'::text, 'WAITING'::text]))"))
+  @@index([operation_id], map: "job_runs_operation_idx", where: raw("(operation_id IS NOT NULL)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model media_attempts {
+  id                                                              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id                                                        String          @db.Uuid
+  operation_id                                                    String          @db.Uuid
+  profile_version                                                 String          @db.VarChar(80)
+  config_hash                                                     String
+  status                                                          String          @default("QUEUED")
+  attempt_no                                                      Int
+  provider_batch_ref                                              String?
+  callback_context_hash                                           String          @unique
+  error_code                                                      String?         @db.VarChar(100)
+  created_at                                                      DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                                                      DateTime        @default(now()) @db.Timestamptz(6)
+  completed_at                                                    DateTime?       @db.Timestamptz(6)
+  inbox_events                                                    inbox_events[]
+  video_assets_media_attempts_asset_idTovideo_assets              video_assets    @relation("media_attempts_asset_idTovideo_assets", fields: [asset_id], references: [id], onUpdate: NoAction)
+  operations                                                      operations      @relation(fields: [operation_id], references: [id], onUpdate: NoAction)
+  media_outputs                                                   media_outputs[]
+  video_assets_video_assets_current_attempt_id_idTomedia_attempts video_assets[]   @relation("video_assets_current_attempt_id_idTomedia_attempts")
+
+  @@unique([asset_id, config_hash], map: "media_attempts_active_idx", where: raw("(status = ANY (ARRAY['QUEUED'::text, 'RUNNING'::text, 'WAITING_PROVIDER'::text, 'VERIFYING_OUTPUT'::text, 'RECONCILING'::text]))"))
+  @@unique([asset_id, config_hash, attempt_no])
+  @@unique([id, asset_id])
+  @@index([operation_id], map: "media_attempts_operation_idx")
+  @@index([status, updated_at], map: "media_attempts_reconcile_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model media_outputs {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attempt_id        String         @db.Uuid
+  format            String
+  profile_version   String         @db.VarChar(80)
+  config_hash       String
+  status            String
+  manifest_ref      String?
+  rendition_summary Json           @default("[]")
+  verified_at       DateTime?      @db.Timestamptz(6)
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  media_attempts    media_attempts @relation(fields: [attempt_id], references: [id], onUpdate: NoAction)
+
+  @@unique([attempt_id, format, config_hash])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mfa_challenges {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String                 @db.Uuid
+  session_id           String?                @db.Uuid
+  factor_id            String?                @db.Uuid
+  purpose              String
+  challenge_hash       String                 @unique
+  attempt_count        Int                    @default(0)
+  max_attempts         Int                    @default(5) @db.SmallInt
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  expires_at           DateTime               @db.Timestamptz(6)
+  consumed_at          DateTime?              @db.Timestamptz(6)
+  auth_replay_receipts auth_replay_receipts[]
+  mfa_factors          mfa_factors?           @relation(fields: [factor_id, user_id], references: [id, user_id], onDelete: NoAction, onUpdate: NoAction)
+  auth_sessions        auth_sessions?         @relation(fields: [session_id, user_id], references: [id, user_id], onDelete: NoAction, onUpdate: NoAction)
+  users                users                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([expires_at], map: "mfa_challenges_expiry_idx")
+  @@index([factor_id], map: "mfa_challenges_factor_idx", where: raw("(factor_id IS NOT NULL)"))
+  @@index([session_id], map: "mfa_challenges_session_idx", where: raw("(session_id IS NOT NULL)"))
+  @@index([user_id, created_at(sort: Desc)], map: "mfa_challenges_user_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mfa_factors {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String               @db.Uuid
+  kind               String               @default("TOTP")
+  encrypted_secret   Bytes
+  encryption_key_id  String               @db.VarChar(100)
+  verified_at        DateTime?            @db.Timestamptz(6)
+  last_accepted_step BigInt?
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  disabled_at        DateTime?            @db.Timestamptz(6)
+  mfa_challenges     mfa_challenges[]
+  users              users                @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  mfa_recovery_codes mfa_recovery_codes[]
+
+  @@unique([user_id, kind], map: "mfa_factors_enabled_idx", where: raw("(disabled_at IS NULL)"))
+  @@unique([id, user_id])
+  @@schema("movie")
+}
+
+model mfa_recovery_codes {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factor_id   String      @db.Uuid
+  code_hash   String      @unique
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  consumed_at DateTime?   @db.Timestamptz(6)
+  mfa_factors mfa_factors @relation(fields: [factor_id], references: [id], onUpdate: NoAction)
+
+  @@index([factor_id], map: "mfa_recovery_factor_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model operations {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_user_id       String?               @db.Uuid
+  principal_scope     String                @db.VarChar(180)
+  type                String                @db.VarChar(80)
+  resource_type       String?               @db.VarChar(80)
+  resource_id         String?               @db.Uuid
+  status              String                @default("QUEUED")
+  progress            Int                   @default(0) @db.SmallInt
+  result_ref          Json?
+  error_code          String?               @db.VarChar(100)
+  error_message       String?               @db.VarChar(500)
+  error_retryable     Boolean?
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  completed_at        DateTime?             @db.Timestamptz(6)
+  audit_exports       audit_exports?
+  audit_logs          audit_logs[]
+  idempotency_records idempotency_records[]
+  job_runs            job_runs[]
+  media_attempts      media_attempts[]
+  users               users?                @relation(fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  outbox_events       outbox_events[]
+
+  @@index([owner_user_id, created_at(sort: Desc), id(sort: Desc)], map: "operations_owner_idx")
+  @@index([status, created_at], map: "operations_status_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model outbox_events {
+  id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                String      @db.VarChar(100)
+  schema_version      Int         @default(1) @db.SmallInt
+  aggregate_type      String      @db.VarChar(80)
+  aggregate_id        String      @db.Uuid
+  aggregate_version   BigInt
+  operation_id        String?     @db.Uuid
+  initiating_actor_id String?     @db.Uuid
+  correlation_id      String?     @db.VarChar(100)
+  payload             Json
+  attempt_count       Int         @default(0)
+  next_attempt_at     DateTime    @default(now()) @db.Timestamptz(6)
+  lease_owner         String?     @db.VarChar(150)
+  lease_until         DateTime?   @db.Timestamptz(6)
+  lease_token         BigInt      @default(0)
+  created_at          DateTime    @default(now()) @db.Timestamptz(6)
+  published_at        DateTime?   @db.Timestamptz(6)
+  users               users?      @relation(fields: [initiating_actor_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  operations          operations? @relation(fields: [operation_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([initiating_actor_id], map: "outbox_actor_idx", where: raw("(initiating_actor_id IS NOT NULL)"))
+  @@index([next_attempt_at, created_at, id], map: "outbox_dispatch_idx", where: raw("(published_at IS NULL)"))
+  @@index([operation_id], map: "outbox_operation_idx", where: raw("(operation_id IS NOT NULL)"))
+  @@index([published_at], map: "outbox_retention_idx", where: raw("(published_at IS NOT NULL)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model password_reset_tokens {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String    @db.Uuid
+  token_hash  String    @unique
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at  DateTime  @db.Timestamptz(6)
+  consumed_at DateTime? @db.Timestamptz(6)
+  users       users     @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([expires_at], map: "password_reset_expiry_idx")
+  @@index([user_id, created_at(sort: Desc)], map: "password_reset_user_idx")
+  @@schema("movie")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model people {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String    @db.VarChar(200)
+  normalized_name String
+  biography       String    @default("")
+  photo_asset_ref String?
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+  credits         credits[]
+
+  @@schema("movie")
+}
+
+model permissions {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String             @unique @db.VarChar(80)
+  description      String
+  role_permissions role_permissions[]
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model playback_event_batches {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id          String            @db.Uuid
+  client_batch_id     String            @db.Uuid
+  payload_fingerprint String
+  event_count         Int               @db.SmallInt
+  payload_bytes       Int
+  status              String            @default("ACCEPTED")
+  received_at         DateTime          @default(now()) @db.Timestamptz(6)
+  processed_at        DateTime?         @db.Timestamptz(6)
+  playback_sessions   playback_sessions @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+
+  @@unique([session_id, client_batch_id])
+  @@index([received_at], map: "playback_batches_pending_idx", where: raw("(status = 'ACCEPTED'::text)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model playback_sessions {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                String?                  @db.Uuid
+  guest_id_hash          String?
+  episode_id             String                   @db.Uuid
+  asset_id               String                   @db.Uuid
+  asset_version          Int
+  mode                   String                   @default("PUBLIC")
+  management_token_hash  String                   @unique
+  telemetry_token_hash   String                   @unique
+  delivery_generation    BigInt                   @default(1)
+  resume_generation      BigInt?
+  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  expires_at             DateTime                 @db.Timestamptz(6)
+  max_expires_at         DateTime                 @db.Timestamptz(6)
+  closed_at              DateTime?                @db.Timestamptz(6)
+  revoked_at             DateTime?                @db.Timestamptz(6)
+  content_reports        content_reports[]
+  playback_event_batches playback_event_batches[]
+  video_assets           video_assets             @relation(fields: [asset_id, episode_id, asset_version], references: [id, episode_id, internal_version], onDelete: NoAction, onUpdate: NoAction)
+  episodes               episodes                 @relation(fields: [episode_id], references: [id], onUpdate: NoAction)
+  users                  users?                   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  resume_heads           resume_heads[]
+  watch_events           watch_events[]
+  watch_progress         watch_progress[]
+
+  @@unique([id, user_id, episode_id, asset_id, asset_version, resume_generation])
+  @@unique([id, user_id, episode_id])
+  @@unique([id, user_id, episode_id, resume_generation])
+  @@index([asset_id, expires_at], map: "playback_sessions_asset_idx")
+  @@index([episode_id, created_at(sort: Desc)], map: "playback_sessions_episode_idx")
+  @@index([expires_at], map: "playback_sessions_expiry_idx")
+  @@index([user_id, created_at(sort: Desc)], map: "playback_sessions_user_idx", where: raw("(user_id IS NOT NULL)"))
+  @@schema("movie")
+}
+
+model policy_locks {
+  key         String @id @db.VarChar(100)
+  description String
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+model refresh_tokens {
+  id                                                                                                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id                                                                                             String                 @db.Uuid
+  family_id                                                                                              String                 @unique(map: "refresh_tokens_live_family_idx", where: raw("(consumed_at IS NULL)")) @db.Uuid
+  generation                                                                                             BigInt
+  token_hash                                                                                             String                 @unique
+  created_at                                                                                             DateTime               @default(now()) @db.Timestamptz(6)
+  expires_at                                                                                             DateTime               @db.Timestamptz(6)
+  consumed_at                                                                                            DateTime?              @db.Timestamptz(6)
+  replaced_by_id                                                                                         String?                @db.Uuid
+  auth_replay_receipts_auth_replay_receipts_input_refresh_token_id_family_id_session_idTorefresh_tokens  auth_replay_receipts[] @relation("auth_replay_receipts_input_refresh_token_id_family_id_session_idTorefresh_tokens")
+  auth_replay_receipts_auth_replay_receipts_output_refresh_token_id_family_id_session_idTorefresh_tokens auth_replay_receipts[] @relation("auth_replay_receipts_output_refresh_token_id_family_id_session_idTorefresh_tokens")
+  refresh_tokens                                                                                         refresh_tokens?        @relation("refresh_tokensTorefresh_tokens", fields: [replaced_by_id, family_id, session_id], references: [id, family_id, session_id], onDelete: NoAction, onUpdate: NoAction)
+  other_refresh_tokens                                                                                   refresh_tokens[]        @relation("refresh_tokensTorefresh_tokens")
+  auth_sessions                                                                                          auth_sessions          @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+
+  @@unique([family_id, generation])
+  @@unique([id, family_id, session_id])
+  @@index([expires_at], map: "refresh_tokens_expiry_idx")
+  @@index([session_id, created_at(sort: Desc)], map: "refresh_tokens_session_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model resume_heads {
+  user_id           String             @db.Uuid
+  episode_id        String             @db.Uuid
+  generation        BigInt             @default(0)
+  active_session_id String?            @db.Uuid
+  updated_at        DateTime           @default(now()) @db.Timestamptz(6)
+  playback_sessions playback_sessions? @relation(fields: [active_session_id, user_id, episode_id, generation], references: [id, user_id, episode_id, resume_generation], onDelete: NoAction, onUpdate: NoAction)
+  episodes          episodes           @relation(fields: [episode_id], references: [id], onUpdate: NoAction)
+  users             users              @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@id([user_id, episode_id])
+  @@index([episode_id], map: "resume_heads_episode_idx")
+  @@index([active_session_id], map: "resume_heads_session_idx", where: raw("(active_session_id IS NOT NULL)"))
+  @@schema("movie")
+}
+
+model role_permissions {
+  role_id       String      @db.Uuid
+  permission_id String      @db.Uuid
+  permissions   permissions @relation(fields: [permission_id], references: [id], onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+  @@index([permission_id, role_id], map: "role_permissions_permission_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model roles {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String             @unique
+  description      String
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model scheduled_jobs {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  logical_key   String    @unique @db.VarChar(300)
+  kind          String    @db.VarChar(100)
+  due_at        DateTime  @db.Timestamptz(6)
+  payload_ref   Json
+  state         String    @default("PENDING")
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  dispatched_at DateTime? @db.Timestamptz(6)
+
+  @@index([due_at, id], map: "scheduled_jobs_due_idx", where: raw("(state = 'PENDING'::text)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model seasons {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id     String     @unique(map: "seasons_technical_idx", where: raw("is_technical")) @db.Uuid
+  number       Int
+  name         String?    @db.VarChar(200)
+  is_technical Boolean    @default(false)
+  version      BigInt     @default(1)
+  created_at   DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime   @default(now()) @db.Timestamptz(6)
+  episodes     episodes[]
+  titles       titles     @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@unique([id, title_id])
+  @@unique([title_id, number])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model security_events {
+  id            BigInt   @id @default(autoincrement())
+  category      String   @db.VarChar(100)
+  outcome       String
+  user_id       String?  @db.Uuid
+  subject_hash  String?
+  ip_hash       String?
+  safe_metadata Json     @default("{}")
+  request_id    String?  @db.VarChar(100)
+  trace_id      String?  @db.VarChar(100)
+  received_at   DateTime @default(now()) @db.Timestamptz(6)
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([category, received_at(sort: Desc)], map: "security_events_category_idx")
+  @@index([received_at(sort: Desc), id(sort: Desc)], map: "security_events_time_idx")
+  @@index([user_id, received_at(sort: Desc)], map: "security_events_user_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model source_backups {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id            String       @db.Uuid
+  storage_provider    String       @db.VarChar(50)
+  bucket              String
+  object_key          String
+  object_version      String?
+  source_manifest_ref String?
+  sha256              String?      @db.VarChar(64)
+  bytes               BigInt?
+  status              String       @default("PENDING")
+  verified_at         DateTime?    @db.Timestamptz(6)
+  retain_until        DateTime?    @db.Timestamptz(6)
+  created_at          DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime     @default(now()) @db.Timestamptz(6)
+  video_assets        video_assets @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+
+  @@unique([asset_id, storage_provider])
+  @@unique([storage_provider, bucket, object_key])
+  @@index([status, updated_at], map: "source_backups_status_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model subtitle_tracks {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id       String       @db.Uuid
+  language       String       @db.VarChar(35)
+  label          String       @db.VarChar(100)
+  kind           String       @default("SUBTITLES")
+  format         String       @default("WEBVTT")
+  storage_ref    String
+  status         String       @default("PENDING")
+  offset_seconds Decimal      @default(0) @db.Decimal(9, 3)
+  version        BigInt       @default(1)
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime     @default(now()) @db.Timestamptz(6)
+  video_assets   video_assets @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+
+  @@unique([asset_id, language, kind])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model system_settings {
+  key        String   @id @db.VarChar(100)
+  value      Json
+  version    BigInt   @default(1)
+  updated_by String   @db.Uuid
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [updated_by], references: [id], onUpdate: NoAction)
+
+  @@index([updated_by], map: "system_settings_editor_idx")
+  @@schema("movie")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model title_aliases {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id         String  @db.Uuid
+  alias            String  @db.VarChar(300)
+  normalized_alias String
+  language         String? @db.VarChar(35)
+  titles           titles  @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@unique([title_id, normalized_alias])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model title_daily_stats {
+  title_id           String   @db.Uuid
+  day                DateTime @db.Date
+  definition_version Int      @default(1) @db.SmallInt
+  qualified_views    BigInt   @default(0)
+  playback_starts    BigInt   @default(0)
+  playback_failures  BigInt   @default(0)
+  watched_seconds    Decimal  @default(0) @db.Decimal(20, 3)
+  finalized          Boolean  @default(false)
+  updated_at         DateTime @default(now()) @db.Timestamptz(6)
+  titles             titles   @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@id([title_id, day, definition_version])
+  @@index([day(sort: Desc), qualified_views(sort: Desc), title_id], map: "title_daily_stats_day_idx")
+  @@schema("movie")
+}
+
+model title_genres {
+  title_id String @db.Uuid
+  genre_id String @db.Uuid
+  genres   genres @relation(fields: [genre_id], references: [id], onUpdate: NoAction)
+  titles   titles @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@id([title_id, genre_id])
+  @@index([genre_id, title_id], map: "title_genres_genre_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model titles {
+  id                             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind                           String
+  slug                           String              @unique @db.VarChar(200)
+  localized_title                String              @db.VarChar(300)
+  original_title                 String?             @db.VarChar(300)
+  normalized_title               String
+  synopsis                       String              @default("")
+  release_year                   Int?                @db.SmallInt
+  country_codes                  String[]            @default([])
+  original_language              String?             @db.VarChar(35)
+  age_rating                     String?             @db.VarChar(20)
+  publication_status             String              @default("DRAFT")
+  poster_asset_ref               String?
+  backdrop_asset_ref             String?
+  trailer_asset_ref              String?
+  published_at                   DateTime?           @db.Timestamptz(6)
+  version                        BigInt              @default(1)
+  created_by                     String              @db.Uuid
+  updated_by                     String              @db.Uuid
+  created_at                     DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime            @default(now()) @db.Timestamptz(6)
+  content_reports                content_reports[]
+  credits                        credits[]
+  homepage_banners               homepage_banners[]
+  seasons                        seasons?
+  title_aliases                  title_aliases[]
+  title_daily_stats              title_daily_stats[]
+  title_genres                   title_genres[]
+  users_titles_created_byTousers users               @relation("titles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_titles_updated_byTousers users               @relation("titles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  watchlist                      watchlist[]
+
+  @@index([country_codes], map: "titles_country_idx", type: Gin)
+  @@index([created_by])
+  @@index([kind, release_year(sort: Desc), id], map: "titles_public_filter_idx", where: raw("(publication_status = 'PUBLISHED'::text)"))
+  @@index([published_at(sort: Desc), id(sort: Desc)], map: "titles_public_new_idx", where: raw("(publication_status = 'PUBLISHED'::text)"))
+  @@index([updated_by])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model upload_intents {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  episode_id        String        @db.Uuid
+  owner_user_id     String        @db.Uuid
+  target_public_id  String        @unique
+  status            String        @default("PENDING")
+  expected_policy   Json
+  verified_asset_id String?       @db.Uuid
+  created_at        DateTime      @default(now()) @db.Timestamptz(6)
+  expires_at        DateTime      @db.Timestamptz(6)
+  verified_at       DateTime?     @db.Timestamptz(6)
+  video_assets      video_assets? @relation(fields: [verified_asset_id, episode_id], references: [id, episode_id], onUpdate: NoAction, map: "upload_intents_asset_fk")
+  episodes          episodes      @relation(fields: [episode_id], references: [id], onUpdate: NoAction)
+  users             users         @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction)
+
+  @@index([verified_asset_id], map: "upload_intents_asset_idx", where: raw("(verified_asset_id IS NOT NULL)"))
+  @@index([episode_id, created_at(sort: Desc)], map: "upload_intents_episode_idx")
+  @@index([expires_at], map: "upload_intents_expiry_idx", where: raw("(status = 'PENDING'::text)"))
+  @@index([owner_user_id, created_at(sort: Desc)], map: "upload_intents_owner_idx")
+  @@schema("movie")
+}
+
+model user_roles {
+  user_id                            String   @db.Uuid
+  role_id                            String   @db.Uuid
+  granted_by                         String?  @db.Uuid
+  granted_at                         DateTime @default(now()) @db.Timestamptz(6)
+  users_user_roles_granted_byTousers users?   @relation("user_roles_granted_byTousers", fields: [granted_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  roles                              roles    @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+  users_user_roles_user_idTousers    users    @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@id([user_id, role_id])
+  @@index([granted_by], map: "user_roles_grantor_idx", where: raw("(granted_by IS NOT NULL)"))
+  @@index([role_id, user_id], map: "user_roles_role_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                                                      String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email_normalized                                        String                      @unique @db.VarChar(254)
+  password_hash                                           String
+  display_name                                            String                      @db.VarChar(100)
+  status                                                  String                      @default("ACTIVE")
+  email_verified_at                                       DateTime?                   @db.Timestamptz(6)
+  auth_version                                            BigInt                      @default(1)
+  created_at                                              DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                                              DateTime                    @default(now()) @db.Timestamptz(6)
+  deleted_at                                              DateTime?                   @db.Timestamptz(6)
+  audit_exports                                           audit_exports[]
+  audit_logs_audit_logs_actor_user_idTousers              audit_logs[]                @relation("audit_logs_actor_user_idTousers")
+  audit_logs_audit_logs_initiator_user_idTousers          audit_logs[]                @relation("audit_logs_initiator_user_idTousers")
+  auth_sessions                                           auth_sessions[]
+  content_reports_content_reports_handled_byTousers       content_reports[]           @relation("content_reports_handled_byTousers")
+  content_reports_content_reports_reporter_user_idTousers content_reports[]           @relation("content_reports_reporter_user_idTousers")
+  email_verification_tokens                               email_verification_tokens[]
+  homepage_banners                                        homepage_banners[]
+  mfa_challenges                                          mfa_challenges[]
+  mfa_factors                                             mfa_factors[]
+  operations                                              operations[]
+  outbox_events                                           outbox_events[]
+  password_reset_tokens                                   password_reset_tokens[]
+  playback_sessions                                       playback_sessions[]
+  resume_heads                                            resume_heads[]
+  security_events                                         security_events[]
+  system_settings                                         system_settings[]
+  titles_titles_created_byTousers                         titles[]                    @relation("titles_created_byTousers")
+  titles_titles_updated_byTousers                         titles[]                    @relation("titles_updated_byTousers")
+  upload_intents                                          upload_intents[]
+  user_roles_user_roles_granted_byTousers                 user_roles[]                @relation("user_roles_granted_byTousers")
+  user_roles_user_roles_user_idTousers                    user_roles[]                @relation("user_roles_user_idTousers")
+  watch_progress                                          watch_progress[]
+  watchlist                                               watchlist[]
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model video_assets {
+  id                                                                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  episode_id                                                        String              @db.Uuid
+  provider                                                          String              @default("CLOUDINARY")
+  provider_asset_id                                                 String?
+  public_id                                                         String
+  resource_type                                                     String              @default("video")
+  delivery_type                                                     String
+  provider_version                                                  String?
+  internal_version                                                  Int
+  processing_status                                                 String              @default("PENDING_UPLOAD")
+  lifecycle_status                                                  String              @default("ACTIVE")
+  backup_status                                                     String              @default("PENDING")
+  duration_seconds                                                  Decimal?            @db.Decimal(12, 3)
+  width                                                             Int?
+  height                                                            Int?
+  bytes                                                             BigInt?
+  source_format                                                     String?             @db.VarChar(20)
+  current_attempt_id                                                String?             @db.Uuid
+  version                                                           BigInt              @default(1)
+  created_at                                                        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                                                        DateTime            @default(now()) @db.Timestamptz(6)
+  deleted_at                                                        DateTime?           @db.Timestamptz(6)
+  episodes_episodes_active_asset_id_idTovideo_assets                episodes[]           @relation("episodes_active_asset_id_idTovideo_assets")
+  media_attempts_media_attempts_asset_idTovideo_assets              media_attempts[]    @relation("media_attempts_asset_idTovideo_assets")
+  playback_sessions                                                 playback_sessions[]
+  source_backups                                                    source_backups[]
+  subtitle_tracks                                                   subtitle_tracks[]
+  upload_intents                                                    upload_intents[]
+  media_attempts_video_assets_current_attempt_id_idTomedia_attempts media_attempts?     @relation("video_assets_current_attempt_id_idTomedia_attempts", fields: [current_attempt_id, id], references: [id, asset_id], onUpdate: NoAction, map: "video_assets_current_attempt_fk")
+  episodes_video_assets_episode_idToepisodes                        episodes            @relation("video_assets_episode_idToepisodes", fields: [episode_id], references: [id], onUpdate: NoAction)
+
+  @@unique([episode_id, internal_version])
+  @@unique([id, episode_id, internal_version])
+  @@unique([id, episode_id])
+  @@unique([provider, provider_asset_id])
+  @@unique([provider, public_id])
+  @@index([current_attempt_id], map: "video_assets_attempt_idx", where: raw("(current_attempt_id IS NOT NULL)"))
+  @@index([backup_status, updated_at], map: "video_assets_backup_idx", where: raw("(lifecycle_status = 'ACTIVE'::text)"))
+  @@index([processing_status, updated_at], map: "video_assets_work_idx", where: raw("(lifecycle_status = 'ACTIVE'::text)"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model watch_events {
+  id                  BigInt            @id @default(autoincrement())
+  session_id          String            @db.Uuid
+  client_event_id     String            @db.Uuid
+  sequence            BigInt
+  type                String            @db.VarChar(50)
+  elapsed_ms          BigInt
+  position_seconds    Decimal?          @db.Decimal(12, 3)
+  schema_version      Int               @default(1) @db.SmallInt
+  payload             Json              @default("{}")
+  payload_fingerprint String
+  received_at         DateTime          @default(now()) @db.Timestamptz(6)
+  playback_sessions   playback_sessions @relation(fields: [session_id], references: [id], onUpdate: NoAction)
+
+  @@unique([session_id, client_event_id])
+  @@index([received_at], map: "watch_events_retention_idx")
+  @@index([session_id, elapsed_ms, id], map: "watch_events_session_time_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model watch_progress {
+  user_id           String            @db.Uuid
+  episode_id        String            @db.Uuid
+  session_id        String            @db.Uuid
+  asset_id          String            @db.Uuid
+  asset_version     Int
+  resume_generation BigInt
+  last_sequence     BigInt
+  position_seconds  Decimal           @db.Decimal(12, 3)
+  watched_intervals Json              @default("[]")
+  watched_seconds   Decimal           @default(0) @db.Decimal(12, 3)
+  completed_at      DateTime?         @db.Timestamptz(6)
+  updated_at        DateTime          @default(now()) @db.Timestamptz(6)
+  episodes          episodes          @relation(fields: [episode_id], references: [id], onUpdate: NoAction)
+  playback_sessions playback_sessions @relation(fields: [session_id, user_id, episode_id, asset_id, asset_version, resume_generation], references: [id, user_id, episode_id, asset_id, asset_version, resume_generation], onDelete: NoAction, onUpdate: NoAction)
+  users             users             @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@id([user_id, episode_id])
+  @@index([asset_id], map: "watch_progress_asset_idx")
+  @@index([episode_id], map: "watch_progress_episode_idx")
+  @@index([user_id, updated_at(sort: Desc), episode_id], map: "watch_progress_recent_idx")
+  @@index([session_id], map: "watch_progress_session_idx")
+  @@schema("movie")
+}
+
+model watchlist {
+  user_id    String   @db.Uuid
+  title_id   String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  titles     titles   @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@id([user_id, title_id])
+  @@index([user_id, created_at(sort: Desc), title_id], map: "watchlist_recent_idx")
+  @@index([title_id], map: "watchlist_title_idx")
+  @@schema("movie")
+}
