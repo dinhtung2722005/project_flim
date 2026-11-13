@@ -68,6 +68,12 @@ export async function runMfaPolicyChecks(c: Context) {
       200,
     );
     equal(status(await login(editor), 201).body.state, "ACTIVE");
+    status(
+      await request(c.server)
+        .get("/api/v1/me/watchlist")
+        .auth(token, { type: "bearer" }),
+      200,
+    );
 
     const genre = status(
       await request(c.server)

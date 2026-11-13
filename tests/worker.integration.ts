@@ -12,7 +12,7 @@ import {
 } from "../packages/media/src/cloudinary.provider";
 import { BackupStorage } from "../packages/media/src/backup-storage";
 import { ApiError, hash } from "../apps/api/src/common";
-import { verifyHls } from "../packages/media/src/hls-verifier";
+import { verifyHls, MediaPending } from "../packages/media/src/hls-verifier";
 type Input = {
   fixtures: any;
   api: any;
@@ -634,6 +634,43 @@ export async function runWorkerIntegration(c: Input) {
       "SUCCEEDED",
     );
     checks++;
+    const savedFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = async () =>
+        new Response("", {
+          status: 400,
+          headers: {
+            "x-cld-error":
+              "This transformation is a byproduct of a streaming profile, and cannot be derived directly",
+          },
+        });
+      await assert.rejects(
+        verifyHls(
+          "https://res.cloudinary.com/test-cloud/video/authenticated/sp_hd/test.m3u8",
+          "test-cloud",
+          { width: 1280, height: 720, duration: 12 },
+        ),
+        MediaPending,
+      );
+      checks++;
+      globalThis.fetch = async () =>
+        new Response("", {
+          status: 400,
+          headers: { "x-cld-error": "Unknown streaming profile" },
+        });
+      await assert.rejects(
+        verifyHls(
+          "https://res.cloudinary.com/test-cloud/video/authenticated/sp_hd/test.m3u8",
+          "test-cloud",
+          { width: 1280, height: 720, duration: 12 },
+        ),
+        (e) =>
+          e instanceof ApiError && e.code === "MEDIA_PROVIDER_BAD_RESPONSE",
+      );
+      checks++;
+    } finally {
+      globalThis.fetch = savedFetch;
+    }
     foreign = true;
     await assert.rejects(
       verifyHls(

@@ -209,6 +209,14 @@ export class PlaybackService {
       delivery: {
         url: this.provider.playbackUrl(asset, profile),
         format: "HLS",
+        fallback:
+          asset.source_format === "mp4"
+            ? {
+                url: this.provider.sourcePlaybackUrl(asset),
+                format: "MP4",
+                adaptiveBitrate: false,
+              }
+            : null,
         authorization: "SIGNED_URL",
         expiresAt: null,
         revocation: "SESSION_ONLY",

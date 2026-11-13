@@ -1,10 +1,12 @@
 # pj-Flim
 
-Backend cho nền tảng xem phim theo yêu cầu (VOD), sử dụng Node.js/NestJS, PostgreSQL, Cloudinary và RabbitMQ.
+Nền tảng xem phim theo yêu cầu (VOD), gồm giao diện React/Vite cho người xem và admin, backend Node.js/NestJS, PostgreSQL, Cloudinary và RabbitMQ.
 
-Repository: [dinhtung2722005/project_flim](https://github.com/dinhtung2722005/project_flim). Cập nhật ngày **11/11/2026**.
+Repository: [dinhtung2722005/project_flim](https://github.com/dinhtung2722005/project_flim). Cập nhật ngày **13/11/2026**.
 
-> Hiện có backend API và media worker. Frontend, trang quản trị và player trình duyệt chưa được triển khai. Các script vận hành local đang được dùng trên Windows tại `E:\pj-Flim`.
+> Đã có giao diện người xem, trang quản trị và player HLS nối API thật, cùng MP4 dự phòng cho nguồn MP4 đã xác minh. Khi video không tải, thử Ctrl+F5 rồi Đổi cách phát bên dưới video; nếu trình duyệt chặn tự phát, bấm Phát video. Mở http://localhost:3000 và http://localhost:3000/admin sau khi build cả web/API. Xem [hướng dẫn frontend](docs/frontend.md). Các script local dùng Windows tại `E:\pj-Flim`; ma trận thiết bị và tải chưa nghiệm thu.
+
+Giao diện cập nhật 13/11/2026: chữ và nút lớn hơn, tìm kiếm/lọc rõ hơn, danh sách tập cạnh video trên màn hình rộng, menu admin gọn trên điện thoại và bảng/form dễ đọc. Chạy tại http://localhost:3000; dùng Ctrl+F5 để tải bản giao diện mới. Xem [chi tiết giao diện](docs/frontend.md).
 
 ## Mục lục
 
@@ -50,6 +52,7 @@ Quy mô hợp đồng hiện tại: **87 operation trên 67 path OpenAPI**, gồ
 
 | Thành phần | Công nghệ                                                          |
 | ---------- | ------------------------------------------------------------------ |
+| Frontend   | React 19, TypeScript, React Router, Vite, hls.js và Lucide         |
 | Runtime    | Node.js, yêu cầu tối thiểu 22.12; môi trường local đã dùng Node 24 |
 | API        | NestJS 11, TypeScript 5.9, Express                                 |
 | Validation | class-validator, class-transformer, DTO riêng theo nghiệp vụ       |
@@ -61,7 +64,7 @@ Quy mô hợp đồng hiện tại: **87 operation trên 67 path OpenAPI**, gồ
 | Tài liệu   | @nestjs/swagger và OpenAPI sinh từ controller/DTO                  |
 | Kiểm thử   | Integration HTTP bằng Supertest, PostgreSQL tạm và RabbitMQ        |
 
-Redis và Next.js nằm trong thiết kế tiếp theo, chưa có dịch vụ cache hoặc ứng dụng frontend đang chạy trong repository.
+Frontend hiện dùng React/Vite thay lựa chọn Next.js trong thiết kế ban đầu. Redis/SSR chưa triển khai. Trang public, admin và HLS được tách tải theo route; hls.js chỉ tải khi cần adapter JS.
 
 ## Kiến trúc
 
@@ -96,6 +99,7 @@ apps/
     exceptions/      Ánh xạ lỗi HTTP, parser, Prisma/PostgreSQL
     application.ts   Bootstrap HTTP, middleware và Swagger
     auth.guard.ts    Bearer, session, permission và step-up
+  web/src/           Trang người xem/admin, API client, auth và player
   worker/src/        Broker, outbox, HLS, backup, webhook relay
 packages/
   database/          Prisma schema và database adapter
@@ -201,6 +205,18 @@ npm.cmd run admin:bootstrap
 Email mặc định là `admin@pj-flim.local`; mật khẩu, thông tin thiết lập MFA và recovery codes được sinh riêng trên mỗi máy, lưu tại `.local/api/bootstrap-admin.json`. File này không được commit. Chạy lại bootstrap không tự đổi mật khẩu/MFA của tài khoản đã tồn tại.
 
 ## Chạy dự án
+
+### Giao diện người dùng và admin
+
+```powershell
+Set-Location E:\pj-Flim
+npm.cmd run build:all
+npm.cmd start
+```
+
+Trang người xem: http://localhost:3000; admin: http://localhost:3000/admin. Không mở process API thứ hai nếu cổng 3000 đã chạy. Để hot reload dùng thêm `npm.cmd run web:dev` tại cổng 3002. Cấu hình public, màn hình và kiểm thử: [docs/frontend.md](docs/frontend.md). Upload mới cần worker/broker/webhook theo phần media bên dưới.
+
+Sao chép .env.web.example thành .env.web.local và điền VITE_CLOUDINARY_CLOUD_NAME nếu dùng ảnh Cloudinary; không đưa API secret vào biến frontend.
 
 ### Chỉ chạy API
 
@@ -323,6 +339,9 @@ Registry có 73 mã lỗi; xem [exception handling](docs/api/exception-handling.
 
 ## Kiểm thử
 
+Kết quả full-stack ngày13/11/2026: **1.227 kiểm tra đạt** (76 browser, có RabbitMQ/PostgreSQL), **17 bước phát video Cloudinary thật** và đọc lại/checksum backup của2asset. Đã sửa lỗi dọn phiên khi đăng xuất và script Docker/RabbitMQ khởi động lạnh. Xem [báo cáo và giới hạn](docs/testing/full-stack-2026-11-13.md).
+
+
 ```powershell
 npm.cmd run typecheck
 npm.cmd run build
@@ -350,7 +369,7 @@ Muốn bao gồm worker, RabbitMQ phải hoạt động và cấu hình worker �
 
 Bộ integration tạo `pj_flim_test_<random>` riêng và topology broker thử riêng, không dùng `pj_flim` hoặc phim thật làm fixture. Database tạm do test tạo được dọn sau khi chạy. Báo cáo nằm tại `.local/api/integration-result.json`.
 
-Kết quả gần nhất ngày 11/11/2026: **1.142 assertion đạt**, có RabbitMQ; gồm 509 exception, 194 viewer, 41 MFA/local và 40 Swagger. Các nhóm này nằm trong tổng số, không phải toàn bộ danh sách test. Chrome headless cũng đã render 87 operation Swagger không có form login. Đây là bằng chứng local, chưa thay cho kiểm thử player/thiết bị/tải production.
+Kết quả gần nhất ngày 11/11/2026: **1.198 assertion/kiểm tra đạt**, có RabbitMQ và 53 browser checks Chrome; gồm 509 exception, 194 viewer, 42 MFA/local và 40 Swagger. Các nhóm này nằm trong tổng số, không phải toàn bộ danh sách test. Chrome headless cũng đã render 87 operation Swagger không có form login. Đây là bằng chứng local, chưa thay cho kiểm thử player/thiết bị/tải production.
 
 ## Lệnh thường dùng
 
@@ -363,10 +382,14 @@ Kết quả gần nhất ngày 11/11/2026: **1.142 assertion đạt**, có Rabbi
 | `npm.cmd run db:introspect`               | Introspect database hiện có              |
 | `npm.cmd run api:configure`               | Sinh cấu hình/khóa API local             |
 | `npm.cmd run admin:bootstrap`             | Tạo SUPER_ADMIN local nếu chưa có        |
+| `npm.cmd run rabbitmq:smoke`              | Kiểm broker local bằng topology thử riêng |
 | `npm.cmd run worker:configure`            | Sinh cấu hình worker/broker local        |
 | `npm.cmd run worker:dev` / `worker:start` | Chạy worker riêng, cần broker/config     |
 | `npm.cmd run cloudinary:configure`        | Kiểm tài khoản/preset/profile Cloudinary |
 | `npm.cmd run openapi:export`              | Xuất spec từ controller/DTO              |
+| `npm.cmd run web:dev`                     | Frontend hot reload, cổng 3002           |
+| `npm.cmd run build:all`                   | Build cả API và web                      |
+| `npm.cmd run test:web`                    | Kiểm thử Chrome/API trên PostgreSQL tạm  |
 | `npm.cmd run test:integration`            | Kiểm thử trên PostgreSQL tạm             |
 | `npm.cmd run format`                      | Định dạng source bằng Prettier           |
 
@@ -387,9 +410,20 @@ Kết quả gần nhất ngày 11/11/2026: **1.142 assertion đạt**, có Rabbi
 | Email không đến hộp thư thật           | Local mặc định lưu riêng trong `.local/mail`; SMTP adapter chưa nghiệm thu gửi thật                              |
 | Prisma/database lệch baseline          | Đọc runbook và tạo migration phù hợp; không xóa dữ liệu hoặc dùng db push để ép khớp                             |
 
+Redis hiện chưa có client/cấu hình/container trong dự án; phần Redis trong plan là dự kiến. Báo cáo kiểm thử broker riêng không chứng minh worker xử lý phim đang chạy: kiểm consumer và tiến trình worker khi vận hành.
+
 Log/process record ở `.local/api` và `.local/worker`; backup/email local không được phục vụ như static files.
 
 ## Giới hạn và việc tiếp theo
+
+Thanh tìm phim đã có [live search](docs/testing/live-search-2026-11-13.md): gõ từ 2 ký tự hiện tối đa 6 gợi ý sau 300 ms, chọn bằng chuột/bàn phím, có loading/lỗi/thử lại và giữ bộ lọc. Bản mới đã build và phục vụ ở localhost:3000; frontend-only 202 kiểm tra đạt (54 live search), không đổi API/database.
+
+Đã có [nghiên cứu nguồn điểm/review IMDb, Metacritic, TMDB và các web khác](docs/design/external-ratings-reviews-research.md), dùng ba agent; plan 9.6/14.7 và EXT01–EXT08 đều chưa triển khai. Có endpoints/license gates, matching phim/mùa/tập, worker/agent và attribution/purge. Chưa nhập dataset/review, đăng ký dịch vụ hoặc có quyền feed trả phí.
+
+Đã bổ sung [nghiên cứu mã hóa, nén và đa độ phân giải](docs/plans/movie-streaming-platform-plan.md#67-nghiên-cứu-mã-hóa-nén-và-tạo-nhiều-độ-phân-giải): H.264/HLS trước, rate control và per-title ladder, GOP/segment, VMAF/review, chi phí và ENC01–ENC09. Hiện chỉ có bằng chứng các mức 180–720p; 1080p/HDR/HEVC/AV1 và thuật toán tối ưu mới chưa nghiệm thu. Lượt nghiên cứu không thay profile hoặc chuyển mã lại video.
+
+Đã có [nghiên cứu gợi ý và cá nhân hóa trong plan](docs/plans/movie-streaming-platform-plan.md#92-thuật-toán-gợi-ý-phim-và-cá-nhân-hóa): content-based → hybrid/item-to-item → model học khi đủ dữ liệu, kèm API/data/analytics/privacy và REC01–REC09. Đây là thiết kế sau MVP, chưa có recommender cá nhân chạy thật; route phim liên quan hiện vẫn dựa vào cùng thể loại.
+
 
 | Ticket | Việc còn mở                                                                        |
 | ------ | ---------------------------------------------------------------------------------- |
@@ -397,30 +431,36 @@ Log/process record ở `.local/api` và `.local/worker`; backup/email local khô
 | ST02   | Quota playback theo user/guest/IP, proxy tin cậy và store chung khi nhiều instance |
 | ST03   | Chống spam telemetry trước xác thực, tránh tăng quota/log bền theo token giả       |
 | ST04   | Analytics consumer, tổng hợp QoE/lượt xem và cleanup/retention                     |
-| ST05   | Frontend/admin/player, browser/device/network matrix và load test                  |
+| ST05   | Đã có UI/player cơ bản; còn browser/device/network matrix và load test             |
 | ST06   | Backup độc lập, restore thật và webhook cố định cho production                     |
 
 Production worker yêu cầu S3 backup, webhook HTTPS cố định và AMQPS. Local filesystem backup/tunnel tạm chỉ phục vụ phát triển. S3/restore và SMTP chưa nghiệm thu với tài khoản thật. Admin preview, subtitle delivery, audit export và quy trình migration/CI đầy đủ còn thiếu.
 
-Không có frontend Netflix, thanh toán/VIP/DRM hoặc gợi ý hành vi hoàn chỉnh trong source hiện tại.
+Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website và đọc/lọc báo lỗi, bên cạnh phim/user/role/audit. Email/reset/MFA enrollment, admin preview, phụ đề/audio, gán credits và đổi trạng thái xử lý report còn thiếu. Trang người xem chưa đọc cấu hình banner/site settings để thay thương hiệu/header. Thanh toán/VIP/DRM và gợi ý hành vi còn ngoài bản hiện tại.
 
 ## Tài liệu chi tiết
 
-| Tài liệu                                                                                        | Nội dung                                    |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| [API runbook](docs/api/README.md)                                                               | Khởi động, cấu hình và hợp đồng API         |
-| [API người xem](docs/api/viewer-api.md)                                                         | Catalog, accounts, playback và thư viện     |
-| [Endpoint](docs/api/endpoints.md) / [OpenAPI](docs/api/openapi.json)                            | Route và schema hiện hành                   |
-| [Cloudinary upload](docs/api/cloudinary-upload.md)                                              | Upload intent, xác minh nguồn và nghiệm thu |
-| [Media worker](docs/api/media-worker.md)                                                        | RabbitMQ, webhook, HLS, backup và vận hành  |
-| [Exception handling](docs/api/exception-handling.md)                                            | Problem Details, log và registry lỗi        |
-| [Database runbook](database/README.md)                                                          | Bootstrap, kết nối, grants và kiểm SQL      |
-| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 bảng, ERD, ràng buộc                     |
-| [Thiết kế backend](docs/design/movie-backend-design.md)                                         | Kiến trúc và thuật toán mục tiêu            |
-| [Plan hiện hành](docs/plans/movie-streaming-platform-plan.md)                                   | Tính năng, công đoạn và backlog             |
-| [DTO](apps/api/src/dto/README.md)                                                               | Tổ chức và validation                       |
-| [Controllers](apps/api/src/controllers/README.md) / [Services](apps/api/src/services/README.md) | Phân lớp HTTP và nghiệp vụ                  |
-| [AGENTS.md](AGENTS.md), [agent.md](agent.md), [memory.md](memory.md)                            | Hướng dẫn làm việc, ngữ cảnh và tiến trình  |
+| Tài liệu                                                                                        | Nội dung                                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [Nghiệm thu streaming thật](docs/testing/live-streaming.md)                                     | Quy trình UI/provider/CDN thật, kết quả và giới hạn     |
+| [Giao diện web](docs/frontend.md)                                                               | Màn hình, cấu hình, chạy và kiểm thử browser            |
+| [API runbook](docs/api/README.md)                                                               | Khởi động, cấu hình và hợp đồng API                     |
+| [API người xem](docs/api/viewer-api.md)                                                         | Catalog, accounts, playback và thư viện                 |
+| [Endpoint](docs/api/endpoints.md) / [OpenAPI](docs/api/openapi.json)                            | Route và schema hiện hành                               |
+| [Cloudinary upload](docs/api/cloudinary-upload.md)                                              | Upload intent, xác minh nguồn và nghiệm thu             |
+| [Admin mở rộng](docs/testing/admin-ui-2026-11-13.md) | 4 màn hình, 148 kiểm tra frontend và sửa timestamp pagination |
+| [Kiểm tra xác thực/phân quyền](docs/testing/auth-authorization-2026-11-13.md) | 49 operation/5 role; 840 kiểm tra mới, hồi quy API 1.934 |
+| [Kiểm thử Redis/RabbitMQ](docs/testing/redis-rabbitmq-2026-11-13.md) | 9 nhóm/42 assertion RabbitMQ; Redis chưa tích hợp |
+| [Media worker](docs/api/media-worker.md)                                                        | RabbitMQ, webhook, HLS, backup và vận hành              |
+| [Exception handling](docs/api/exception-handling.md)                                            | Problem Details, log và registry lỗi                    |
+| [Database runbook](database/README.md)                                                          | Bootstrap, kết nối, grants và kiểm SQL                  |
+| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 bảng, ERD, ràng buộc                                 |
+| [Thuật toán stream chi tiết](docs/design/streaming-algorithms.md)                               | HLS/CDN, worker, phiên phát, ABR/buffer/tua và progress |
+| [Thiết kế backend](docs/design/movie-backend-design.md)                                         | Kiến trúc và thuật toán mục tiêu                        |
+| [Plan hiện hành](docs/plans/movie-streaming-platform-plan.md)                                   | Tính năng, công đoạn và backlog                         |
+| [DTO](apps/api/src/dto/README.md)                                                               | Tổ chức và validation                                   |
+| [Controllers](apps/api/src/controllers/README.md) / [Services](apps/api/src/services/README.md) | Phân lớp HTTP và nghiệp vụ                              |
+| [AGENTS.md](AGENTS.md), [agent.md](agent.md), [memory.md](memory.md)                            | Hướng dẫn làm việc, ngữ cảnh và tiến trình              |
 
 File kế hoạch trùng tên ở gốc là bản cũ; dùng bản trong `docs/plans`. Thiết kế và plan có thể mô tả phần chưa code; đối chiếu trạng thái hiện hành trong README/memory và source.
 

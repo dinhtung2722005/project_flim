@@ -11,6 +11,7 @@ export function configuration() {
   }
   if (
     process.env.JWT_SECRET!.length < 64 ||
+    process.env.CURSOR_SECRET!.length < 64 ||
     !/^[a-f0-9]{64}$/i.test(process.env.MFA_ENCRYPTION_KEY!)
   )
     throw new Error("Invalid authentication key configuration.");

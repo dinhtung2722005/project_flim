@@ -61,7 +61,7 @@ export async function verifyHls(
     }
     if (
       response.status === 400 &&
-      /process|pending|parallel/i.test(
+      /process|pending|parallel|byproduct of a streaming profile.*cannot be derived directly/i.test(
         response.headers.get("x-cld-error") ?? "",
       )
     ) {

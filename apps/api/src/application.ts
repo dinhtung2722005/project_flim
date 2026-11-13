@@ -1,3 +1,4 @@
+import { mountFrontend } from "./frontend";
 import { GlobalExceptionFilter } from "./filters/global-exception.filter";
 import { configureViewerOpenApi } from "./viewer.openapi";
 import "reflect-metadata";
@@ -300,6 +301,7 @@ export async function createApplication() {
       },
     });
   }
+  mountFrontend(server);
   await app.init();
   server.use(handleExpressError);
   return { app, document };

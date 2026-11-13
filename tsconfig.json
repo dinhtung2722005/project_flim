@@ -16,7 +16,8 @@
     "outDir": "dist"
   },
   "include": [
-    "apps/*/src/**/*.ts",
+    "apps/api/src/**/*.ts",
+    "apps/worker/src/**/*.ts",
     "packages/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts"

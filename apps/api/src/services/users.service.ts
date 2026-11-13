@@ -28,7 +28,7 @@ export class UsersService {
       this.db,
       "SELECT " +
         userColumns +
-        " FROM movie.users WHERE ($1='' OR email_normalized ILIKE '%'||$1||'%' OR display_name ILIKE '%'||$1||'%') AND ($2='' OR status=$2) AND ($3::timestamptz IS NULL OR (created_at,id)<($3::timestamptz,$4::uuid)) ORDER BY created_at DESC,id DESC LIMIT $5",
+        ",created_at::text AS __cursor_time FROM movie.users WHERE ($1='' OR email_normalized ILIKE '%'||$1||'%' OR display_name ILIKE '%'||$1||'%') AND ($2='' OR status=$2) AND ($3::timestamptz IS NULL OR (created_at,id)<($3::timestamptz,$4::uuid)) ORDER BY created_at DESC,id DESC LIMIT $5",
       [
         dto.q ?? "",
         dto.status ?? "",

@@ -13,14 +13,21 @@
     "api:configure": "node scripts/configure-api.mjs",
     "test:integration": "ts-node --project apps/api/tsconfig.json tests/admin.integration.ts",
     "openapi:export": "ts-node --project apps/api/tsconfig.json scripts/export-openapi.ts",
-    "format": "prettier --write \"apps/**/*.ts\" \"packages/**/*.ts\" \"scripts/*.{ts,mjs}\" \"tests/**/*.ts\" package.json tsconfig.json apps/api/tsconfig.json prisma.config.ts",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css,json,html}\" \"packages/**/*.ts\" \"scripts/*.{ts,mjs}\" \"tests/**/*.ts\" package.json tsconfig.json apps/api/tsconfig.json prisma.config.ts",
     "cloudinary:configure": "ts-node --project apps/api/tsconfig.json scripts/configure-cloudinary.ts",
     "cloudinary:smoke": "ts-node --project apps/api/tsconfig.json scripts/cloudinary-smoke.ts",
     "worker:configure": "node scripts/configure-worker.mjs",
     "worker:dev": "ts-node --project apps/worker/tsconfig.json apps/worker/src/main.ts",
     "worker:start": "node dist/apps/worker/src/main.js",
     "worker:smoke": "ts-node --project apps/worker/tsconfig.json scripts/worker-smoke.ts",
-    "playback:smoke": "ts-node --project apps/api/tsconfig.json scripts/playback-smoke.ts"
+    "playback:smoke": "ts-node --project apps/api/tsconfig.json scripts/playback-smoke.ts",
+    "web:dev": "npm --workspace @pj-flim/web run dev",
+    "web:build": "npm --workspace @pj-flim/web run build",
+    "web:typecheck": "npm --workspace @pj-flim/web run typecheck",
+    "build:all": "npm run build && npm run web:build",
+    "test:web": "node scripts/test-web.mjs",
+    "streaming:smoke": "ts-node --project apps/api/tsconfig.json scripts/live-streaming-smoke.ts",
+    "rabbitmq:smoke": "ts-node --project apps/worker/tsconfig.json scripts/rabbitmq-smoke.ts"
   },
   "engines": {
     "node": ">=22.12"
@@ -61,5 +68,8 @@
     "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
-  }
+  },
+  "workspaces": [
+    "apps/web"
+  ]
 }

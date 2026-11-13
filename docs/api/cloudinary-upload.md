@@ -1,6 +1,6 @@
 # Upload video Cloudinary cho admin
 
-Triển khai tại E:\pj-Flim. API dùng signed direct upload; trình duyệt gửi video thẳng lên Cloudinary. Backend chỉ nhận JSON và đọc metadata provider. Đã có [RabbitMQ worker, webhook và backup](media-worker.md); giao diện admin/frontend chưa được triển khai.
+Triển khai tại E:\pj-Flim. API dùng signed direct upload; trình duyệt gửi video thẳng lên Cloudinary. Backend chỉ nhận JSON và đọc metadata provider. Đã có [RabbitMQ worker, webhook và backup](media-worker.md); đã có [giao diện admin](../frontend.md) và [quy trình nghiệm thu video thật](../testing/live-streaming.md).
 
 ## Cấu hình
 
@@ -29,7 +29,7 @@ Cloudinary preset **không hỗ trợ giới hạn dung lượng riêng cho từ
 
 ## API
 
-Cần access JWT sau MFA, quyền `media.upload` (EDITOR, ADMIN, SUPER_ADMIN). Mỗi intent chỉ cho người tạo đọc, lấy chữ ký và xác minh; người khác nhận 404.
+Cần access JWT theo MFA policy hiện hành, quyền `media.upload` (EDITOR, ADMIN, SUPER_ADMIN). Mỗi intent chỉ cho người tạo đọc, lấy chữ ký và xác minh; người khác nhận 404.
 
 | Method | Đường dẫn                                             | Kết quả                                        |
 | ------ | ----------------------------------------------------- | ---------------------------------------------- |

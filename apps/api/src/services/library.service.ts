@@ -33,7 +33,7 @@ export class LibraryService {
         this.db,
         "SELECT " +
           titleFields() +
-          ",w.created_at AS saved_at FROM movie.watchlist w JOIN movie.titles t ON t.id=w.title_id WHERE w.user_id=$1::uuid AND " +
+          ",w.created_at AS saved_at,w.created_at::text AS __cursor_time FROM movie.watchlist w JOIN movie.titles t ON t.id=w.title_id WHERE w.user_id=$1::uuid AND " +
           publicTitle() +
           " AND ($2::timestamptz IS NULL OR (w.created_at,t.id)<($2::timestamptz,$3::uuid)) ORDER BY w.created_at DESC,t.id DESC LIMIT $4",
         [actor.id, cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],
@@ -96,7 +96,7 @@ export class LibraryService {
         this.db,
         "SELECT p.episode_id AS id," +
           this.progressFields() +
-          ",e.number,e.name,e.title_id,t.slug,t.localized_title,t.poster_asset_ref,(p.asset_id=e.active_asset_id) AS resume_eligible FROM movie.watch_progress p JOIN movie.episodes e ON e.id=p.episode_id JOIN movie.titles t ON t.id=e.title_id JOIN movie.video_assets a ON a.id=e.active_asset_id WHERE p.user_id=$1::uuid AND " +
+          ",p.updated_at::text AS __cursor_time,e.number,e.name,e.title_id,t.slug,t.localized_title,t.poster_asset_ref,(p.asset_id=e.active_asset_id) AS resume_eligible FROM movie.watch_progress p JOIN movie.episodes e ON e.id=p.episode_id JOIN movie.titles t ON t.id=e.title_id JOIN movie.video_assets a ON a.id=e.active_asset_id WHERE p.user_id=$1::uuid AND " +
           publicEpisode() +
           (continuing
             ? " AND p.completed_at IS NULL AND p.position_seconds>0 AND p.asset_id=e.active_asset_id"

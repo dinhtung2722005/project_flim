@@ -3,13 +3,24 @@ $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
 $env:DOCKER_CONFIG=Join-Path $root '.local\docker'
 [IO.Directory]::CreateDirectory($env:DOCKER_CONFIG)|Out-Null
-$null=& docker.exe info --format '{{.ServerVersion}}' 2>$null
-if($LASTEXITCODE -ne 0){
+function Test-DockerEngine {
+ $previousPreference=$ErrorActionPreference
+ try {
+  # Windows PowerShell reports native stderr as an error record. A stopped engine
+  # is an expected probe result, not a reason to skip the Desktop startup branch.
+  $ErrorActionPreference='Continue'
+  $null=& docker.exe info --format '{{.ServerVersion}}' 2>$null
+  return ($LASTEXITCODE -eq 0)
+ } finally {
+  $ErrorActionPreference=$previousPreference
+ }
+}
+if(-not(Test-DockerEngine)){
  $desktop=Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe'
  if(-not(Test-Path -LiteralPath $desktop)){throw 'Start/install Docker Desktop before running RabbitMQ.'}
  Start-Process -FilePath $desktop -WindowStyle Hidden
  $ready=$false
- for($i=0;$i -lt 90;$i++){Start-Sleep -Seconds 1;$null=& docker.exe info --format '{{.ServerVersion}}' 2>$null;if($LASTEXITCODE -eq 0){$ready=$true;break}}
+ for($i=0;$i -lt 90;$i++){Start-Sleep -Seconds 1;if(Test-DockerEngine){$ready=$true;break}}
  if(-not $ready){throw 'Docker Engine did not become ready.'}
 }
 if(-not(Test-Path -LiteralPath '.local\rabbitmq\bootstrap.env')){throw 'Run npm.cmd run worker:configure first.'}

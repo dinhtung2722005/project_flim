@@ -259,14 +259,14 @@ export function paginated(
     data = rows.slice(0, limit),
     last = data.at(-1);
   return {
-    data: json(data),
+    data: json(data.map(({ __cursor_time, ...row }) => row)),
     page: {
       limit,
       hasMore,
       nextCursor:
         hasMore && last
           ? pageCursor(resource, filter, [
-              new Date(last[time]).toISOString(),
+              last.__cursor_time ?? new Date(last[time]).toISOString(),
               last.id.toString(),
             ])
           : null,

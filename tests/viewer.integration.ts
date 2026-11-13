@@ -322,6 +322,13 @@ export async function runViewerIntegration(c: {
   eq(session.delivery.revocation, "SESSION_ONLY");
   ok(session.delivery.url.startsWith("https://res.cloudinary.com/"));
   ok(!session.delivery.url.endsWith(".mp4"));
+  eq(session.delivery.fallback.format, "MP4");
+  eq(session.delivery.fallback.adaptiveBitrate, false);
+  const fallbackUrl = new URL(session.delivery.fallback.url);
+  eq(fallbackUrl.hostname, "res.cloudinary.com");
+  ok(fallbackUrl.pathname.includes("/video/authenticated/s--"));
+  ok(fallbackUrl.pathname.endsWith(".mp4"));
+  ok(!fallbackUrl.pathname.includes("sp_"));
   eq(session.managementToken, undefined);
   const stored = (
     await f.query(

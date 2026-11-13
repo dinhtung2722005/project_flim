@@ -34,6 +34,7 @@ export async function checkViewer(tx: Tx, actor: Principal) {
     [actor.id],
   );
   if (
+    configuration().mfaRequired &&
     staff &&
     !(await one(
       tx,

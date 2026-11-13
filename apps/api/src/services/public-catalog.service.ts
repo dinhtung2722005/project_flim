@@ -37,7 +37,7 @@ export class PublicCatalogService {
       this.db,
       "SELECT " +
         titleFields() +
-        " FROM movie.titles t WHERE " +
+        ",t.published_at::text AS __cursor_time FROM movie.titles t WHERE " +
         publicTitle() +
         " AND ($1='' OR position($1 in t.normalized_title)>0 OR EXISTS(SELECT 1 FROM movie.title_aliases al WHERE al.title_id=t.id AND position($1 in al.normalized_alias)>0) OR EXISTS(SELECT 1 FROM movie.credits cr JOIN movie.people pe ON pe.id=cr.person_id WHERE cr.title_id=t.id AND position($1 in pe.normalized_name)>0)) AND ($2::text IS NULL OR t.slug=$2) AND ($3::text IS NULL OR t.kind=$3) AND ($4::text IS NULL OR EXISTS(SELECT 1 FROM movie.title_genres tg JOIN movie.genres g ON g.id=tg.genre_id WHERE tg.title_id=t.id AND g.slug=$4)) AND ($5::int IS NULL OR t.release_year=$5) AND ($6::text IS NULL OR $6=ANY(t.country_codes)) AND ($7::timestamptz IS NULL OR (t.published_at,t.id)" +
         cmp +
@@ -196,7 +196,7 @@ export class PublicCatalogService {
         this.db,
         "SELECT " +
           titleFields() +
-          " FROM movie.titles t WHERE t.id<>$1::uuid AND " +
+          ",t.published_at::text AS __cursor_time FROM movie.titles t WHERE t.id<>$1::uuid AND " +
           publicTitle() +
           " AND EXISTS(SELECT 1 FROM movie.title_genres own JOIN movie.title_genres other ON other.genre_id=own.genre_id WHERE own.title_id=$1::uuid AND other.title_id=t.id) AND ($2::timestamptz IS NULL OR (t.published_at,t.id)<($2::timestamptz,$3::uuid)) ORDER BY t.published_at DESC,t.id DESC LIMIT $4",
         [id, cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],

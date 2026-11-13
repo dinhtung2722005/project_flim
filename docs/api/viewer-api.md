@@ -81,7 +81,9 @@ Response phiên gồm id, episodeId, assetId/assetVersion, expiresAt, maxExpires
 - Tối đa 3 phiên còn hiệu lực/tài khoản hoặc 2/guest; tạo phiên có quota 60 request/IP/10 phút.
 - Tạo/gia hạn đọc primary và kiểm policy trong transaction. Phiên pin phiên bản asset ban đầu; đổi active asset không đổi timeline của phiên cũ nếu bản cũ vẫn đủ điều kiện phát.
 
-Node chỉ ký manifest URL từ metadata đã verified; player tải HLS trực tiếp từ Cloudinary CDN. Không gọi Admin API provider hoặc tạo eager transformation khi bấm Play.
+Node ký manifest URL từ metadata đã verified; player tải HLS trực tiếp từ Cloudinary CDN. Không gọi Admin API provider hoặc tạo eager transformation khi bấm Play.
+
+Khi nguồn gốc đã xác minh có định dạng MP4, response phiên cấp thêm delivery.fallback={url,format:"MP4",adaptiveBitrate:false}. URL ký trỏ đúng nguồn authenticated và provider version của asset đã pin; không tạo transformation mới hoặc mở URL qua catalog. Nguồn khác trả fallback:null. MP4 tải trực tiếp từ Cloudinary, không proxy qua Node; không có ABR và có thể tốn băng thông hơn HLS. Cùng giới hạn chữ ký không tự hết hạn như HLS.
 
 ### Giới hạn quyền phát hiện tại
 

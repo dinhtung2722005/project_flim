@@ -8,6 +8,10 @@ Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **8
 
 [API người xem](viewer-api.md) đã triển khai thêm 27 operation: catalog công khai, phiên phát HLS, đăng ký/email xác minh/reset, yêu thích/lịch sử/xem tiếp/tiến độ và báo lỗi. Email development lưu riêng trong .local/mail. URL CDN hiện là signed URL không tự hết hạn; production mặc định chặn cấp URL nếu chưa chấp nhận rõ giới hạn này.
 
+[Thuật toán stream chi tiết](../design/streaming-algorithms.md): đường media HLS/CDN, worker/backup, session/idempotency, renewal/progress/telemetry và player cơ bản hiện có cùng các phần cần nghiệm thu tiếp.
+
+Giao diện người xem/admin đã nối API: [hướng dẫn frontend](../frontend.md). Build cả web/API rồi mở / hoặc /admin trên cổng 3000; Swagger vẫn mở trực tiếp.
+
 ## Mở Swagger
 
 - UI mở trực tiếp, không cần đăng nhập: http://127.0.0.1:3000/api/docs
@@ -60,16 +64,16 @@ npm.cmd start
 
 Chỉ chạy một process ở cổng cấu hình. Process local đã khởi động được ghi ở .local/api/server-process.json; stdout/stderr log nằm cùng thư mục. Nếu chạy bằng terminal, dừng bằng Ctrl+C.
 
-| Biến                   | Ý nghĩa                                             |
-| ---------------------- | --------------------------------------------------- |
-| DATABASE_URL           | API runtime, login giới hạn                         |
-| MIGRATION_DATABASE_URL | Chỉ CLI introspection/bootstrap, không dùng cho API |
+| Biến                   | Ý nghĩa                                                   |
+| ---------------------- | --------------------------------------------------------- |
+| DATABASE_URL           | API runtime, login giới hạn                               |
+| MIGRATION_DATABASE_URL | Chỉ CLI introspection/bootstrap, không dùng cho API       |
 | AUTH_MFA_REQUIRED      | false bỏ MFA/step-up ở local; production luôn yêu cầu MFA |
-| JWT_SECRET             | Ký JWT, kiểm issuer/audience và purpose riêng       |
-| MFA_ENCRYPTION_KEY     | AES-256-GCM cho TOTP secret và credential receipt   |
-| CURSOR_SECRET          | HMAC cursor và định danh tối thiểu cho rate limit   |
-| API_HOST / API_PORT    | Mặc định 127.0.0.1 / 3000                           |
-| SWAGGER_ENABLED        | Bật Swagger ở local; production vẫn tắt             |
+| JWT_SECRET             | Ký JWT, kiểm issuer/audience và purpose riêng             |
+| MFA_ENCRYPTION_KEY     | AES-256-GCM cho TOTP secret và credential receipt         |
+| CURSOR_SECRET          | HMAC cursor và định danh tối thiểu cho rate limit         |
+| API_HOST / API_PORT    | Mặc định 127.0.0.1 / 3000                                 |
+| SWAGGER_ENABLED        | Bật Swagger ở local; production vẫn tắt                   |
 
 Pool Prisma tối đa 10 connection, connection timeout 5 giây và timezone UTC. Runtime không được sửa/xóa/truncate audit, sửa registry quyền hoặc tạo bảng.
 
@@ -147,3 +151,13 @@ Cụm hiện tại có tạo/đọc/sửa và publication, không có API xóa v
 Các kiểm tra hiện có không thay kiểm thử tải, toàn bộ worker failure modes hoặc restore/PITR. Xem [plan](../plans/movie-streaming-platform-plan.md) và [backend design](../design/movie-backend-design.md).
 
 Tham khảo: [NestJS OpenAPI](https://docs.nestjs.com/openapi/introduction), [validation](https://docs.nestjs.com/techniques/validation), [authorization](https://docs.nestjs.com/security/authorization), [Prisma PostgreSQL adapter](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/postgresql).
+
+## Kiểm tra xác thực và phân quyền 13/11/2026
+
+[Đánh giá và bằng chứng](../testing/auth-authorization-2026-11-13.md): 840 assertion mới cho 49 operation admin/5 role, JWT và IDOR; tổng hồi quy API 1.934 đạt, không bật frontend/worker trong lần chạy. Đã từ chối CURSOR_SECRET dưới 64 ký tự khi đọc cấu hình, cùng yêu cầu tối thiểu 64 ký tự cho JWT_SECRET. Dùng khóa ngẫu nhiên, không dùng chuỗi dễ đoán. Khóa local hiện có giữ nguyên; cần khởi động code mới để áp dụng validator mới.
+
+Local vẫn password-only/Swagger mở theo yêu cầu; production buộc MFA và không mount Swagger. URL Cloudinary đã cấp không tự hết hạn/thu hồi theo session API, ST01 còn mở. Token browser nằm trong sessionStorage nên cần kiểm soát XSS; chưa đổi sang cookie/BFF.
+
+## Cursor và độ chính xác timestamp — 13/11/2026
+
+Các danh sách dùng cursor thời gian giữ timestamp PostgreSQL đầy đủ trong cursor ký HMAC, không chuyển khóa so sánh qua Date JavaScript gây mất microsecond. Query dùng trường nội bộ __cursor_time; helper loại khỏi data JSON, các trường thời gian trả cho client vẫn theo hợp đồng cũ. Cursor cũ còn được nhận; tải lại danh sách từ đầu để lấy cursor mới. [Hồi quy 64 assertion và kiểm thử admin](../testing/admin-ui-2026-11-13.md) xác nhận không bỏ sót/trùng các bản ghi cùng thời điểm. Không thay schema/route/DTO.

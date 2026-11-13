@@ -4,7 +4,7 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { WorkerStore } from "../apps/worker/src/store";
 import { BackupStorage } from "../packages/media/src/backup-storage";
 import { CloudinaryProvider } from "../packages/media/src/cloudinary.provider";
-import { verifyHls } from "../packages/media/src/hls-verifier";
+import { verifyHls, MediaPending } from "../packages/media/src/hls-verifier";
 export async function verifyMediaPipeline(
   assetId?: string,
   timeoutMs = 15 * 60 * 1000,
@@ -66,15 +66,32 @@ export async function verifyMediaPipeline(
       )
     ).rows[0];
     if (!output) throw new Error("HLS_OUTPUT_MISSING");
-    const renditions = await verifyHls(
-      provider.deliveryUrl(snapshot, snapshot.expected_policy, true),
-      snapshot.expected_policy.cloudName,
-      {
-        width: snapshot.width,
-        height: snapshot.height,
-        duration: Number(snapshot.duration_seconds),
-      },
-    );
+    async function verifyPublishedHls(): Promise<
+      Awaited<ReturnType<typeof verifyHls>>
+    > {
+      for (;;) {
+        try {
+          return await verifyHls(
+            provider.deliveryUrl(snapshot, snapshot.expected_policy, true),
+            snapshot.expected_policy.cloudName,
+            {
+              width: snapshot.width,
+              height: snapshot.height,
+              duration: Number(snapshot.duration_seconds),
+            },
+          );
+        } catch (error) {
+          if (
+            !(error instanceof MediaPending) ||
+            Date.now() - started >= timeoutMs
+          )
+            throw error;
+          console.log(JSON.stringify({ event: "worker.smoke.cdn_pending" }));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+    }
+    const renditions = await verifyPublishedHls();
     const backup = (
       await store.pool.query(
         "SELECT * FROM movie.source_backups WHERE asset_id=$1 AND status='VERIFIED'",

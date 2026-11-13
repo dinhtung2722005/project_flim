@@ -1,6 +1,34 @@
 # Kế hoạch hoàn chỉnh: Web xem phim với Node.js và Cloudinary
 
-Ngày lập: 08/11/2026. Cập nhật: 11/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.7.
+Ngày lập: 08/11/2026. Cập nhật: 13/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.20.
+
+Tài liệu giải thích triển khai: [Thuật toán stream video](../design/streaming-algorithms.md). Đã có UI/player cơ bản tại apps/web; phân biệt cấu hình hiện tại với các thuật toán minh họa và ma trận nghiệm thu còn thiếu. Tài liệu không hoàn tất ST01–ST06.
+
+Phiên bản 2.20 (13/11/2026): triển khai live search trên thanh tìm phim: từ 2 ký tự, debounce 300 ms, tối đa 6 gợi ý theo bộ lọc, loading/empty/error/retry, abort/chặn response cũ, IME và combobox bàn phím. Frontend-only 202 kiểm tra đạt (54 live search), 4 mẫu responsive và 6 probe runtime read-only. Không đổi API/schema/backend/media; search ranking/cache vẫn như trước, ST/REC/ENC/EXT giữ trạng thái. [Báo cáo](../testing/live-search-2026-11-13.md).
+
+Phiên bản 2.19 (13/11/2026): dùng ba agent nghiên cứu dữ liệu điểm/review IMDb, Metacritic và nguồn khác; bổ sung mục 9.6, báo cáo nguồn/thiết kế riêng và EXT01–EXT08 ở 14.7. Phân biệt aggregate score, critic quote, user review, AI summary và quyền từng use case; ưu tiên thử TMDB theo quyền, IMDb/Metacritic theo entitlement. Thiết kế mapping, worker, source policy, agent có giới hạn, API/UI và purge; chưa import data, cấp credential, mua gói hoặc thay source/schema/runtime. ST/REC/ENC giữ trạng thái.
+
+Phiên bản 2.18 (13/11/2026): nghiên cứu mã hóa/nén đa độ phân giải tại mục 6.7 và ENC01–ENC09 tại mục 14.6. Đối chiếu encoder/profile HLS Cloudinary hiện có, bổ sung codec/giao thức, rate control, ladder/per-title, GOP/segment, màu/audio, VMAF/review, chi phí và rollout/rollback. Baseline thực đã thử 180–720p; 1080p/HDR/HEVC/AV1/per-title chưa nghiệm thu. Các ticket đều NOT_STARTED; chỉ cập nhật tài liệu, không thay source/schema/profile hoặc hoàn tất ST01–ST06.
+
+Phiên bản 2.17 (13/11/2026): nghiên cứu thuật toán gợi ý/cá nhân hóa tại mục 9.2 và backlog REC01–REC09 tại mục 14.5. Đối chiếu nguồn gốc về content-based, item-to-item, ALS/BPR/LightFM, retrieval/ranking, MMR và Netflix MAPS 2026. Chốt lộ trình ưu tiên Node.js/PostgreSQL, instrumentation/analytics riêng, snapshot/ownership/opt-out, đánh giá timeline/full-catalog/A-B và gate dữ liệu. Hệ số/ngưỡng là giả thuyết cần đo; cá nhân hóa, bảng/API/model mới đều chưa triển khai, không đổi source/schema hoặc trạng thái ST01–ST06.
+
+Phiên bản 2.16 (13/11/2026): [mở rộng admin](../testing/admin-ui-2026-11-13.md) với people/banner/settings/đọc report, menu và lối tắt theo quyền, form ETag/If-Match, step-up settings và redaction AUDITOR. Frontend đạt 148 kiểm tra, 24 mẫu responsive; hồi quy API riêng đạt 1.998, gồm 64 kiểm tra phân trang. Sửa mất microsecond trong cursor gây bỏ sót hồ sơ cùng timestamp; giữ timestamp gốc trong cursor, bỏ trường nội bộ khỏi JSON. Build/restart đúng API local và 15 probe runtime đạt. Không đổi API/schema hoặc upload/xuất bản; banner/site settings chưa được trang người xem sử dụng, gán credits/moderation vẫn còn thiếu. ST01–ST06 chưa hoàn tất.
+
+Phiên bản 2.15 (13/11/2026): [kiểm tra xác thực/phân quyền](../testing/auth-authorization-2026-11-13.md): 840 assertion mới cho 49 operation admin/5 role, hợp đồng endpoint-permission độc lập, JWT/IDOR/trạng thái phiên; tổng 1.934 kiểm tra hồi quy API đạt, không bật frontend/worker lần này. Sửa cấu hình chấp nhận CURSOR_SECRET quá ngắn: yêu cầu ít nhất 64 ký tự, không đổi khóa local. Đọc quyền DB xác nhận API/worker không dùng superuser hoặc sở hữu bảng; worker không đọc password hash/refresh token. Local MFA=false/Swagger mở giữ nguyên; CDN TTL/thu hồi và rủi ro sessionStorage/XSS còn mở. Không đổi API/schema hoặc hoàn tất ST01–ST06.
+
+Phiên bản 2.14 (13/11/2026): [kiểm thử Redis/RabbitMQ](../testing/redis-rabbitmq-2026-11-13.md): RabbitMQ local thật đạt 9 nhóm/42 assertion, gồm ACK/prefetch/DLQ/mandatory routing/redelivery/delivery limit; thêm lệnh rabbitmq:smoke dùng topology riêng và tự dọn. Redis chưa tích hợp, không có cấu hình/client/container và cổng 6379 không lắng nghe; không ghi nhận Redis đã đạt. Broker hiện một node, worker xử lý phim không có consumer tại thời điểm đo; chưa nghiệm thu HA/restart/load. Không đổi API/schema hoặc ST01–ST06.
+
+Phiên bản 2.13 (13/11/2026): [kiểm thử full-stack](../testing/full-stack-2026-11-13.md) đạt1.227kiểm tra với frontend76/API/PostgreSQL/RabbitMQ thật, thêm17bước playbackCloudinary và kiểm2asset/HLS/backupchecksum/biênnhậnwebhook đã có. Sửa logout thu hồi auth trước khi dọn phiên: registry giữ Promise dispose, chờ tối đa5giây; hồi quy trì hoãn telemetry/đóng phiên trước auth và kết thúc0phiên thử còn hoạt động. Sửa probe Docker lạnh trên Windows PowerShell và chờ metadata trong smoke. Không upload mới hoặc testtải/device; ST05 vẫn IN_PROGRESS.
+
+Phiên bản 2.12 (13/11/2026): cải thiện UX/UI người xem/admin với typography dễ đọc, nút chính44px, tìm kiếm/xóa từ khóa và điều hướng focus, thẻ phim hai dòng/placeholder, video cạnh danh sách tập có nhãn Đang xem/nút tập tiếp; bảng/form admin lớn hơn, menu mobile mở/đóng, lối tắt editor và Escape/outside-click cho tài khoản. Web build/73browser checks đạt trên PostgreSQL tạm, 28trường hợp responsive320/390/768/1440px không tràn toàn trang; có giải mã hình ảnh video thật trên Chrome muted. Không đổi API/schema hoặc worker; ST05 vẫn IN_PROGRESS, chưa auditWCAG/device matrix.
+
+Phiên bản 2.11: cải thiện chọn độ phân giải khi xem: mức HLS thực sắp giảm dần, Tự động, báo videoHeight và trạng thái chuyển; giữ timeline/tốc độ/cùng phiên. MP4 hiển thị mức gốc, khóa chọn và có nút thử HLS sau khi lưu/đóng phiên cũ; native HLS vẫn tự động. Web build và 61 kiểm tra browser/DB tạm đạt; Cloudinary thật đã kiểm 720p/360p/180p/Auto, viewport390px, chuyển MP4 rồi xem tiếp HLS từ30giây. CDN master đôi lúc400 vẫn là giới hạn provider; không đánh dấu ST05 VERIFIED. Không đổi API/schema/provider hoặc upload thêm.
+
+Phiên bản 2.10: sửa player đứng sau fatal HLS trước khi có nguồn: recovery/timeout hữu hạn, mã lỗi chi tiết an toàn, nút phát khi autoplay bị chặn. Cấp URL nguồn MP4 đã verified theo asset/version của phiên làm fallback; tự chuyển hoặc nút Đổi cách phát, giữ vị trí/tốc độ. MP4 không ABR; quyền và giới hạn chữ ký CDN không thay đổi. Không thêm endpoint/schema, không reupload hoặc tự xuất bản. Hồi quy đạt 1.207 kiểm tra (56 browser/200 viewer), Chrome giải mã cả HLS và MP4 dự phòng; ST05 vẫn IN_PROGRESS.
+
+Phiên bản 2.9: [nghiệm thu video thật qua UI/player](../testing/live-streaming.md) đạt trên Chrome Windows: hai tập riêng 20 phút 11 giây/45 giây, upload thật, 5 mức 180p–720p, backup checksum, webhook và xuất bản. Có 3 kiểm tra prepare và 17 playback; kiểm 720p/chuyển mức/tua/tốc độ/mất mạng/đổi tập/server progress sau login/completion. Sửa nhãn form, Chrome native maybe, workerPath ESM, recovery/tốc độ/resume, auth-loading, phân loại CDN pending và tunnel hết hiệu lực. Hồi quy 1.198 checks có RabbitMQ, gồm 53 browser. ST05 vẫn IN_PROGRESS vì Android/Safari/mạng yếu/tải/expiry dài chưa nghiệm thu; không đổi API/schema hoặc khắc phục ST01–ST04/ST06.
+
+Phiên bản 2.8: triển khai [giao diện React/Vite](../frontend.md) cho người xem và admin, thay lựa chọn Next.js ban đầu trong bản local. Có catalog, tìm/lọc, chi tiết/tập, auth, thư viện; admin metadata/mùa/tập, Cloudinary direct upload, polling, chọn asset/publication, user/role/audit; player HLS native/hls.js nối session/renewal/events/progress. API phục vụ dist/web cùng origin; giữ RBAC/ETag/audit và MFA production. Build cả API/web đạt; tổng 1.194 kiểm tra có RabbitMQ, gồm 51 kiểm tra Chrome trên PostgreSQL tạm; Cloudinary boundary/HLS READY fixture chỉ dùng trong test. C09/C10 có phần MVP, ST05 vẫn IN_PROGRESS; chưa nghiệm thu giải mã HD/ABR trên thiết bị thật, subtitle hoặc load test. Không đổi schema/endpoint, không xuất bản phim thật.
 
 Phiên bản 2.7: theo yêu cầu mới, bỏ đăng nhập Swagger local: UI/spec mở trực tiếp, bỏ form/cookie/CSRF/docs-session và tự chèn token. Bookmark docs-login redirect sang docs. API nghiệp vụ vẫn giữ Bearer/session/RBAC; production hoặc SWAGGER_ENABLED=false không mount docs. Build/export và 1.142 kiểm tra đạt, gồm 40 kiểm tra Swagger và 41 MFA/local; Chrome thật chạy headless đã render 87 operation không có form. Không đổi schema hoặc xử lý ST01–ST06.
 
@@ -54,31 +82,34 @@ Luồng sản phẩm phải hoàn chỉnh: tạo tập → upload → xử lý �
 
 ## 2. Công nghệ và trách nhiệm
 
-| Thành phần     | Lựa chọn                                    | Trách nhiệm                                                         |
-| -------------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| Frontend       | Next.js App Router, React, TypeScript       | Trang công khai render phía server; player và tương tác phía client |
-| Giao diện      | Tailwind CSS, shadcn/ui                     | Responsive, dark mode, bàn phím và trạng thái loading/error         |
-| Dữ liệu client | TanStack Query                              | Cache dữ liệu tương tác, mutation, hủy request cũ                   |
-| Backend        | Node.js bản LTS còn hỗ trợ, NestJS          | REST API, quyền truy cập, upload intent, phiên phát                 |
-| Database       | PostgreSQL, Prisma                          | Nguồn dữ liệu chính, migration, transaction và index                |
-| Tìm kiếm       | PostgreSQL pg_trgm, tên chuẩn hóa           | Tìm tên gần đúng và không dấu cho MVP                               |
-| Cache          | Redis                                       | Cache danh mục, rate limit, lease phiên phát nếu cần                |
-| Hàng đợi       | RabbitMQ, Node client hỗ trợ confirms       | Tác vụ media, tìm kiếm, thông báo và đối soát                       |
-| Media          | Cloudinary Node.js SDK và CDN               | Upload, eager processing, HLS, poster, trailer                      |
-| Player         | HTML5 video, hls.js; HLS native khi phù hợp | ABR, buffer, tua, phụ đề, sự kiện chất lượng phát                   |
-| Quan sát       | Log JSON, OpenTelemetry, hệ thống thu lỗi   | Theo dõi API, job, webhook và phiên phát                            |
-| Kiểm thử       | Jest, Supertest, Playwright, Postman CLI    | Nghiệp vụ, hợp đồng API, hồi quy và end-to-end                      |
-| Triển khai     | Docker, reverse proxy, GitHub Actions       | Build, CI, HTTPS, triển khai và rollback                            |
+| Thành phần     | Lựa chọn                                    | Trách nhiệm                                                        |
+| -------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| Frontend       | React, Vite, React Router, TypeScript       | SPA cùng origin với API; player/tương tác phía client; SSR chưa có |
+| Giao diện      | Tailwind CSS, shadcn/ui                     | Responsive, dark mode, bàn phím và trạng thái loading/error        |
+| Dữ liệu client | TanStack Query                              | Cache dữ liệu tương tác, mutation, hủy request cũ                  |
+| Backend        | Node.js bản LTS còn hỗ trợ, NestJS          | REST API, quyền truy cập, upload intent, phiên phát                |
+| Database       | PostgreSQL, Prisma                          | Nguồn dữ liệu chính, migration, transaction và index               |
+| Tìm kiếm       | PostgreSQL pg_trgm, tên chuẩn hóa           | Tìm tên gần đúng và không dấu cho MVP                              |
+| Cache          | Redis                                       | Cache danh mục, rate limit, lease phiên phát nếu cần               |
+| Hàng đợi       | RabbitMQ, Node client hỗ trợ confirms       | Tác vụ media, tìm kiếm, thông báo và đối soát                      |
+| Media          | Cloudinary Node.js SDK và CDN               | Upload, eager processing, HLS, poster, trailer                     |
+| Player         | HTML5 video, hls.js; HLS native khi phù hợp | ABR, buffer, tua, phụ đề, sự kiện chất lượng phát                  |
+| Gợi ý sau MVP | Node.js worker, PostgreSQL; job training riêng nếu cần | Content/hybrid theo mục 9.2; chưa triển khai, không bắt buộc Redis hoặc ML service |
+| Quan sát       | Log JSON, OpenTelemetry, hệ thống thu lỗi   | Theo dõi API, job, webhook và phiên phát                           |
+| Kiểm thử       | Jest, Supertest, Playwright, Postman CLI    | Nghiệp vụ, hợp đồng API, hồi quy và end-to-end                     |
+| Triển khai     | Docker, reverse proxy, GitHub Actions       | Build, CI, HTTPS, triển khai và rollback                           |
 
-Khóa phiên bản thực tế trong lockfile sau khi thử tương thích. Tách Next.js, API và worker thành tiến trình có thể tăng số bản chạy độc lập. Redis có thể bị xóa cache mà không làm mất lịch sử, trạng thái xử lý hoặc công việc cần thực hiện.
+Khóa phiên bản thực tế trong lockfile sau khi thử tương thích. Web build hiện phục vụ cùng API local; khi scale có thể tách static host, API và worker. Redis có thể bị xóa cache mà không làm mất lịch sử, trạng thái xử lý hoặc công việc cần thực hiện.
 
-Next.js hỗ trợ Server/Client Components cho cách chia trên. [Tài liệu Next.js](https://nextjs.org/docs/app/getting-started/server-and-client-components)
+Trạng thái triển khai Redis (13/11/2026): chưa có client, biến môi trường hoặc container của dự án. Các mục Redis/rate limit phân tán và cạnh nối Redis trong sơ đồ dưới đây là thiết kế dự kiến; catalog hiện trả Cache-Control: no-store. RabbitMQ đã có broker/worker và kiểm thử thật.
+
+Bản hiện tại dùng SPA React/Vite; SSR/SEO public là hạng mục riêng nếu phát triển sau.
 
 ## 3. Kiến trúc
 
 ```mermaid
 flowchart LR
-    U[Người xem] --> FE[Next.js]
+    U[Người xem] --> FE[React / Vite]
     FE --> API[NestJS API]
     A[Admin] --> API
     A -->|Signed direct upload| CL[Cloudinary]
@@ -170,7 +201,7 @@ Cloudinary ký webhook và retry hữu hạn; job đối soát xử lý trườn
 - Guard hiển thị tập dùng cùng quy tắc xuất bản và khả năng media. Danh mục chỉ hiển thị phim công khai có tập phát được; không trả tập draft qua danh sách tập, tìm kiếm, số đếm hoặc API tập tiếp theo.
 - Ví dụ: tập 1–5 đã công khai vẫn xem được khi tập 6 đang xử lý. Tập 6 không xuất hiện hoặc được tự chuyển tới cho đến khi đủ điều kiện và được admin xuất bản.
 - Gỡ tập chặn tạo phiên mới cho tập đó; gỡ phim chặn tất cả phiên mới bên dưới nhưng giữ nguyên trạng thái từng tập để có thể xuất bản lại có chủ đích. Độ trễ thu hồi phiên đã được cấp tuân theo mục 7.1.
-- Sự kiện xuất bản/gỡ/thay media được ghi qua outbox, cập nhật catalog version và vô hiệu cache Redis/Next.js liên quan. Cache public còn sót có thể làm giao diện chậm cập nhật, nhưng API cấp quyền vẫn từ chối ngay theo trạng thái đã commit.
+- Sự kiện xuất bản/gỡ/thay media được ghi qua outbox, cập nhật catalog version và vô hiệu cache public liên quan khi triển khai cache. Cache public còn sót có thể làm giao diện chậm cập nhật, nhưng API cấp quyền vẫn từ chối ngay theo trạng thái đã commit.
 
 ## 6. Phát video, HD và giảm dữ liệu truyền
 
@@ -192,7 +223,7 @@ Cloudinary ký webhook và retry hữu hạn; job đối soát xử lý trườn
 | 720p  | 2–3 Mbps                          | HD phổ biến                   |
 | 1080p | 4–6 Mbps                          | Khi nguồn và thiết bị phù hợp |
 
-Đây là giá trị thử nghiệm, không phải bitrate cố định cho mọi phim hoặc cấu hình mặc định của Cloudinary. Bổ sung audio phù hợp, thường bắt đầu thử AAC stereo 128 kbps. Không nâng FPS hoặc upscale chỉ để có nhãn chất lượng cao.
+Đây là giá trị thử nghiệm cho nguồn SDR khoảng 24–30 FPS, không phải bitrate cố định cho mọi phim hoặc cấu hình mặc định của Cloudinary. Các asset đã kiểm thử với profile hiện hành có 5 mức 180/270/360/540/720; bảng này không khẳng định đã có 480p hoặc 1080p. Xem nghiên cứu và cách chọn ladder theo nội dung tại mục 6.7. Bổ sung audio phù hợp, thường bắt đầu thử AAC stereo 128 kbps. Không nâng FPS hoặc upscale chỉ để có nhãn chất lượng cao.
 
 - Bắt đầu H.264/AAC và profile HLS được tạo trước; kiểm tra manifest thực tế có đúng mức mong muốn.
 - Với profile cho phép điều chỉnh, thử segment 4–6 giây và căn keyframe; xác minh khả năng cấu hình của Cloudinary thay vì coi mọi tham số FFmpeg đều có sẵn.
@@ -204,6 +235,8 @@ Cloudinary ký webhook và retry hữu hạn; job đối soát xử lý trườn
 HLS có thể dùng native hoặc hls.js theo khả năng trình duyệt. [Tài liệu hls.js](https://github.com/video-dev/hls.js)
 
 ### 6.3. Tối ưu dung lượng
+
+Cơ chế nén, khả năng codec/giao thức, thuật toán per-title, phép đo chất lượng và backlog triển khai được nghiên cứu chi tiết tại mục 6.7/14.6. Các dòng dưới đây là định hướng, chưa xác nhận tiết kiệm bitrate trên catalog.
 
 - Tạo bản mã hóa theo độ phức tạp từng phim trong khả năng profile provider; kiểm tra cảnh tối, chuyển động, grain và khuôn mặt. Không hứa giữ nguyên chất lượng ở mọi mức giảm bitrate.
 - Dùng bộ mẫu và VMAF khi pipeline đo hỗ trợ; kết hợp xem bằng mắt. Các chỉ số chất lượng cần được so sánh trên cùng nguồn và cấu hình hiển thị.
@@ -259,6 +292,200 @@ Luồng resume và luồng telemetry được tách riêng. `PUT /me/watch-progr
 - Dashboard ghi tỷ lệ bao phủ telemetry, số phiên/lỗi thiếu dữ liệu và phương pháp đo. Thiết bị không quan sát được quality ghi `unknown`; không suy ra giữ HD chỉ từ độ phân giải màn hình.
 - Mặc định raw event giữ 30 ngày, tổng hợp không định danh 90 ngày; đây là cấu hình sản phẩm, cần tính dung lượng và hỗ trợ xóa dữ liệu gắn với tài khoản theo chính sách mục 7.2.
 
+### 6.7. Nghiên cứu mã hóa, nén và tạo nhiều độ phân giải
+
+Ngày nghiên cứu: 13/11/2026. **Trạng thái: thiết kế và backlog; chưa thay profile Cloudinary, chuyển mã lại catalog hoặc chạy benchmark trong lượt này.** Các khoảng bitrate, số mẫu, ngưỡng chất lượng và tỷ lệ rollout dưới đây là cấu hình thử của pj-Flim, không phải kết quả đã đo hoặc mặc định bắt buộc của provider.
+
+#### 6.7.1. Hiện trạng và mục tiêu
+
+| Hạng mục | Đã có trong source/bằng chứng | Phần cần làm |
+| --- | --- | --- |
+| Chuyển mã | Cloudinary provider gọi `explicit` với eager async, `streaming_profile` từ upload policy và `format=m3u8`; mặc định config là `hd` | Kiểm kê nội dung profile thực tế, lập profile mới có version khi tối ưu |
+| Các mức chất lượng | Hai asset trong [báo cáo full-stack](../testing/full-stack-2026-11-13.md) có 5 mức 180/270/360/540/720; đã thử phát 720/360/Auto | Không coi bảng 360/480/720/1080 ở mục 6.2 là output hiện tại; chưa nghiệm thu 1080p, HDR hoặc codec khác |
+| Xác minh HLS | Verifier đọc master, resolution/bandwidth, VOD ENDLIST, tổng EXTINF; đọc một phần segment đầu của mỗi variant | Chưa giải mã toàn bộ, đo VMAF, kiểm IDR/căn GOP hoặc đối chiếu bitrate thật; HTTP 200/206 không đủ chứng minh chất lượng |
+| Điều kiện sẵn sàng | Attempt/config/profile đúng và HLS đã verify, backup nguồn VERIFIED; admin xuất bản riêng | Giữ gate hiện có khi thêm phiên bản encoding; không tự công khai bằng webhook |
+| Phát dự phòng | MP4 fallback là nguồn authenticated đã xác minh, URL ký cùng asset/version | Có thể lớn hoặc codec không phù hợp; chưa có MP4 fallback tối ưu riêng, không có ABR |
+| Công cụ | Node điều phối, RabbitMQ xử lý nền, Cloudinary chuyển mã/CDN | Chưa có FFmpeg encoder hoặc bộ đo chất lượng nội bộ; thêm công cụ chỉ khi bắt đầu ticket |
+
+Đối chiếu trực tiếp: [cấu hình](../../packages/media/src/cloudinary.config.ts), [provider](../../packages/media/src/cloudinary.provider.ts), [HLS verifier](../../packages/media/src/hls-verifier.ts), [worker](../../apps/worker/src/media-worker.ts). Mục tiêu là giảm byte truyền **ở chất lượng hình/âm thanh chấp nhận được**, giữ độ ổn định phát và kiểm soát tổng chi phí; giảm bitrate bằng mọi giá không phải tiêu chí hoàn thành.
+
+#### 6.7.2. Cơ chế nén và các khái niệm cần phân biệt
+
+1. **Codec và nén mất dữ liệu:** encoder dự đoán trong khung hình và giữa các khung hình, biến đổi phần sai khác, lượng tử hóa rồi mã hóa entropy. Lượng tử hóa mạnh hơn thường giảm bit và mất chi tiết; decoder tái tạo hình gần nguồn. Tạo bản HD nhỏ hơn không đồng nghĩa giữ nguyên từng pixel.
+2. **I/P/B và GOP:** ảnh tham chiếu cùng dự đoán chuyển động giúp tránh gửi lại toàn bộ hình cho mỗi frame. Nhiều tham chiếu/lookahead có thể tăng hiệu quả nhưng cần compute/buffer và phải nằm trong khả năng decoder. Điểm truy cập độc lập giúp bắt đầu, tua và đổi rendition.
+3. **Transcode:** giải mã nguồn rồi mã hóa lại; dùng khi đổi codec, bitrate, kích thước hoặc đặc tính hình. Mỗi rendition nên tạo từ nguồn gốc đã bảo toàn, tránh chuỗi 1080 → 720 → 480 làm tích lũy mất chất lượng.
+4. **Remux/segment:** đổi container hoặc chia gói mà có thể giữ nguyên bitstream; riêng việc đổi MP4 thành HLS không tự giảm đáng kể bitrate. HLS/DASH là cách mô tả/phân phối luồng, H.264/HEVC/AV1 là codec; MP4, MPEG-TS và fMP4 là container/kiểu đóng gói.
+5. **Multirendition và ABR:** chuẩn bị nhiều bản độc lập cùng nội dung/timeline; player chọn một mức video tại mỗi khoảng phát. Server lưu nhiều bản, client không phải tải toàn bộ các bản. ABR chọn mạng/thiết bị phù hợp, còn encoder quyết định số bit và chất lượng của mỗi bản.
+6. **Encoding khác encryption:** mã hóa codec ở mục này phục vụ nén; AES/DRM phục vụ bảo vệ nội dung. Nén tốt không sửa quyền truy cập hoặc TTL URL. ST01 về link ký chưa tự hết hạn vẫn còn mở; gzip/Brotli cũng không thay thế codec video.
+
+Đây là mô hình giải thích để thiết kế; thông số triển khai phải đọc từ encoder/provider đang dùng. Các tùy chọn rate control, GOP/profile được mô tả trong [FFmpeg codecs](https://ffmpeg.org/ffmpeg-codecs.html#libx264_002c-libx264rgb); không suy ra Cloudinary cho cấu hình toàn bộ các tùy chọn đó.
+
+#### 6.7.3. Codec, giao thức và khả năng giải mã
+
+| Phương án | Vai trò đề xuất cho pj-Flim | Điều kiện trước khi sử dụng |
+| --- | --- | --- |
+| H.264 + AAC, HLS | Baseline trước mắt; giữ đường phát tương thích đã có | Xác nhận codec string/profile/level, pixel format và audio thật; thử hls.js/native trên thiết bị mục tiêu |
+| HEVC/H.265, HLS | Thử trên một nhóm thiết bị phù hợp, giữ H.264 dự phòng | Cloudinary profile, container và decoder thực tế đều đạt; đo pin, dropped frames và byte ở chất lượng tương đương |
+| AV1, DASH | Thử nghiệm về sau nếu lợi ích đủ lớn | Gói tài khoản cho phép, tạo MPD/đầu ra mới và thêm DASH adapter; không đưa MPD vào hls.js |
+| VP9, DASH | Phương án đối chứng nếu phù hợp thiết bị/chi phí | Cùng gate DASH và giải mã; không tạo thêm cả HEVC/AV1/VP9 khi chưa có nhu cầu đo được |
+
+Theo bảng profile Cloudinary hiện hành: H.264/HEVC hỗ trợ HLS và DASH; AV1/VP9 là DASH. AV1 còn có điều kiện gói/metric tài khoản. pj-Flim quyết định giữ HLS H.264 trước và chỉ mở nhánh codec sau thử nghiệm. [Cloudinary ABR/profile](https://cloudinary.com/documentation/adaptive_bitrate_streaming#predefined_streaming_profiles)
+
+Thiết kế chọn nguồn tương lai: backend chỉ trả danh sách output đã READY và được cấp quyền; frontend kiểm tra MIME/codec và, khi có, `navigator.mediaCapabilities.decodingInfo()` với width/height/bitrate/FPS của output. Các trường `supported/smooth/powerEfficient` giúp chọn ứng viên; không chứng minh chắc chắn hardware decode hoặc đảm bảo phát mọi nội dung. API thiếu hoặc trả lỗi thì dùng baseline; không thu thập fingerprint thiết bị chi tiết. Chỉ dò một số cấu hình đã cho phép, tránh trì hoãn startup bởi hàng loạt probe. [W3C Media Capabilities, bản dự thảo đang phát triển](https://www.w3.org/TR/media-capabilities/)
+
+Không đổi codec giữa các segment tùy ý trong cùng phiên bản HLS. Khi cần đổi nguồn/adapter, thiết kế chuyển có kiểm soát: lưu vị trí, dọn adapter cũ, mở đúng output/version và phục hồi timeline; kiểm audio/telemetry và tránh vòng lặp fallback. Quyết định codec phải dựa vào **codec + container + giao thức + player + thiết bị**, không chỉ tên Chrome/Safari.
+
+#### 6.7.4. Rate control: chọn chất lượng và ngân sách bitrate
+
+| Cơ chế | Ý nghĩa và đánh đổi | Cách áp dụng đề xuất |
+| --- | --- | --- |
+| CBR | Cố giữ bitrate quanh mức đặt, dễ dự toán đường truyền nhưng có thể tiêu bit không cần ở cảnh đơn giản | Không chọn mặc định cho VOD chỉ để có con số cố định; dùng khi một hệ thống đích thật sự yêu cầu |
+| VBR/target average, có thể 2-pass | Phân bổ bit theo độ khó; hai lượt phân tích/mã hóa hỗ trợ mục tiêu bitrate trung bình, tăng công xử lý | Thử khi cần quản lý kích thước/chi phí; target không phải trần tức thời |
+| CRF/constant quality | Encoder cố giữ chất lượng tương đối, bitrate và kích thước tùy cảnh | Dùng cho thí nghiệm offline; CRF cùng số giữa các codec/preset không có nghĩa cùng chất lượng |
+| Constrained quality/capped VBR | Chất lượng thích nghi kèm giới hạn tốc độ/VBV theo khả năng encoder | Ứng viên VOD thử nghiệm để hạn chế cảnh bitrate vọt cao; kiểm chất lượng cảnh khó khi chạm giới hạn |
+
+`ABR` ở đây có hai nghĩa thường gây nhầm: average bitrate của encoder khác adaptive bitrate của player. `maxrate/bufsize` mô tả điều khiển bitrate/buffer encoder, không phải buffer xem trước 30 giây ở trình duyệt. Tên preset fast/slow cũng không bảo đảm bitrate hay chất lượng tương đương giữa encoder phần mềm và phần cứng.
+
+Với Cloudinary, kiểm khả năng profile/`bit_rate`/`quality` trước khi thiết kế mapping; `q_auto` không phải một giá trị CRF có thể sao chép sang FFmpeg. Tài liệu chỉ nêu strict CBR cho H.264. pj-Flim sẽ thử trên asset riêng, giữ nguyên transformation giữa eager và delivery, không ghép tham số tùy ý vào URL phát. [Cloudinary video optimization](https://cloudinary.com/documentation/video_optimization#meeting_minimum_bitrate_thresholds)
+
+Ưu tiên VOD xử lý trước khi xuất bản: chấp nhận thời gian encode dài hơn khi tổng chi phí hợp lý; không dùng preset realtime/zero-latency mặc định cho phim dài. Nhánh FFmpeg riêng chỉ là phương án lab/adapter tương lai; cần benchmark, giới hạn CPU/RAM/disk/process timeout và cô lập worker trước khi dùng thật.
+
+#### 6.7.5. Thang độ phân giải và bitrate thử nghiệm
+
+Dùng bảng mục 6.2 làm baseline giả thuyết **video SDR khoảng 24–30 FPS**; đó không phải profile đang chạy. Có thể thử thêm mức 240p khoảng 0,3–0,5 Mbps nếu telemetry cho thấy cần; tránh thêm mức chỉ vì muốn menu dài. Audio AAC stereo thử 96–128 kbps theo nội dung, kiểm thoại/nhạc; các mức này không phải chuẩn chất lượng bắt buộc.
+
+- Giữ tỷ lệ hình/display aspect ratio, rotation và kích thước hợp lệ cho codec. Các nhãn 360p/720p minh họa nguồn ngang thông thường; phim điện ảnh có thanh đen hoặc tỷ lệ rộng cần ghi kích thước thật, không ép mọi nguồn thành 16:9.
+- Chỉ có mức không vượt độ phân giải nguồn sau xử lý orientation/crop hợp lệ. Nguồn 720p không tạo 1080p để làm đẹp nhãn; nguồn thấp hơn 360p vẫn cần đường phát phù hợp.
+- Giữ cadence/FPS nguồn khi phù hợp; 23,976/29,97 khác 24/30. Nguồn 50/60 FPS có ladder riêng nếu giữ FPS, không tự nhân bitrate theo một hệ số cố định.
+- Cho phép một độ phân giải có hơn một bitrate nếu thử nghiệm chứng minh lợi ích; ngược lại có thể bỏ một mức nếu bị mức khác vượt về chất lượng và dung lượng. Khoảng bitrate giữa hai mức thử khoảng 1,4–2 lần chỉ là hướng khảo sát, không ép dataset theo tỷ lệ này.
+- Cho profile có version, ví dụ tên nội bộ `h264_sdr_v1`; ánh xạ sang một Cloudinary profile **được tạo/kiểm tra thật**, không coi tên ví dụ là preset đã tồn tại. Lưu cả định nghĩa profile, không chỉ tên.
+- Mức hiển thị lấy từ manifest/output đã xác minh; nếu chỉ có 180/270/360/540/720 thì UI hiển thị đúng các mức đó. Không đổi bitrate trên giấy rồi gán lại nhãn output cũ.
+
+Ladder đủ tốt phải có đường phát mạng thấp, HD nguồn đủ và khoảng chuyển hợp lý; chốt số mức bằng phân bố mạng/thiết bị và đo chất lượng/chi phí, không bắt buộc mọi tập có cùng danh sách.
+
+#### 6.7.6. Thuật toán per-title và hướng per-shot
+
+Netflix mô tả per-title bằng thử nhiều cặp độ phân giải/tham số encode, đo rate–quality và chọn các điểm gần biên hiệu quả; độ phân giải cao hơn tại cùng bitrate có thể cho hình tệ hơn. Đây là cơ sở nghiên cứu, không phải tuyên bố pj-Flim đã có công nghệ Netflix. [Netflix Per-Title Encode Optimization, 2015](https://netflixtechblog.com/per-title-encode-optimization-7e99442b62a2)
+
+Thuật toán **đề xuất cho pj-Flim**, chạy offline với ngân sách giới hạn:
+
+1. Lập tập mẫu có timecode: đầu/giữa/cuối và cảnh tối, chuyển động, grain, hoạt hình, mặt người, chữ nhỏ. Kết hợp mẫu phủ thời gian với cảnh khó; không chỉ chọn trailer đẹp. Lưu checksum nguồn và kế hoạch lấy mẫu.
+2. Tạo ma trận hữu hạn giữa kích thước không upscale và các cấu hình bitrate/quality được provider hỗ trợ. Thử một codec trước; đặt số ứng viên/giây video xử lý tối đa để không bùng chi phí.
+3. Đo mỗi điểm `(R, Q, size, processingTime)`: R là bitrate thực, Q gồm số đo cảm nhận và review cảnh khó, kèm metadata encode. Không so bitrate target của bản này với bitrate thật của bản khác.
+4. Loại điểm bị trội: có điểm khác cùng điều kiện hiển thị với `R <= R_i` và `Q >= Q_i`, ít nhất một bất đẳng thức chặt. Khi lập đường rate–distortion dùng cùng định nghĩa distortion; Pareto filtering không tự đồng nghĩa đã xây convex hull.
+5. Từ các điểm còn lại, chọn ladder hữu hạn theo ngân sách byte/chất lượng, các mức mạng cần phục vụ, khoảng chuyển và khả năng decode. Không bỏ đường 720p chỉ vì 1080p có chất lượng cao hơn khi một nhóm decoder chỉ hỗ trợ 720p.
+6. Encode toàn bộ title bằng ứng viên thắng; đo lại bitrate peak/average và chất lượng các cảnh khó. Kết quả trên clip chỉ là sàng lọc, không phải nghiệm thu toàn phim.
+7. Nếu không đạt chất lượng, khả năng phát hoặc ngân sách thì giữ profile baseline. Không tự tăng số lần thử vô hạn để tìm một điểm tối ưu.
+
+Mô tả ngắn của bước chọn, không phải code đã triển khai:
+
+```text
+candidates = trialEncode(samples, allowedConfigs, trialBudget)
+measured = evaluate(candidates, reference, metricVersion, reviewProtocol)
+frontier = removeDominated(measured)
+ladder = select(frontier, networkBuckets, decoderLimits, qualityAndCostBudget)
+fullOutput = encodeFromOriginal(sourceVersion, ladder)
+accept only if full validation + backup + current attempt/config guards pass
+otherwise keep baseline; publication remains a separate admin action
+```
+
+Per-shot phân đoạn theo cảnh và phân bổ bit theo độ khó từng cảnh là nhánh sau. Netflix Dynamic Optimizer nghiên cứu rate–distortion theo shot và ghép các quyết định toàn video; không chỉ đổi bitrate theo từng đoạn tùy tiện. pj-Flim chưa có shot encoder/provider contract tương ứng, nên chỉ khảo sát sau khi per-title có lợi ích rõ; mọi nhánh phải giữ đồng bộ timeline và các điểm chuyển. [Netflix Dynamic Optimizer, 2018](https://netflixtechblog.com/dynamic-optimizer-a-perceptual-video-encoding-optimization-framework-e19f1e3a277f)
+
+#### 6.7.7. GOP, segment và manifest phục vụ chuyển mức
+
+Đề xuất thử segment 4 và 6 giây **nếu provider cho cấu hình**, dùng cùng lịch điểm truy cập độc lập giữa các mức. GOP dài giúp giảm overhead nhưng có thể tăng độ trễ tua/chuyển; segment rất ngắn tăng số request và chi phí đóng gói. VOD chưa có yêu cầu live latency nên không thêm LL-HLS chỉ để gọi là nhanh hơn.
+
+- Nếu dùng encoder riêng, thử closed GOP và IDR phù hợp ranh giới segment; ví dụ nguồn CFR 24 FPS với chu kỳ 2 giây có khoảng 48 frame, còn FPS phân số/VFR phải dựa timestamp. Không áp dụng máy móc `g=48` cho mọi nguồn.
+- Segment/keyframe cần cùng timeline xuyên rendition; audio có ranh giới sample riêng, kiểm lệch A/V theo thời gian và khi chuyển. Không yêu cầu mọi file có cùng số byte hoặc ép số frame âm thanh giống video.
+- Kiểm duration đầu/cuối, discontinuity khi có, init segment nếu fMP4, codec string và track references; kiểm cả đầu, cảnh khó, ranh giới chuyển và cuối phim.
+- MPEG-TS/fMP4 là lựa chọn đóng gói cần đối chiếu provider/player; đổi container không tự bảo đảm nén tốt hơn. Không gán CMAF cho mọi output hiện tại khi chưa kiểm chứng.
+- Khi đóng gói bằng FFmpeg, `hls_time` là mục tiêu cắt và phụ thuộc keyframe; không bảo đảm mọi segment đúng số giây yêu cầu. [FFmpeg HLS muxer](https://ffmpeg.org/ffmpeg-formats.html#hls-2)
+
+RFC 8216 quy định `BANDWIDTH` phản ánh peak segment bitrate của variant, `AVERAGE-BANDWIDTH` là trung bình nếu có; gồm tổ hợp track phát được, không chỉ video target. Nội dung tương ứng giữa variant cần timestamp tương ứng. Metadata sai có thể khiến lựa chọn ABR không phù hợp. [RFC 8216, mục 4.3.4.2 và 6.2.4](https://www.rfc-editor.org/rfc/rfc8216)
+
+Verifier hiện tại chỉ kiểm giá trị bandwidth dương và timeline trong dung sai, không đo peak/average hoặc giải mã độc lập segment. Ticket mới phải bổ sung bằng chứng; chỉ gắn nhãn output đã qua phép kiểm thực tế.
+
+#### 6.7.8. Tiền xử lý hình, âm thanh và phụ đề
+
+Thiết kế ingest mở rộng cần probe nguồn: codec/profile/level, width/height, SAR/DAR, rotation, progressive/interlaced, FPS/timebase, pixel format/bit depth, color primaries/transfer/range, duration, audio channels/sample rate/language và phụ đề. Lưu kết quả đã lọc metadata; không ghi đường dẫn riêng tư hoặc URL ký. Có thể dùng JSON từ `ffprobe` trong lab hoặc worker cô lập, sau khi chốt công cụ. [FFprobe](https://ffmpeg.org/ffprobe.html#Main-options)
+
+- SDR baseline thử H.264 8-bit 4:2:0 khi thiết bị phù hợp; không ép nguồn HDR thành SDR bằng cách chỉ đổi pixel format/tag màu.
+- HDR/PQ/HLG hoặc 10-bit cần đường xử lý/metric phù hợp và test màn hình thật. Nếu chưa hỗ trợ thì báo admin nguồn chưa được nghiệm thu, không im lặng làm màu bạc/mất highlight. Tone mapping là bước xử lý màu riêng; FFmpeg cũng mô tả yêu cầu miền ánh sáng/dữ liệu cho filter. [FFmpeg tonemap](https://ffmpeg.org/ffmpeg-filters.html#tonemap)
+- Deinterlace/denoise/crop chỉ khi có lý do và review; xóa grain có thể làm nhỏ file nhưng đổi ý đồ hình ảnh. Giữ nguồn gốc để có thể xử lý lại.
+- Audio: chọn track mặc định/language rõ, kiểm lệch tiếng ở đầu/giữa/cuối, thoại nhỏ và clipping; downmix stereo có review nếu nguồn đa kênh. Loudness/true-peak target sẽ chốt theo nội dung/đích phát, không áp một con số như chuẩn phổ quát.
+- Tách alternate audio khi provider/player đã hỗ trợ và kiểm chứng; không coi UI hiện tại đã có đa audio hoàn chỉnh. Tính bytes theo track thực tải; audio mux trong mỗi rendition sẽ làm tăng storage lặp.
+- WebVTT cho phụ đề rời khi được hỗ trợ, UTF-8 tiếng Việt, kiểm timecode/font/diacritics. Tránh burn-in cho mọi ngôn ngữ vì mỗi bản sẽ phải encode lại; burn-in là lựa chọn rõ cho trường hợp cần.
+
+#### 6.7.9. Tích hợp Cloudinary và quản lý phiên bản xử lý
+
+Giữ tuyến `upload trực tiếp → xác minh nguồn → outbox/RabbitMQ → eager async → webhook/inbox + reconcile → verify HLS/backup → READY → admin preview/publish`. API Play chỉ cấp quyền/tham chiếu tới output sẵn có. RabbitMQ chứa ID/cấu hình an toàn, không chứa video hoặc credential; Node không proxy segment.
+
+1. Kiểm kê profile account bằng API quản trị phía server, lưu snapshot định nghĩa/version; khóa allowlist qua cấu hình quản trị phù hợp. Không cho browser tự chọn transformation.
+2. Mỗi cấu hình mới có fingerprint bao gồm source version, codec/container, định nghĩa profile, audio/color/GOP khi kiểm soát được, adapter version và các tham số ảnh hưởng output. `config_hash/profile_version` đã có là nền để mở rộng, chưa chứng minh tên profile hiện tại là bất biến phía Cloudinary.
+3. Không sửa profile dùng cho asset đang xuất bản tại chỗ; tạo tên/version mới. Eager và URL delivery phải khớp transformation; lưu output reference cùng version để đọc lại, không lưu URL credential như metadata công khai.
+4. Reconcile kết quả chưa rõ trước khi retry; at-least-once queue/webhook có thể lặp. Giữ lease/attempt guard, giới hạn concurrency và quota; chặn output cũ đánh dấu attempt mới thành công.
+5. Candidate mới chỉ được chọn khi output bắt buộc đã verify và backup nguồn hợp lệ; lỗi nhánh codec tùy chọn không làm mất baseline đang phát. Cần thiết kế rõ output required/optional trước khi mở đa codec.
+6. Rollout theo asset/version: phiên đang xem giữ bản đã pin; phiên mới dùng bản được duyệt sau preview. Rollback trỏ lại bản đã nghiệm thu, giữ reference tới khi không còn phiên và hết retention phù hợp; không xóa output còn dùng.
+7. Không chuyển sang `sp_auto` hoặc dùng `f_auto/q_auto` cho HLS chỉ để “tự tối ưu” khi chưa thử bảo vệ quyền, first-request processing, đúng version và cách tính quota. Preset hiện tại không được thay trong lượt nghiên cứu. Kiểm tra cả thiết lập Optimize by default của account: tài liệu Cloudinary cảnh báo mặc định tự thêm transformation có thể làm URL delivery không khớp eager, phát sinh bản dẫn xuất mới. Không bật thay đổi này trong rollout encoding khi chưa xác minh ảnh hưởng.
+
+Cloudinary mô tả eager output và yêu cầu delivery khớp transformation. pj-Flim chọn xử lý trước và version hóa để hạn chế request Play làm phát sinh công việc mới. [Cloudinary eager processing](https://cloudinary.com/documentation/eager_and_incoming_transformations)
+
+Dữ liệu đề xuất khi code, **chưa migration/API mới**: mở rộng `media_outputs.rendition_summary` hoặc bảng con khi cần truy vấn, gồm actual dimensions/FPS/codec/profile/level/pixel format/color, container/audio, measured average/peak bitrate, bytes, segment/keyframe audit, metric/model/tool versions, report reference/checksum và trạng thái quality review. Dùng số đo nullable/`unknown` khi chưa đo; không điền target bitrate như số đo. Nếu tạo API admin cho profile/re-encode phải tách DTO/controller/service, RBAC, audit, idempotency, quota và cập nhật Swagger/error registry.
+
+#### 6.7.10. Đánh giá chất lượng và thiết kế thí nghiệm
+
+VMAF là metric full-reference, cần nguồn tham chiếu và bản đã giải mã. Với output giảm độ phân giải, đưa về cùng điều kiện kích thước hiển thị để so; model có phạm vi áp dụng, không coi mọi điểm số như nhau giữa HD/4K/HDR. [Netflix VMAF FAQ](https://github.com/Netflix/vmaf/blob/master/resource/doc/faq.md)
+
+Bộ benchmark **đề xuất**:
+
+- Giai đoạn clip: khoảng 12–20 đoạn dài 30–60 giây, phủ ít nhất cảnh tối/chuyển động/grain/hoạt hình/thoại/chữ; dùng nội dung được phép và nguồn đủ tốt. Sau sàng lọc, thêm nội dung dài 90–120 phút cho pipeline/QoE; không dùng clip để kết luận toàn bộ catalog.
+- Nhánh A là output baseline thực tế, B là profile H.264 mới; nhánh codec khác chỉ thêm sau khi gate tương thích/chi phí đạt. Khóa source checksum, encoder/provider profile definition, timestamp lấy mẫu, color pipeline và ngày đo.
+- So chất lượng ở cùng điều kiện hiển thị/thiết bị; lưu resize kernel, alignment, timebase, frame count và model hash. Không lấy output tự tạo làm reference; không sửa gamma/màu chỉ để tăng điểm metric.
+- Tính mean và phân bố theo frame/scene, xem các đoạn có điểm thấp; bổ sung SSIM/PSNR nếu hữu ích. Không chỉ dùng mean đẹp để che cảnh tối vỡ khối hoặc banding. Log metric có version để tái lập; `libvmaf` có thể xuất JSON theo cấu hình tool. [FFmpeg libvmaf](https://ffmpeg.org/ffmpeg-filters.html#libvmaf)
+- Có review bằng mắt trên màn hình nhỏ/lớn: mặt, tóc, vật chuyển động, grain, chữ, chuyển cảnh, shadow/highlight. Audio và phụ đề có tiêu chí riêng; VMAF không xác nhận đúng tiếng/phụ đề.
+- Thử quality budget ban đầu, ví dụ B không giảm quá 2 điểm VMAF mean so A trên cùng model/điều kiện và không có cảnh review bị loại; **đây chỉ là giả thuyết cần hiệu chỉnh**, không phải ngưỡng phổ quát. Khi so tại cùng chất lượng thì báo byte giảm; khi so tại cùng bitrate thì báo chất lượng tăng. Báo cả hai nếu làm được.
+- Đo encode wall time/CPU/RAM nếu sở hữu encoder; với Cloudinary đo thời gian submit → ready, lỗi/retry và usage tài khoản, không gán compute nội bộ provider thành số đã quan sát.
+
+Không hứa tiết kiệm 30%/50% theo codec marketing. Báo cáo phải có bảng từng mẫu, tổng hợp theo cách trọng số đã định trước, outlier, số mẫu và cấu hình; chưa có báo cáo thì ghi “chưa đo”.
+
+#### 6.7.11. Dung lượng lưu, truyền và điểm hòa vốn
+
+Công thức dự toán riêng của pj-Flim, dùng Mbps thập phân và GB thập phân:
+
+```text
+GB của một output ≈ durationHours × (videoAvgMbps + audioAvgMbps) × 0,45
+GB toàn ladder ≈ tổng GB các output/tracks + container/playlist overhead
+GB delivery ≈ watchHours × tổng bitrate thực được tải trung bình × 0,45
+               + byte tải thừa/prefetch/retry và overhead chưa nằm trong phép đo
+savingRatio = 1 - candidateDeliveredBytes / baselineDeliveredBytes
+```
+
+Với audio mux từng bản, cộng audio vào từng output; nếu track dùng chung thì chỉ tính storage track một lần. Client Auto tải một mức video tại từng khoảng, có thể tải thêm khi switch/seek/retry; delivery không bằng tổng dung lượng mọi rendition. Khi lấy số byte CDN đã gồm container thì không cộng overhead container lần nữa.
+
+Ví dụ **ước tính**, phim 2 giờ, video trung bình 3 Mbps + audio 0,128 Mbps: khoảng 2,8152 GB cho một bản trước overhead. Nếu video còn 2 Mbps thì khoảng 1,9152 GB; giảm 0,9 GB, tương đương khoảng 32% của ví dụ, **chỉ có ý nghĩa nếu chất lượng tương đương được chứng minh**. Không phải kết quả đo trên phim hiện có.
+
+Phương án codec mới cần đạt:
+`tiền bandwidth tiết kiệm trong kỳ > encode bổ sung + storage/version giữ lại + vận hành/player/QA bổ sung`.
+Dùng usage/bill thực và dự báo lượt xem; phim ít xem có thể không hoàn vốn encode nhiều codec. Storage tăng do nhiều output vẫn có thể đi cùng delivery giảm; hai chỉ số phải báo riêng.
+
+Cloudinary tính transformation khác giữa automatic/manual profile; với manual, nhiều representations góp vào quota. Không suy tiền chỉ từ số file hoặc một lần gọi API. Lưu ngày/gói/đơn vị và đối chiếu Console trước thử catalog lớn. [Cloudinary transformation counts](https://cloudinary.com/documentation/transformation_counts#adaptive_bitrate_streaming)
+
+#### 6.7.12. Nghiệm thu, rollout và điều kiện dừng
+
+| Nhóm kiểm | Bằng chứng bắt buộc trước khi duyệt ứng viên |
+| --- | --- |
+| Nguồn và encode | Checksum/version đúng; không upscale ngoài chính sách; codec/FPS/color/audio đúng; giải mã kiểm tra output, không chỉ tải được manifest |
+| Manifest/segment | Duration/timeline, track/init/codec metadata, byte/bitrate thực, điểm truy cập/căn chuyển mức, đầu/cuối và cảnh khó; missing/corrupt segment bị phát hiện trong phạm vi kiểm đã công bố |
+| Chất lượng | Báo cáo baseline/candidate, metric/model và review scene; các ngoại lệ nguồn yếu/HDR/FPS cao ghi rõ |
+| Browser/thiết bị | Chrome/Edge desktop, Safari/iPhone native và Android thật thuộc ma trận; ghi phiên bản/hardware/path thực tế, không thay thiết bị thật bằng tên user-agent |
+| Mạng/QoE | Thử 2/5/20 Mbps, RTT 50/150 ms, đổi băng thông/mất mạng; TTFP p50/p95, rebuffer, dropped frames, giữ HD, tua/đổi mức và bytes/watch-hour; cold/warm riêng theo mục 12.1 |
+| Pipeline/quyền | Webhook lặp/mất, timeout chưa rõ kết quả, worker crash, source/profile đổi giữa chừng, backup lỗi, attempt cũ; chỉ output đủ điều kiện được cấp cho đúng viewer |
+| Chi phí và rollout | Bảng usage/chi phí thực, giới hạn xử lý, preview, canary, rollback giữ output cũ và dọn đúng retention; không làm gián đoạn phiên đang xem |
+
+Đề xuất shadow trên asset thử → admin preview → canary khoảng 5% phiên mới đủ khả năng → tăng dần sau đủ mẫu. Không dùng A-B triển khai khi chưa có định nghĩa metric và telemetry đáng tin; ST04 analytics vẫn cần làm riêng. Chặn promotion nếu lỗi giải mã/A-V sync/màu, QoE xấu đi vượt ngưỡng đã chốt hoặc vượt ngân sách; rollback sang output đã nghiệm thu. Nếu chỉ có một lần phát tốt thì chưa đủ kết luận p95 hoặc hiệu quả tiết kiệm.
+
+Các phép kiểm nặng chạy theo lớp: contract/unit không gọi provider; staging encode có dataset/ngân sách; mẫu chất lượng mỗi cấu hình/title theo policy; mở rộng scan hoặc giải mã toàn bộ khi mức rủi ro yêu cầu. Một segment đọc được không thay kiểm toàn phim. Cụm ticket ENC01–ENC09 ở mục 14.6 triển khai nghiên cứu này; ST01–ST06 giữ nguyên trạng thái và các điều kiện MVP hiện hành.
+
 ## 7. Quyền xem và bảo mật
 
 ### 7.1. Chính sách media
@@ -299,7 +526,7 @@ Lựa chọn triển khai: access JWT ngắn hạn và refresh token opaque xoay
 - Renewal xoay refresh trong transaction; token cũ chỉ được nhận lại trong đúng luồng retry đã định nghĩa ở mục 10.6, cùng proof/operation context. Reuse ngoài luồng hợp lệ thu hồi token family và phát security event; không tạo cửa sổ cho phép mọi token cũ tùy ý dùng lại.
 - API đọc auth_sessions và trạng thái user để kiểm revoked/suspended/authVersion. Thao tác quản trị đối chiếu nguồn PostgreSQL hiện hành, không chờ JWT tự hết hạn khi role bị gỡ. Cache nếu dùng phải có invalidation và không trở thành đường vượt qua thu hồi.
 - Browser không lưu access/refresh token trong localStorage. Cookie access token và bearer token dùng cùng logic verify; nếu request gửi cả hai mà không khớp thì từ chối, không lấy cookie hợp lệ để che bearer không hợp lệ. Request cookie thay đổi dữ liệu cần CSRF/Origin checks, gồm login/renewal/logout theo luồng đã chọn.
-- Ngoại lệ development hiện hành theo yêu cầu ngày 11/11/2026: AUTH_MFA_REQUIRED=false cho phép đăng nhập và thao tác quản trị bằng mật khẩu, bỏ MFA/step-up. Swagger chỉ hiển thị email/mật khẩu; API trả ACTIVE. Cờ mặc định true và không tắt được MFA ở production; bật lại MFA chặn phiên staff chưa xác minh và yêu cầu đăng nhập lại. RBAC, audit, quyền tài nguyên và bảo vệ SUPER_ADMIN cuối vẫn áp dụng.
+- Ngoại lệ development hiện hành theo yêu cầu ngày 11/11/2026: AUTH_MFA_REQUIRED=false cho phép đăng nhập và thao tác quản trị bằng mật khẩu, bỏ MFA/step-up. Giao diện web hiển thị email/mật khẩu; Swagger đã mở trực tiếp theo yêu cầu sau đó. API trả ACTIVE. Cờ mặc định true và không tắt được MFA ở production; bật lại MFA chặn phiên staff chưa xác minh và yêu cầu đăng nhập lại. RBAC, audit, quyền tài nguyên và bảo vệ SUPER_ADMIN cuối vẫn áp dụng.
 - Khi policy MFA được bật, tất cả vai trò EDITOR/ADMIN/SUPER_ADMIN/AUDITOR phải hoàn tất MFA trước truy cập khu vực quản trị. Đăng nhập cần MFA tạo phiên PENDING_MFA và challenge có hạn, chưa cấp phiên/token đủ quyền admin. Credential tạm chỉ gọi endpoint challenge/enrollment được cho phép.
 - MVP dùng TOTP và recovery codes một lần; TOTP secret mã hóa server-side, recovery codes lưu hash, giới hạn thử OTP và chặn dùng lại OTP trong cửa sổ đã tiêu thụ. Enrollment chỉ bật MFA sau kiểm tra mã xác minh; không ghi secret/OTP/recovery codes vào log. [OWASP MFA](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html)
 - Step-up gần đây, thử tối đa 10 phút, bắt buộc cho đổi role, khóa tài khoản quản trị, reset MFA, xóa media và xuất audit log. Step-up gắn session/actor, không truyền một cờ mfaVerified do client tự khai.
@@ -378,6 +605,8 @@ RabbitMQ phân biệt publisher confirms và consumer ACK; mất kết nối có
 
 ### 9.1. Tìm kiếm tiếng Việt
 
+Hiện trạng 13/11/2026: [live search](../testing/live-search-2026-11-13.md) đã có ở ô tìm phim công khai, debounce 300 ms/từ 2 ký tự/tối đa 6 gợi ý theo kind/genre/sort, abort và đóng/mở an toàn, IME/keyboard/loading/error/retry. Submit hoặc Xem tất cả kết quả cập nhật URL/danh mục, Back/Forward khôi phục từ khóa. Backend hiện tìm substring trên tên chuẩn hóa/alias/credits và sort published_at/id; các bước ranking exact/prefix/trigram và Redis/cache dưới đây vẫn là thiết kế, chưa triển khai trong lượt này.
+
 - Lưu title gốc, title Việt và aliases; trường chuẩn hóa chữ thường, bỏ dấu, `đ` thành `d`, gom khoảng trắng.
 - Ưu tiên exact match → prefix → khớp từ → trigram → diễn viên/mô tả. Không áp ngưỡng fuzzy quá thấp cho từ khóa rất ngắn.
 - PostgreSQL pg_trgm với GIN/GiST phù hợp truy vấn; unique slug, index trạng thái và filter phổ biến. Dùng EXPLAIN trên dữ liệu kiểm thử.
@@ -386,16 +615,317 @@ RabbitMQ phân biệt publisher confirms và consumer ACK; mất kết nối có
 
 pg_trgm hỗ trợ độ tương tự chuỗi và index tìm gần đúng. [Tài liệu PostgreSQL](https://www.postgresql.org/docs/current/pgtrgm.html)
 
-### 9.2. Phim tương tự và gợi ý
+### 9.2. Thuật toán gợi ý phim và cá nhân hóa
 
-MVP dùng danh sách do admin biên tập hoặc cùng thể loại, lọc phim công khai có tập phát được và sort ổn định. Các bước chấm điểm/vector dưới đây là thiết kế sau MVP, không phải điều kiện mở bản đầu.
+Nghiên cứu cập nhật ngày 13/11/2026. **Trạng thái: đã nghiên cứu/thiết kế, chưa triển khai cá nhân hóa.** Hợp đồng API, bảng, cấu hình, hệ số và mục tiêu dưới đây là đề xuất cho các ticket REC01–REC09 tại mục 14.5; không phải tính năng đã có hoặc số đo hiệu quả.
 
-- Vector nội dung từ thể loại, quốc gia, diễn viên, đạo diễn và từ khóa; cosine similarity giữa các vector khác zero. Thiếu metadata dùng fallback biên tập/phổ biến.
-- Tính trước top ứng viên khi metadata thay đổi hoặc qua job; lọc lại trạng thái xuất bản/quyền khi trả về.
-- Gợi ý theo title, không liệt kê nhiều tập của cùng bộ. Giới hạn lặp thể loại và trộn nội dung mới.
-- Sau khi có dữ liệu: `userVector = tổng(weight × movieVector)`; trọng số từ thời gian thực xem, thích và đánh giá. Không tính tua đến cuối thành hoàn tất.
-- Thử score `0.65 × phù hợp + 0.20 × phổ biến + 0.15 × mới`, các thành phần chuẩn hóa cùng thang. Đây là cấu hình khởi đầu, cần đo và điều chỉnh.
-- Cold start dùng nội dung biên tập, phổ biến và tùy chọn thể loại. Collaborative filtering để sau khi có dữ liệu đủ chất lượng.
+#### 9.2.1. Hiện trạng và phạm vi
+
+- Source hiện tại: PublicCatalogService.recommendations lấy phim có chung thể loại, bỏ phim nguồn, lọc công khai/phát được và sắp published_at/id. Đây là gợi ý theo ngữ cảnh phim, không học sở thích tài khoản.
+- Có titles/title_genres/people/credits, watchlist, watch_progress, playback_sessions/watch_events/playback_event_batches và outbox. watch_progress là trạng thái tiến độ hiện hành, không phải nhật ký đầy đủ mọi lần xem hoặc dữ liệu đánh giá sao.
+- title_daily_stats có schema, nhưng consumer tổng hợp analytics/trending chưa triển khai. Publisher media hiện chỉ dispatch media.processing.requested và media.webhook.received; playback.events.accepted chưa tự động trở thành feature gợi ý.
+- Chưa có impression/click attribution riêng cho gợi ý, sở thích/opt-out, Không quan tâm, model registry hoặc bảng embedding. Redis chưa tích hợp. Ratings, nhiều profile và entitlement/VIP cũng chưa có trong bản hiện hành.
+- Giữ gợi ý cùng thể loại làm baseline. MVP hiện có không bị chặn bởi việc chưa triển khai học máy. Nâng cấp theo thứ tự: đo dữ liệu → content-based → hybrid → thử nghiệm → mô hình lớn khi có bằng chứng cần thiết.
+
+Đơn vị xếp hạng là **title**, không phải từng episode. Hiện nhận diện sở thích ở cấp tài khoản; không gọi đó là sở thích riêng từng người trong tài khoản dùng chung. Khi có profiles, phải thiết kế lại scope, ownership và di chuyển dữ liệu rõ ràng.
+
+#### 9.2.2. So sánh phương án và quyết định
+
+| Phương án | Cách hoạt động | Điểm mạnh | Giới hạn và quyết định cho pj-Flim |
+| --- | --- | --- | --- |
+| Biên tập, phổ biến, mới phát hành | Danh sách biên tập và thống kê xem có khử lặp | Dễ giải thích, làm fallback cho người mới | Chưa cá nhân hóa; dễ thiên về phim vốn nổi tiếng |
+| Content-based: TF-IDF/multi-hot + cosine | So metadata phim với phim/ngữ cảnh hoặc vector sở thích | Có thể làm bằng Node.js, dùng được cho phim mới | Phụ thuộc chất lượng metadata; dễ lặp thể loại. Chọn làm bước đầu |
+| Item-to-item collaborative filtering | Tìm phim được nhiều tài khoản đủ điều kiện cùng xem | Nhận ra liên hệ ngoài metadata, tính trước láng giềng | Dữ liệu thưa, bot và độ nổi tiếng ảnh hưởng mạnh. Là ứng viên hybrid bước tiếp |
+| Implicit ALS | Phân rã ma trận phản hồi ngầm với độ tin cậy | Baseline học máy rõ ràng cho lịch sử xem lớn hơn | Không tự giải quyết cold start; phải thử offline trước |
+| BPR | Học thứ tự phim có tín hiệu tích cực so với item lấy mẫu | Phù hợp bài toán top-N thay vì dự đoán sao | Chất lượng lấy mẫu rất quan trọng; phim chưa xem không đồng nghĩa không thích |
+| LightFM | Kết hợp embedding ID với metadata | Có phương án cho item/user cold start | Phải quản lý feature vocabulary và dữ liệu huấn luyện; chưa chọn mặc định |
+| Two-tower, mô hình tuần tự | Retrieval bằng embedding hoặc học chuỗi tương tác | Hướng mở rộng khi dữ liệu/catalog tăng | Chi phí và yêu cầu dữ liệu cao hơn; không cần để ra mắt bước đầu |
+| Contextual bandit cho artwork | Chọn ảnh/preview theo ngữ cảnh với khám phá có kiểm soát | Cá nhân hóa cách trình bày một title | Là bài toán riêng với chọn phim; hoãn sau khi có nhiều asset và attribution đáng tin |
+
+Cơ sở: [Amazon Science về item-to-item](https://www.amazon.science/the-history-of-amazons-recommendation-algorithm), [Hu/Koren/Volinsky về implicit feedback](https://yifanhu.net/PUB/cf.pdf), [BPR, UAI 2009](https://arxiv.org/abs/1205.2618) và [Kula về LightFM, 2015](https://arxiv.org/abs/1507.08439). Các phương pháp là ứng viên để so sánh trên dữ liệu của dự án, không có thuật toán thắng mọi trường hợp.
+
+Tách tạo ứng viên và xếp hạng là cấu trúc được mô tả trong [nghiên cứu YouTube 2016](https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/) và [hướng dẫn retrieval hai tower của TensorFlow](https://www.tensorflow.org/recommenders/examples/basic_retrieval). Dự án áp dụng cách chia trách nhiệm, không sao chép kiến trúc hoặc quy mô của các hệ thống đó.
+
+#### 9.2.3. Mục tiêu sản phẩm và luồng xử lý
+
+Ưu tiên giúp người dùng tìm được phim phù hợp và bắt đầu một lượt xem có chất lượng. Không tối ưu CTR hoặc tổng số giờ xem một cách đơn lẻ; theo dõi cả lỗi phát, thời gian tìm phim, sự đa dạng và phản hồi Không quan tâm.
+
+Các hàng đề xuất:
+
+| Hàng | Logic | Điều kiện |
+| --- | --- | --- |
+| Tiếp tục xem | Tiến độ hợp lệ hiện có, cùng asset/timeline, chưa hoàn tất | Là tiện ích resume, không phải dự đoán ML |
+| Dành cho bạn | Kết hợp sở thích nội dung, cộng tác khi đủ dữ liệu và fallback | Tài khoản bật cá nhân hóa |
+| Vì bạn đã xem… | Láng giềng nội dung/cộng tác của seed title phù hợp | Seed thuộc lịch sử chính tài khoản; lý do không tiết lộ dữ liệu người khác |
+| Đang được quan tâm | Qualified views có khử lặp và suy giảm thời gian | Chỉ bật số liệu thật sau REC02/ST04 |
+| Mới phát hành | Thời điểm công khai thực, không lấy updated_at metadata | Không tự coi nội dung mới là nội dung tốt |
+| Khám phá thêm | Một phần nhỏ nội dung khác biệt nhưng còn liên quan | Vẫn qua toàn bộ kiểm quyền và điều kiện phát |
+
+```mermaid
+flowchart LR
+    R[Request theo tài khoản hoặc ngữ cảnh] --> A[Đọc policy và scope]
+    A --> C[Hợp ứng viên content / popular / fresh / CF]
+    C --> E[Lọc công khai và phát được]
+    E --> S[Chấm điểm theo phiên bản]
+    S --> D[Đa dạng hóa và loại trùng]
+    D --> V[Kiểm tra lại điều kiện hiện hành]
+    V --> F[Snapshot feed và metadata phim]
+    F --> U[Hiển thị / click / xem được xác nhận]
+    U --> O[Receipt và outbox]
+    O --> Q[RabbitMQ analytics riêng]
+    Q --> W[Khử lặp và tổng hợp feature]
+    W --> P[(PostgreSQL feature / neighbors / model)]
+    P --> C
+```
+
+Bộ gợi ý không cấp quyền xem và không trả signed video URL. Chọn phim rồi tạo playback session qua luồng hiện có; mọi giới hạn CDN tại ST01 vẫn giữ nguyên.
+
+#### 9.2.4. Tín hiệu, độ tin cậy và chống suy diễn sai
+
+| Tín hiệu | Diễn giải dự kiến | Cách dùng |
+| --- | --- | --- |
+| Impression nhìn thấy | Thẻ thực sự xuất hiện trên màn hình, không chỉ API đã trả | Mẫu số exposure và đánh giá vị trí |
+| Click có attribution | Người dùng chọn một item từ feed đã phát hành | Tín hiệu yếu; không ngang với xem thành công |
+| Xem hợp lệ | Tiến độ/interval được server chấp nhận, trong thời gian phiên cho phép | Tín hiệu dương chính, khử lặp ở cấp user/title |
+| Hoàn tất | Độ phủ/ended được backend xác nhận | Tín hiệu dương mạnh hơn; một tập không đại diện đã xem hết cả bộ |
+| Thêm watchlist | Muốn lưu lại để xem; không chắc là thích sau khi xem | Tín hiệu dương vừa; không tự biến thành rating 5 sao |
+| Không quan tâm | Người dùng chủ động ẩn title khỏi gợi ý | Loại title khỏi feed cá nhân; vẫn có thể tìm trực tiếp trong catalog |
+| Dừng sớm | Có thể vì không thích, hết thời gian hoặc lỗi phát | Không mặc định là dislike, nhất là khi có buffering/error |
+| Bỏ watchlist | Có thể đã xem xong hoặc thay đổi danh sách | Không tự chuyển thành tín hiệu âm |
+
+Định nghĩa thử cho qualified play của một episode dài D giây:
+
+```text
+q(D) = min(D, max(10, min(120, 0.20 * D)))
+qualified = coveredSeconds >= q(D)
+            AND phiên/asset/sequence hợp lệ
+            AND không phải preview/test/bot đã đánh dấu
+```
+
+D phải hữu hạn và lớn hơn 0, lấy từ asset đã xác minh. coveredSeconds là độ phủ timeline được chấp nhận, không phải chứng cứ người dùng chú ý hay thời gian đồng hồ thực. Không dùng position cuối, số segment tải, autoplay hoặc một event ended do client khai để suy ra đã xem. Ngưỡng này là đề xuất có version, cần kiểm với video ngắn/dài và tốc độ phát thực tế; chưa phải định nghĩa thống kê hiện hành.
+
+Gộp tín hiệu theo user/title/ngày UTC; mỗi title đóng góp tối đa một qualified view cho một tài khoản trong bucket 00:00–24:00 UTC, unique theo user/title/day/definition_version. Gộp interval, chống event/batch trùng, giới hạn đóng góp từ xem lại và nhiều tập; phim bộ không được có lợi thế vô hạn vì nhiều episode.
+
+Trọng số sở thích thử nghiệm:
+
+```text
+a(u,i,d) = min(5,
+    2 * qualified(u,i,d)
+    + 1 * watchlistAdded(u,i,d)
+    + 1 * completedEpisode(u,i,d))
+
+r(u,i,T) = min(20, sum_d a(u,i,d) * 2^(-(T-d)/30 ngày))
+```
+
+qualified và watchlistAdded nhận 0 hoặc 1; completedEpisode đếm số tập hoàn tất có khử lặp, cap 2/title/ngày UTC. Không cộng lại watchlist mỗi lần quét khi không có thay đổi. Giới hạn 5/20, trọng số và half-life 30 ngày chỉ là cấu hình khởi đầu cần đánh giá; không phải kết quả thực nghiệm từ Netflix hoặc từ dữ liệu pj-Flim.
+
+Tổng hợp dựa trên event/receipt bền và feature watermark. Backfill watch_progress chỉ là ảnh trạng thái hiện tại: không dựng giả lịch sử ngày hoặc impression trong quá khứ. Anonymous playback hiện không có cùng mức xác thực với tài khoản; báo cáo riêng độ tin cậy và không coi đổi IP là đổi người xem.
+
+#### 9.2.5. Bước đầu: content-based chạy với Node.js
+
+1. Lấy metadata hợp lệ: thể loại, mô tả/từ khóa, people/credits, ngôn ngữ, quốc gia và năm. Thiếu metadata phải có fallback; không suy đoán giới tính, sức khỏe hoặc thuộc tính nhạy cảm của người xem.
+2. Tạo vector sparse theo nhóm. Thể loại/credits/ngôn ngữ dùng multi-hot; văn bản dùng TF-IDF với chuẩn hóa Unicode, chữ thường và thử unigram/bigram tiếng Việt. Đánh giá tác động bỏ dấu thay vì mặc định nó giữ nguyên nghĩa.
+3. Chuẩn hóa L2 từng nhóm, ghép nhóm với hệ số căn bậc hai của trọng số rồi L2 toàn vector; nhóm thiếu để zero. Thử trọng số genre 0.40, text 0.30, credits 0.15, language/country 0.10, year 0.05; không dùng title ID như thông tin ngữ nghĩa.
+4. Tính cosine giữa các vector khác zero. Vector sở thích là tổng có trọng số từ title đã có tín hiệu tích cực rồi chuẩn hóa; loại hết title Không quan tâm ở bước lọc.
+5. Tính trước top láng giềng khi catalog thay đổi. Dùng inverted index theo tag/term để giới hạn ứng viên; không chạy so sánh mọi cặp phim trong request API.
+
+```text
+idf(t) = log((1 + N) / (1 + df(t))) + 1
+v_u = normalize(sum_i r(u,i,T) * v_i)
+content(u,i) = max(0, cosine(v_u, v_i))
+```
+
+TF-IDF/cosine là nền tảng biểu diễn văn bản; tham khảo [tài liệu feature extraction của scikit-learn](https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction). Các quy tắc nhóm, hệ số và cách chuẩn hóa ở trên là thiết kế thử của dự án, không bắt buộc cài scikit-learn hoặc chuyển API sang Python.
+
+Nếu về sau thử embedding ngữ nghĩa đa ngôn ngữ, phải đo chất lượng tiếng Việt, chi phí, giấy phép và version model. Chỉ dùng metadata được phép; không gửi lịch sử tài khoản hoặc secret cho dịch vụ ngoài theo mặc định. Không có LLM hoặc lời gọi tạo embedding trên mỗi lần người dùng mở trang.
+
+#### 9.2.6. Bước tiếp: item-to-item, ALS, BPR và LightFM
+
+Với item-to-item, tạo tập user đã có tương tác xem hợp lệ trong cửa sổ thử 90 ngày. n_i là số user riêng biệt của title i, n_ij là số user chung:
+
+```text
+sim_CF(i,j) = n_ij / sqrt(n_i * n_j) * n_ij / (n_ij + lambda)
+CF(u,i) = normalized(sum_j r(u,j,T) * sim_CF(i,j))
+```
+
+Thử lambda=20 và chưa tạo cạnh nếu n_ij<5 để giảm nhiễu. Đây không phải bảo đảm ẩn danh. Lưu top 50–100 láng giềng/title; cap số title/user trước khi sinh cặp, bỏ bot/test/preview và không nhân đôi tín hiệu vì nhiều tập của một bộ. Kết quả tham khảo cách tiếp cận item-to-item của [Amazon Science](https://www.amazon.science/the-history-of-amazons-recommendation-algorithm); công thức shrinkage và các ngưỡng là đề xuất riêng.
+
+Khi thử implicit ALS, phân biệt sở thích và độ tin cậy:
+
+```text
+p_ui = 1 nếu r_ui > 0, ngược lại 0
+c_ui = 1 + alpha * log(1 + r_ui)
+
+min sum_(u,i) c_ui * (p_ui - x_u^T y_i)^2
+    + lambda * (||X||^2 + ||Y||^2)
+```
+
+Đây là một lựa chọn biến đổi confidence để thử theo mô hình [implicit-feedback factorization](https://yifanhu.net/PUB/cf.pdf). p=0 ở item chưa quan sát không khẳng định người dùng ghét item đó. Không nhét giá trị âm Không quan tâm vào r của công thức này; giữ feedback loại trừ riêng.
+
+BPR là phương án học thứ tự: tối thiểu hóa -log(sigmoid(score(u,i)-score(u,j))) cộng regularization, với i có tín hiệu dương và j được lấy mẫu từ tập đủ điều kiện tại thời điểm đó. Không lấy item chưa xuất bản, tương lai hoặc ngoài quyền truy cập làm negative dễ để thổi phồng chất lượng. Tham khảo [nghiên cứu BPR](https://arxiv.org/abs/1205.2618).
+
+LightFM kết hợp factor ID và metadata, phù hợp để đưa vào benchmark cold start; item mới chỉ tận dụng được những feature mà pipeline/model hiểu, không có phép suy ra sở thích thần kỳ khi metadata trống. Tham khảo [Metadata Embeddings for User and Item Cold-start Recommendations](https://arxiv.org/abs/1507.08439).
+
+Chọn một mô hình thắng baseline trên giao thức chung, không cộng mọi mô hình vào production. Node.js vẫn phục vụ API, kiểm quyền và xếp hạng. Bước đầu worker Node.js tính content/item-to-item; nếu cần ALS/LightFM, có thể dùng job huấn luyện Python riêng và xuất artifact/snapshot có version để Node đọc. Không train trên HTTP thread hoặc trong worker HLS/backup.
+
+#### 9.2.7. Hợp ứng viên, xếp hạng và đa dạng hóa
+
+Ứng viên ban đầu có thể gồm top theo sở thích, láng giềng của 5–20 seed title, phổ biến, mới và CF nếu model đủ điều kiện. Thử tối đa 500 ứng viên sau hợp/khử trùng; chọn 50 ứng viên tốt nhất để rerank top 20. Các con số là budget thử, phải benchmark theo catalog thật.
+
+Lọc trước và ngay trước khi trả: title công khai, có tập/asset phát được, không draft/deleted/test/preview, không trùng seed của hàng tương tự, không thuộc feedback loại trừ. Khi bổ sung entitlement/region/profile-age policy phải gọi cùng policy hiển thị/phát, không dùng điểm gợi ý để vượt quyền. Nếu không đủ 20 phim, trả ít hơn; không chèn phim chưa đủ điều kiện để lấp hàng.
+
+Chuẩn hóa các thành phần về [0,1] bằng thống kê được version hóa; không cộng trực tiếp cosine, số lượt xem và ngày phát hành. CF chưa có thì bỏ thành phần và chuẩn hóa lại trọng số; mọi thành phần không dùng được thì fallback.
+
+```text
+Phase content: H = 0.65*content + 0.20*popularity + 0.15*freshness
+Phase hybrid:  H = 0.45*content + 0.25*CF + 0.20*popularity + 0.10*freshness
+g(u) = max(n(u) / (n(u) + 10), onboardingConfidence(u))
+S(u,i) = g(u)*H(u,i) + (1-g(u))*(0.80*popularity + 0.20*freshness)
+```
+
+n(u) đếm title có tín hiệu tích cực riêng biệt, có cửa sổ/cap. Onboarding tạo prior vào nhóm thể loại của vector; thử onboardingConfidence=0.30 khi có lựa chọn hợp lệ và 0 khi bỏ qua. Người tắt cá nhân hóa luôn dùng fallback, bất kể n(u). Khi chưa có aggregate popularity hoặc thành phần đều không dùng được, fallback về catalog công khai sắp published_at/id hoặc danh sách biên tập nếu đã triển khai; không dựng lượt xem giả. Score không được quảng cáo là xác suất người dùng thích. Hệ số chỉ là baseline cần tuning; không có cam kết tăng CTR hoặc thời gian xem.
+
+popularity theo công thức suy giảm ở mục 9.3, chỉ sau tổng hợp hợp lệ; dùng log/cap và thống kê tham chiếu để tránh một title lấn át. freshness ưu tiên thời điểm công khai đầu tiên khi có dữ liệu tin cậy; không thưởng lại mỗi lần chỉnh metadata hoặc đăng lại cùng phim.
+
+Rerank theo MMR:
+
+```text
+chọn i tối đa:
+  0.80*S(u,i) - 0.20*max_(j đã chọn) cosine(v_i,v_j)
+```
+
+Tham khảo ý tưởng cân bằng liên quan và không trùng lặp của [CMU: Maximal Marginal Relevance](https://www.cs.cmu.edu/~ref/aaai-ref.html). Giá trị 0.80 là cấu hình thử của dự án. Giới hạn mềm mật độ cùng thể loại và phim lặp giữa các hàng; có thể nới đa dạng khi catalog nhỏ nhưng không nới ownership/quyền xem/Không quan tâm.
+
+Phim lẻ đã hoàn tất có thể giảm tần suất một khoảng thử 30 ngày hoặc chuyển sang hàng Xem lại. Với phim bộ, ưu tiên resume/tập tiếp đã công khai; không ẩn toàn bộ series chỉ vì đã hoàn tất một tập. Phim gỡ hoặc thay asset phải được lọc theo trạng thái hiện hành dù snapshot/model còn cũ.
+
+#### 9.2.8. Cold start, khám phá và cá nhân hóa giao diện
+
+| Tình huống | Hành vi đề xuất |
+| --- | --- |
+| Khách | Phim phổ biến/mới/biên tập và phim liên quan ngữ cảnh; không có hồ sơ hành vi server chỉ dựa vào X-Guest-Id |
+| Tài khoản mới | Cho chọn thể loại tùy ý, có nút Bỏ qua; fallback nếu chưa chọn |
+| Có ít lịch sử | Trộn nội dung theo vector với fallback qua g(u), không khóa người xem vào một thể loại |
+| Phim mới | Content-based từ metadata và một phần exposure khám phá, chưa dùng điểm CF thiếu dữ liệu |
+| Không đủ metadata | Thông báo quản trị cần bổ sung; giữ fallback, không gán vector rỗng thành giống mọi phim |
+| Tắt cá nhân hóa | Feed phổ biến/mới theo policy, không dùng taste vector hoặc training data cá nhân mới |
+| Catalog rất nhỏ | Hàng ngắn, ít lặp; không dựng dữ liệu giả để tạo cảm giác nhiều gợi ý |
+
+Sau khi logging đủ tin cậy mới thử một phần nhỏ traffic khám phá, ví dụ 5%, tối đa một slot khám phá/hàng từ tập vẫn phù hợp và đủ điều kiện. Ghi đúng xác suất chọn có điều kiện của policy thực, gồm việc loại trùng/chọn không hoàn lại; không bịa propensity từ score xếp hạng. A/B ngẫu nhiên theo tài khoản là đánh giá chính; chỉ dùng IPS/off-policy evaluation khi giả định và log hỗ trợ đã được kiểm.
+
+[Netflix MAPS, 28/08/2026](https://netflixtechblog.com/maps-netflixs-multimodal-asset-personalization-at-scale-32f96320785e) mô tả embedding đa phương thức cho ảnh/preview và exploration với propensity biết tại lúc phục vụ. Đây là bằng chứng cho bài toán cá nhân hóa asset, không phải công thức gợi ý title của pj-Flim hoặc bằng chứng cần xây ngay hệ thống giống Netflix.
+
+UI giai đoạn đầu: thay thứ tự các hàng/phim, giải thích ngắn như Cùng thể loại bạn hay xem, nút Không quan tâm/Hoàn tác, tùy chọn tắt cá nhân hóa. Seed/lý do có nêu tên phim phải còn được phép hiển thị ở thời điểm trả feed; nếu seed đã bị gỡ thì dùng lý do chung. Không nói Người dùng X đã xem…, không lộ raw score/vector. Cá nhân hóa poster/trailer để sau khi quản trị được nhiều asset/title và có số đo; không tạo transformation Cloudinary mới cho từng request.
+
+#### 9.2.9. Dữ liệu và pipeline cần bổ sung
+
+Các tên dưới đây là **bảng/quan hệ đề xuất**, chưa tồn tại trong 47 bảng hiện tại. Phải có thiết kế migration SQL, FK/index/grants, Prisma client và retention trước khi code phụ thuộc.
+
+| Quan hệ dự kiến | Dữ liệu và invariant |
+| --- | --- |
+| recommendation_preferences | user_id, enabled, lựa chọn onboarding, revision, personalization_epoch, thời điểm hiệu lực; nguồn policy có ownership |
+| recommendation_feedback | Unique(user_id,title_id); NOT_INTERESTED và thời gian; xóa record để hoàn tác; không chứa role hoặc quyền xem |
+| user_title_features | Tín hiệu tổng hợp user/title/window, source watermark và definition_version; ghi bền, không có token/email |
+| item_neighbors | title_id/neighbor_id/source/model_version, score và rank; top-K có giới hạn, không tự quyết định publication |
+| recommendation_model_versions | Dataset cutoff, feature/config/code version, checksum artifact, metrics, trạng thái và con trỏ active/previous |
+| recommendation_snapshots | Owner, surface, model/feature/catalog version, preference revision/epoch, thứ tự title/row đã chốt và expires_at |
+| recommendation_exposures | Snapshot/item/slot, served/viewed/click timestamps, policy/version/propensity nếu có; phân biệt đã trả và đã nhìn thấy |
+| recommendation_processed_events | Unique(consumer,event_id,definition_version); receipt để xử lý redelivery không tăng tín hiệu |
+| recommendation_experiment_assignments | Dành cho giai đoạn A/B: experiment/version, user scope và bucket ổn định; không lấy phân nhóm từ client |
+
+Nguồn sự kiện còn thiếu cần code rõ: LibraryService hiện ghi watchlist/progress nhưng chưa phát outbox tương ứng. REC02 phải thêm event watchlist.changed và progress.accepted (hoặc tên tương đương được version hóa) trong cùng transaction của thay đổi đã được chấp nhận. Progress event mang reference/version/cumulative coverage để projector đối soát, không cộng watched_seconds cũ như delta mới. Đồng bộ giữa watch_events và progress theo session/sequence/asset; chỉ playback.events.accepted chưa đủ chứng minh xem hợp lệ.
+
+Tận dụng outbox_events/job_runs/scheduled_jobs hiện có với handler/logical_key riêng, nhưng phải thêm publisher/consumer analytics theo allowlist sự kiện. Không tự coi publisher media hiện tại đã xử lý analytics.
+
+Luồng: ghi receipt và outbox trong transaction → publisher confirm/mandatory → queue analytics riêng → kiểm schema/ownership/policy epoch → khử lặp và cập nhật feature cùng transaction → ACK. Crash sau commit trước ACK phải được redelivery mà không nhân đôi số liệu; lỗi độc hại đưa DLQ để đối soát.
+
+Dùng topology riêng, ví dụ pjflim.recommendations.*, prefetch/budget riêng và tiến trình riêng với media worker. Message chỉ chứa ID và version/watermark cần thiết; không mang video, JWT, refresh token, mật khẩu hoặc toàn bộ hồ sơ sở thích.
+
+Thử cập nhật user feature trong vài phút, neighbors khi metadata thay đổi và rebuild batch hằng ngày; đây là mục tiêu freshness cần đo. Thay model bằng con trỏ nguyên tử sau kiểm tra artifact, giữ bản trước để rollback. Job cũ phải kiểm epoch/version để không khôi phục hồ sơ vừa xóa hoặc ghi đè model mới.
+
+Lưu snapshot/top-K trong PostgreSQL trước; cache Redis chỉ là tùy chọn tương lai. Nếu thêm Redis, key phải gồm scope, epoch, model/catalog version, TTL và invalidation; không dùng cache chung cho feed cá nhân và không đưa Redis vào đường truyền video.
+
+#### 9.2.10. REST API dự kiến và phân quyền
+
+Ngoài route GET /titles/:id/recommendations đang có, các route cá nhân hóa còn lại dưới đây chưa được code và chưa nằm trong OpenAPI hiện hành. Phải có DTO/controller/service riêng, error registry và Swagger khi triển khai.
+
+| Route dưới /api/v1 | Ý nghĩa | Xác thực/kết quả |
+| --- | --- | --- |
+| GET /titles/:id/recommendations | Route cùng thể loại đang có; giữ ngữ cảnh phim, có thể nâng điểm content sau | Công khai, chỉ nội dung đủ điều kiện; không biến thành feed riêng tư âm thầm |
+| GET /me/recommendations?surface=home&limit=20&cursor=… | Feed/snapshot cá nhân hoặc fallback khi đã tắt | JWT/session của chính user; 200, data/page và metadata version/mode |
+| GET /me/recommendation-preferences | Đọc lựa chọn hiện hành và ETag/revision để sửa | JWT/session, ownership; 200 |
+| PATCH /me/recommendation-preferences | Bật/tắt, lựa chọn onboarding được whitelist | Ownership, If-Match/revision; 200 |
+| PUT /me/recommendation-feedback/:titleId | Đặt NOT_INTERESTED | Ownership; idempotent, 200 |
+| DELETE /me/recommendation-feedback/:titleId | Hoàn tác Không quan tâm | Ownership; idempotent, 204 |
+| POST /me/recommendation-events | Batch impression/click có proof gắn snapshot/item/scope | 202 sau receipt/outbox bền; tối đa 50 event/64KB theo hợp đồng chốt |
+| POST /me/recommendation-resets | Yêu cầu xóa/reset hồ sơ suy ra theo epoch mới | Ownership, Idempotency-Key; 202 và operation theo owner |
+| GET /me/recommendation-resets/:operationId | Đọc trạng thái reset của chính tài khoản | Ownership; 200, không dùng route admin/media để thay thế |
+
+GET riêng tư dùng Cache-Control: private, no-store; user_id lấy từ principal, không nhận từ query/body. Snapshot cursor ký và gắn owner/surface/model/epoch/expiry; không phân trang bằng score thay đổi theo thời gian. Trước mỗi trang lọc lại eligibility và feedback. Phim bị gỡ bị bỏ, có thể trả trang ngắn; không nhét item mới làm lặp/xáo thứ tự snapshot.
+
+Token chứng minh item do server phát hành phải gắn snapshot, title, vị trí, owner, expiry và policy version. Khóa/purpose ký dành cho attribution có version và chỉ ở server; proof không dùng thay access JWT hoặc playback-management token. Nó chỉ phục vụ attribution, không có quyền phát video. Event ID có dedup và fingerprint; client gửi lại cùng ID khác payload bị từ chối. Browser chỉ ghi viewed khi thẻ đủ mức hiển thị/thời gian đã chốt, ví dụ 50% trong 1 giây ở tab active; server không coi khai báo đó là bằng chứng chống gian lận tuyệt đối.
+
+Attribution tới qualified play cần mở rộng DTO tạo playback có trường proof được whitelist/kiểm tra, hoặc cơ chế liên kết server tương đương. Không nhét thêm trường vào CreatePlaybackDto hiện đang rỗng và mong backend tự nhận. Chốt cửa sổ attribution, ví dụ tối đa 24 giờ sau click hợp lệ; mỗi playback chỉ gắn một exposure theo quy tắc công bố, giữ nguyên version của lần hiển thị thay vì chấm lại lịch sử bằng model mới. Phân biệt click, autoplay và lượt mở trang; không có proof thì không ghi giả là lượt xem do gợi ý.
+
+Dùng mã hiện có AUTHENTICATION_REQUIRED/401, AUTH_FORBIDDEN/403, REQUEST_INVALID_CURSOR/400, RATE_LIMITED/429 và lỗi validation/idempotency theo hợp đồng chung. Đề xuất RECOMMENDATION_FEED_EXPIRED/409 để bắt đầu lại feed khi snapshot hết hiệu lực; RECOMMENDATION_EVENT_INVALID/403 cho proof sai. Đây là mã dự kiến, phải bổ sung registry trước khi dùng.
+
+Hạ tầng model lỗi có thể trả fallback 200 với mode rõ; lỗi DB không kiểm được quyền/eligibility trả SERVICE_UNAVAILABLE/503. Không nuốt 401/403 và đổi thành guest để tránh kiểm quyền. Không trả danh tính hàng xóm CF hoặc signed media URL.
+
+#### 9.2.11. Quyền riêng tư và an toàn vận hành
+
+- Opt-in/opt-out và reset có policy rõ; tắt cá nhân hóa phải có hiệu lực phục vụ ngay dù snapshot/job/cache còn cũ. Reset tăng epoch và có mốc lịch sử được phép dùng lại, tránh xóa vector rồi tự học lại ngay từ toàn bộ lịch sử cũ.
+- Tách lưu resume phục vụ người dùng khỏi cho phép dùng lịch sử để học gợi ý. Không tự xóa audit, security log hoặc resume khi chỉ yêu cầu reset gợi ý; mỗi loại có quy trình riêng.
+- Dữ liệu học dùng định danh nội bộ/pseudonym có quản lý khóa; không copy email, mật khẩu, token, raw IP, mã MFA hoặc truy vấn nhạy cảm vào artifact, queue hay log. Pseudonym không tự biến dữ liệu thành vô danh.
+- Đề xuất raw exposure/event gợi ý giữ 30 ngày, feature hành vi tối đa 90 ngày và aggregate vận hành 90 ngày, đối chiếu ST04. Đây là cấu hình cần chốt theo mục đích và policy, không phải cam kết tuân thủ pháp luật chỉ nhờ TTL.
+- Yêu cầu xóa dữ liệu học phải xét cả snapshots, training export, artifact và mô hình cộng tác; loại đóng góp khi rebuild/retrain theo quy trình/thời hạn công bố. Xóa một vector không đồng nghĩa đã unlearn khỏi mọi model. Rollback không được khôi phục dữ liệu đã bị yêu cầu xóa.
+- Role DB cho recommendation worker có grants hẹp tới metadata/tín hiệu được phép và bảng suy ra; không đọc credential hoặc sửa role/publication. Không mặc định tái sử dụng quyền rộng của migration owner.
+- Quyền admin về cấu hình/model/metrics là đề xuất mới cần seed RBAC, step-up và audit; không nhét cấu hình ML vào SiteSettingsDto chỉ cho name/description/supportEmail. Chỉ cho xem aggregate phù hợp; không thêm API công khai để đọc sở thích tài khoản khác.
+- Giới hạn batch/rate trước xử lý nặng, cap đóng góp theo user/title/window, phát hiện spam và giới hạn tài nguyên job. Analytics lỗi/DLQ không được chặn playback, upload, HLS hoặc backup.
+
+#### 9.2.12. Đánh giá offline và thử nghiệm online
+
+**Offline.** So sánh cùng thể loại hiện tại, popularity, content-based và hybrid trên cùng user/cohort/candidate policy. Tách train trước T0, validation trong T0–T1, test sau T1 theo timeline toàn hệ thống; fit IDF, feature statistics và model chỉ từ dữ liệu cho phép tại mốc train. Lưu catalog/feature version tại thời điểm quyết định để không đưa phim hoặc metadata tương lai vào kết quả.
+
+Dữ liệu cũ không có snapshot eligibility/impression không đủ để tái dựng chính xác lịch sử; benchmark backfill phải ghi giới hạn, không dùng làm bằng chứng online. Nghiên cứu [A Critical Study on Data Leakage in Recommender System Offline Evaluation](https://arxiv.org/abs/2010.11060) chỉ ra rủi ro bỏ qua timeline toàn cục.
+
+Đo Recall@20/NDCG@20, candidate recall trước ranking, catalog coverage, độ đa dạng trong hàng, novelty và chất lượng theo nhóm mới/cũ, ít/nhiều lịch sử, phim mới và thể loại ít lượt xem. Chốt binary/graded relevance trước khi thử; không dùng rating RMSE để đại diện chất lượng top-N. Định nghĩa và implementation tham khảo [Recommenders evaluation](https://github.com/recommenders-team/recommenders/blob/main/recommenders/evaluation/python_evaluation.py).
+
+Công thức kiểm tra metric trên fixture nhỏ:
+
+```text
+Recall@K = |TopK giao Relevant| / |Relevant|
+DCG@K = sum_(k=1..K) (2^rel_k - 1) / log2(k+1)
+NDCG@K = DCG@K / IDCG@K
+```
+
+Relevant và rel phải theo định nghĩa xem hợp lệ đã chốt, không lấy vị trí tua hoặc lượt bấm đơn lẻ làm ground truth. User không có relevant target/IDCG=0 được báo riêng cùng số lượng cohort, không gán NDCG=1 hoặc âm thầm loại mà không công bố.
+
+Ưu tiên đánh giá trên toàn tập catalog đủ điều kiện tại thời điểm test. Nếu phải lấy mẫu, công bố cách lấy/số mẫu/seed và không so điểm sampled với full-catalog; [On Sampled Metrics for Item Recommendation, KDD 2020](https://research.google/pubs/on-sampled-metrics-for-item-recommendation/) cho thấy lấy mẫu có thể làm thay đổi kết luận tương đối giữa mô hình.
+
+MovieLens có thể dùng để thử code đánh giá theo điều kiện của từng bộ dữ liệu, không gộp vào hành vi user thật hoặc coi điểm MovieLens là hiệu quả của web phim. Đọc [README/điều kiện ml-latest](https://files.grouplens.org/datasets/movielens/ml-latest-README.html); chọn bản cố định cho báo cáo có thể lặp lại.
+
+**Online.** Randomize ở cấp tài khoản với bucket ổn định, phân tích theo đơn vị đó; chốt metric và minimum detectable effect trước. Primary metric đề xuất: số qualified play được attribution hợp lệ trên mỗi tài khoản đã được phân nhóm đủ điều kiện, có cả trường hợp không tương tác. CTR và tỷ lệ xem tiếp chỉ là bổ trợ; tránh thay mẫu số theo hành vi bị treatment tác động.
+
+Tính sample size từ baseline/variance thực tế. Dự kiến quan sát tối thiểu hai chu kỳ tuần và đủ mẫu theo power analysis, không coi đủ 14 ngày là tự động đủ dữ liệu. Dùng khoảng tin cậy/analysis theo user, không xem p-value hằng ngày để dừng ngay khi đẹp. Theo dõi lỗi phát, report/Không quan tâm, p95 API, opt-out và sự đa dạng như guardrail.
+
+Không chốt mức tăng CTR hoặc NDCG khi chưa có dữ liệu. Model chỉ được promotion nếu đạt tiêu chí đã đăng ký và không làm xấu guardrail ngoài mức cho phép; kết quả thiếu mẫu phải ghi INSUFFICIENT_DATA, không gọi là PASS.
+
+#### 9.2.13. Gate triển khai và hiệu năng
+
+| Gate | Điều kiện bắt buộc |
+| --- | --- |
+| Dữ liệu | Có event definition/version, ownership, receipt/dedup, opt-out/epoch, test fake/tampered proof và đối chiếu aggregate với fixture |
+| Content MVP | Có fallback cho khách/người mới/zero vector, không lộ draft hoặc người dùng khác; explainability đúng nguồn và UI có Hoàn tác |
+| CF pilot | Đo độ thưa/độ phủ và số user-title dương; cặp hỗ trợ quá ít không tạo cạnh. Ví dụ chỉ thử phục vụ CF khi láng giềng đủ hỗ trợ phủ ít nhất 30% catalog hoạt động; đây là ngưỡng thử phải điều chỉnh |
+| Model học | Offline vượt baseline theo tiêu chí chốt, có feature/dataset cutoff/checksum, không future leakage, artifact và rollback tái lập được |
+| Online | Chốt power/metric/cohort trước, đủ sample và không vi phạm guardrail; không lấy số đo từ fixture làm hiệu quả kinh doanh |
+| Quyền và privacy | Không trả sai owner/draft/feedback loại trừ; opt-out có hiệu lực với cả cache/job cũ; reset/xóa có đối soát |
+| Hiệu năng | Mục tiêu thử p95 GET feed ≤200ms ở catalog 5.000 title/100 user đồng thời, ghi rõ máy/dataset/cold-warm/DB pool; chưa phải khả năng đã đo |
+| Khôi phục | Broker/model/cache lỗi có fallback an toàn; DB eligibility lỗi không cấp nội dung; job redelivery và model promotion/rollback không nhân đôi feature |
+
+Giới hạn request/ứng viên/seed/top-K phải cấu hình và benchmark. Không tính ma trận N×N hoặc load model lớn trên HTTP thread. Nâng lên ANN/two-tower/sequence model chỉ khi đo được bottleneck hoặc cải thiện đáng tin so với baseline đơn giản.
+
+Trình tự phát hành dự kiến: kiểm thử cô lập → shadow không đổi feed → canary nhỏ theo tài khoản → A/B đủ mẫu → mở rộng, với công tắc quay về baseline đã kiểm. REC09 không chặn content MVP hoặc các ticket sửa lỗi streaming hiện có.
+
 
 ### 9.3. Trending và lượt xem
 
@@ -421,6 +951,32 @@ MVP thu lượt xem hợp lệ từ sự kiện mục 6.6 và có thể dùng h�
 
 Sắp theo season/episode number có unique constraint; lấy tập kế tiếp đã xuất bản và phát được. Đếm ngược thử 10 giây, có hủy. Không nhảy sang tập khác do retry; nếu autoplay bị chặn thì hiện nút phát. Bỏ qua intro/credits chỉ khi admin cung cấp mốc đã kiểm tra.
 
+### 9.6. Nguồn điểm số và bài review bên ngoài
+
+Nghiên cứu ngày 13/11/2026 bằng ba agent theo yêu cầu người dùng. Chi tiết nguồn, endpoints, giới hạn kiểm chứng và thiết kế: [IMDb, Metacritic và các nguồn rating/review](../design/external-ratings-reviews-research.md). **Đây là nghiên cứu; chưa có importer, schema, credential hoặc API/UI external reviews chạy thật.** Rating thành viên pj-Flim là tính năng riêng, không phải dữ liệu nhập từ nguồn khác.
+
+| Nguồn | Quyết định thiết kế và gate |
+| --- | --- |
+| IMDb | TSV public có weighted aggregate rating/vote count, không review text. Chốt phạm vi personal/non-commercial/display trước dùng; licensed ratings API/bulk, User Reviews và AI Summaries là các sản phẩm/entitlement khác nhau |
+| Metacritic | Có API qua Fabric Origin, account duyệt + gói core trả phí/ToS; không có trong Free Trial. Match Origin Movie/Show ID, không dùng IMDb ID thay thế; quote/link khác toàn bài, user score khác audience text |
+| TMDB | Ưu tiên adapter thử đầu tiên nếu phù hợp license/attribution; movie/TV review API, phân trang/ngôn ngữ, rating nullable. Commercial cần tuyến cấp phép; chưa thử bằng key |
+| Trakt | Nhánh app-scoped ratings/comments theo policy hiện hành, không bulk harvest/mirror catalog |
+| Rotten Tomatoes/Letterboxd | Licensing/approval/embedding theo nguồn; không xem endpoint public là quyền import, không dùng agent trái điều kiện dự án/API |
+| Publisher/RSS | API/feed/quyền riêng của tòa soạn cho full article; chưa có quyền thì chỉ card/link với metadata hợp lệ hoặc biên tập độc lập |
+
+Quyết định kỹ thuật:
+
+- API/ETL xác định cho thu thập; agent hỗ trợ source research, matching, discovery và draft QA/summary **chỉ khi quyền xử lý cho phép**. External text không phải instruction; không cấp agent quyền tự mua gói, lấy secret, vượt login/bot block hoặc publish DB.
+- Mapping có entity type/scope/version, IMDb `tt...`, TMDB media type và Origin ID riêng. Phân biệt movie/series/season/episode, remake và mùa kỹ thuật của phim lẻ; candidate mơ hồ cần admin duyệt.
+- Tách source policy, external mappings, rating snapshots, review references và ingestion runs; tên bảng/API trong nghiên cứu là đề xuất, chưa thay baseline 47 bảng/87 operation.
+- Queue/publisher/consumer external data riêng; outbox media hiện chỉ hai loại media event, chưa hỗ trợ ingestion này. Fetch → staging/validate → check policy/mapping version → atomic promotion; replay/429/outage/incomplete snapshot không tạo điểm giả.
+- Hiển thị từng nguồn/thang điểm/count/scope/freshness/linkback. Không đổi tỷ lệ positive thành điểm trung bình, không cộng votes giữa nguồn, không gọi điểm tự tính là Metascore hoặc external user review là review pj-Flim.
+- Nội dung quote, full text, dịch, AI summary và ML/embeddings có quyền riêng; source policy kiểm field/allowed uses, region, retention/cache/backup/purge/expiry/attribution. Thiếu quyền thì không nhập/hiển thị trường đó; quyền với dữ liệu review phải được xác minh riêng theo nguồn/use case.
+- API public chỉ trả dữ liệu đã được phép và title đã xuất bản; admin DTO/controller/service, RBAC/audit/ETag/idempotency và Swagger chỉ bổ sung khi code. Outage nguồn không chặn playback/media READY.
+- Giới hạn nghiên cứu: PDF ToS Metacritic do provider liên kết trả 404, Fandom Terms gặp 402, Letterboxd embed guide gặp 403; không viện nội dung indexed/bản cũ như điều khoản hiện hành. Quota/giá/coverage/quyền account chưa xác minh thực.
+
+Lộ trình EXT01–EXT08 tại mục 14.7 đều NOT_STARTED. Không tải dataset, gọi API có phí, cài framework agent, gửi yêu cầu licensing hoặc đưa review lên web trong lượt nghiên cứu. ST01–ST06, REC01–REC09 và ENC01–ENC09 giữ nguyên.
+
 ## 10. Dữ liệu và API
 
 ### 10.1. Bảng chính
@@ -445,6 +1001,7 @@ Sắp theo season/episode number có unique constraint; lấy tập kế tiếp 
 - Unique email chuẩn hóa, slug, số mùa/tập, watchlist và progress theo user/episode; chỉ một asset active cho mỗi episode. Rating sau MVP có unique theo user/title.
 - Role/permission codes và bảng nối có unique constraint; users giữ status/authVersion, phiên giữ MFA/step-up timestamps và token family. Secret MFA được mã hóa, token/recovery codes lưu hash; không đặt các trường này trong public/admin DTO mặc định.
 - Các bảng hỗ trợ được cụ thể hóa trong thiết kế backend: auth_replay_receipts (receipt credential ngắn hạn có mã hóa), policy_locks (invariant quản trị cuối), media_outputs/source_backups, resume_heads/playback_event_batches và operations/idempotency_records/scheduled_jobs. Đây là phần schema của C02, không được bỏ qua chỉ vì bảng tổng quan rút gọn.
+- Cá nhân hóa sau MVP có các quan hệ đề xuất tại mục 9.2.9: preferences/feedback, user-title features, item neighbors, model versions, snapshots/exposures, processed events và experiment assignments. Chúng chưa nằm trong baseline 47 bảng; phải có migration/grants/retention trước khi triển khai REC01–REC02.
 - Baseline database bổ sung homepage_banners, system_settings (chỉ cấu hình không chứa secret) và title_daily_stats (tổng hợp có version định nghĩa); tổng 47 bảng. Kiểu dữ liệu, FK ghép, partial unique và grants lấy từ database design/DDL; C02 cần chuyển thành migration Prisma kèm SQL thủ công và kiểm thử trên PostgreSQL server riêng.
 - audit_logs có append-only policy, allowlisted diff và index mục 7.5; audit_exports giữ owner/scope/status/expiresAt và storage reference riêng tư. Security event failures không bị xóa do rollback transaction nghiệp vụ.
 - Index khóa ngoại, publication/date, watch progress theo user/updated_at, outbox theo trạng thái/next_attempt_at; phân vùng watch_events khi dữ liệu đo được yêu cầu.
@@ -461,6 +1018,9 @@ Sắp theo season/episode number có unique constraint; lấy tập kế tiếp 
 - Path phía frontend như `/search` hoặc `/titles/[slug]` không quyết định tên API. API tìm phim dùng filter `q` trên collection `/titles`.
 
 ### 10.3. Danh mục endpoint và status thành công
+
+Các API cá nhân hóa mới tại mục 9.2.10 là đề xuất của REC04, chưa có trong OpenAPI/runtime hiện hành; không suy ra đã triển khai chỉ từ bảng kế hoạch.
+
 
 Các path sau có tiền tố `/api/v1`. Status là hành vi của API ứng dụng; upload trực tiếp/CDN Cloudinary có giao thức riêng. `201` trả `Location` tới tài nguyên vừa tạo; `202` trả receipt/status URL sau khi công việc đã được ghi bền.
 
@@ -823,14 +1383,14 @@ P0: bắt buộc trước mở công khai. P1: hoàn thành trước phát hành
 
 Các đầu việc dưới đây ghi nhận trạng thái thực tế sau C08 core API. Chưa có đầu việc ST01–ST06 nào được sửa hoặc nghiệm thu trong lần cập nhật plan này. 561 kiểm tra HTTP/client/worker và kiểm tra manifest/segment video thật vẫn là bằng chứng hiện có; chưa thay cho bài phát trên trình duyệt, kiểm thử tải hoặc nghiệm thu production.
 
-| ID | Ưu tiên | Vấn đề đã xác nhận | Công việc cần làm | Tiêu chí nghiệm thu |
-| --- | --- | --- | --- | --- |
-| ST01 | P0: chốt chính sách trước công khai; quyền có hạn phải đạt trước phát hành | URL Cloudinary hiện là signed URL tĩnh, delivery.expiresAt=null; đóng/hết hạn phiên API không thu hồi URL CDN đã cấp | Giữ production guard; xác minh khả năng token/cookie tại tài khoản CDN, bảo vệ manifest và từng segment. Nếu MVP miễn phí chấp nhận chia sẻ link, ghi rõ quyết định và giới hạn; bật cờ cho phép không được coi là đã có URL hết hạn | Khi yêu cầu quyền có hạn: URL/segment bị từ chối sau TTL, thử tối thiểu 3 vòng gia hạn, pause qua hạn và thu hồi trên player JS/native; không cấp lại quyền đã thu hồi. Không hứa xóa byte đã buffer. Liên quan F06/F07 |
-| ST02 | P0 trước thử nghiệm công khai | Tạo phiên đang dùng quota 60 request/10 phút theo req.ip cho cả tài khoản/guest; chưa cấu hình proxy tin cậy nên nhiều người qua một reverse proxy có thể bị chặn chung | Sửa quota theo endpoint + user/guest và lớp chống lạm dụng IP; cấu hình trust proxy theo topology/allowlist cụ thể, không tin mọi X-Forwarded-For. Dùng store chung khi có nhiều API instance | Nhiều tài khoản sau cùng proxy không bị chặn nhầm bởi quota phiên của nhau; một actor vượt ngưỡng nhận RATE_LIMITED/429; giả header IP không né được quota; kiểm tra direct/proxy và nhiều instance. Liên quan F17/F27 |
-| ST03 | P0 trước thử nghiệm công khai | Events ghi quota theo token trước khi xác minh token/session; đổi token giả liên tục có thể tạo nhiều security_events và gây tải DB | Chặn theo IP/toàn cục trước truy vấn tốn tài nguyên; kiểm token/session rồi mới tính quota theo phiên. Không tạo khóa/bản ghi quota bền cho từng token giả; log từ chối phải có lấy mẫu/tổng hợp, giới hạn và retention | Gửi token giả thay đổi liên tục bị chặn, không ghi watch_events/outbox hoặc tăng DB theo từng token giả; token hợp lệ vẫn có quota riêng, response lỗi giữ đúng hợp đồng, không lộ token trong log. Đo DB write rate và latency khi bị spam. Liên quan F17/F18/F23 |
-| ST04 | P1 trước nghiệm thu vận hành MVP | Telemetry đã ghi receipt/events/outbox nhưng chưa có consumer tổng hợp và cleanup; dữ liệu có thể tích lũy | Thêm consumer analytics qua queue riêng, dedup/checkpoint, tổng hợp QoE/lượt xem và cảnh báo lag/dung lượng. Viết retention có batch cho raw event 30 ngày, aggregate 90 ngày; xử lý receipt/outbox theo TTL và trạng thái, không xóa event chưa tổng hợp hoặc audit theo job telemetry | Redelivery không tăng view; kết quả tổng hợp đối chiếu dữ liệu mẫu; cleanup chạy lặp an toàn, không xóa dữ liệu đang xử lý; analytics hỏng không chặn phát/resume hoặc làm nghẽn media queue. Liên quan F19/F23 |
-| ST05 | P0 cho ma trận phát và ngưỡng tải trước mở công khai | Chưa có player frontend; chưa kiểm chứng chuyển chất lượng, buffering, tua, gia hạn và tải đồng thời trong trình duyệt | Làm C09/C10, nối session/renewal/events/progress. Kiểm Chrome/Android và Safari/iPhone, hls.js/native theo capability; chạy ma trận mạng và tải ở mục 12.1, ghi giới hạn lưu lượng dựa trên số đo | Báo cáo khung hình đầu, rebuffer, seek, HD, API p95/error rate/DB pool; thử mất mạng, pause quá hạn, đổi tập và teardown. Có bằng chứng không phát chồng, retry vô hạn hoặc tăng bộ nhớ liên tục. Liên quan F05/F07/F08/F11/F25 |
-| ST06 | P0 trước production | Backup đang cùng máy, webhook dùng tunnel HTTPS tạm theo cấu hình local đã chọn; chưa diễn tập kho backup độc lập/restore thật | Giữ cấu hình local cho phát triển; trước production dùng kho backup độc lập với versioning/private access, webhook HTTPS cố định và runbook backup/restore. Kiểm tra khả năng phục hồi khi máy hoặc tunnel local mất | Phục hồi một phim thử từ backup độc lập, tạo lại HLS, kiểm checksum/timeline và pointer; ghi thời gian/usage. Restart webhook/broker và callback lặp không mất việc hoặc tạo trùng. Liên quan F03/F04/F20/F26 |
+| ID   | Ưu tiên                                                                    | Vấn đề đã xác nhận                                                                                                                                                      | Công việc cần làm                                                                                                                                                                                                                                                                       | Tiêu chí nghiệm thu                                                                                                                                                                                                                                                |
+| ---- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ST01 | P0: chốt chính sách trước công khai; quyền có hạn phải đạt trước phát hành | URL Cloudinary hiện là signed URL tĩnh, delivery.expiresAt=null; đóng/hết hạn phiên API không thu hồi URL CDN đã cấp                                                    | Giữ production guard; xác minh khả năng token/cookie tại tài khoản CDN, bảo vệ manifest và từng segment. Nếu MVP miễn phí chấp nhận chia sẻ link, ghi rõ quyết định và giới hạn; bật cờ cho phép không được coi là đã có URL hết hạn                                                    | Khi yêu cầu quyền có hạn: URL/segment bị từ chối sau TTL, thử tối thiểu 3 vòng gia hạn, pause qua hạn và thu hồi trên player JS/native; không cấp lại quyền đã thu hồi. Không hứa xóa byte đã buffer. Liên quan F06/F07                                            |
+| ST02 | P0 trước thử nghiệm công khai                                              | Tạo phiên đang dùng quota 60 request/10 phút theo req.ip cho cả tài khoản/guest; chưa cấu hình proxy tin cậy nên nhiều người qua một reverse proxy có thể bị chặn chung | Sửa quota theo endpoint + user/guest và lớp chống lạm dụng IP; cấu hình trust proxy theo topology/allowlist cụ thể, không tin mọi X-Forwarded-For. Dùng store chung khi có nhiều API instance                                                                                           | Nhiều tài khoản sau cùng proxy không bị chặn nhầm bởi quota phiên của nhau; một actor vượt ngưỡng nhận RATE_LIMITED/429; giả header IP không né được quota; kiểm tra direct/proxy và nhiều instance. Liên quan F17/F27                                             |
+| ST03 | P0 trước thử nghiệm công khai                                              | Events ghi quota theo token trước khi xác minh token/session; đổi token giả liên tục có thể tạo nhiều security_events và gây tải DB                                     | Chặn theo IP/toàn cục trước truy vấn tốn tài nguyên; kiểm token/session rồi mới tính quota theo phiên. Không tạo khóa/bản ghi quota bền cho từng token giả; log từ chối phải có lấy mẫu/tổng hợp, giới hạn và retention                                                                 | Gửi token giả thay đổi liên tục bị chặn, không ghi watch_events/outbox hoặc tăng DB theo từng token giả; token hợp lệ vẫn có quota riêng, response lỗi giữ đúng hợp đồng, không lộ token trong log. Đo DB write rate và latency khi bị spam. Liên quan F17/F18/F23 |
+| ST04 | P1 trước nghiệm thu vận hành MVP                                           | Telemetry đã ghi receipt/events/outbox nhưng chưa có consumer tổng hợp và cleanup; dữ liệu có thể tích lũy                                                              | Thêm consumer analytics qua queue riêng, dedup/checkpoint, tổng hợp QoE/lượt xem và cảnh báo lag/dung lượng. Viết retention có batch cho raw event 30 ngày, aggregate 90 ngày; xử lý receipt/outbox theo TTL và trạng thái, không xóa event chưa tổng hợp hoặc audit theo job telemetry | Redelivery không tăng view; kết quả tổng hợp đối chiếu dữ liệu mẫu; cleanup chạy lặp an toàn, không xóa dữ liệu đang xử lý; analytics hỏng không chặn phát/resume hoặc làm nghẽn media queue. Liên quan F19/F23                                                    |
+| ST05 | P0 cho ma trận phát và ngưỡng tải trước mở công khai                       | Đã nghiệm thu Chrome Windows với video thật 720p, chuyển mức/tua/mất mạng/đổi tập/resume; còn thiết bị thật Android/Safari, mạng yếu, QoE, gia hạn dài và tải           | Làm C09/C10, nối session/renewal/events/progress. Kiểm Chrome/Android và Safari/iPhone, hls.js/native theo capability; chạy ma trận mạng và tải ở mục 12.1, ghi giới hạn lưu lượng dựa trên số đo                                                                                       | Báo cáo khung hình đầu, rebuffer, seek, HD, API p95/error rate/DB pool; thử mất mạng, pause quá hạn, đổi tập và teardown. Có bằng chứng không phát chồng, retry vô hạn hoặc tăng bộ nhớ liên tục. Liên quan F05/F07/F08/F11/F25                                    |
+| ST06 | P0 trước production                                                        | Backup đang cùng máy, webhook dùng tunnel HTTPS tạm theo cấu hình local đã chọn; chưa diễn tập kho backup độc lập/restore thật                                          | Giữ cấu hình local cho phát triển; trước production dùng kho backup độc lập với versioning/private access, webhook HTTPS cố định và runbook backup/restore. Kiểm tra khả năng phục hồi khi máy hoặc tunnel local mất                                                                    | Phục hồi một phim thử từ backup độc lập, tạo lại HLS, kiểm checksum/timeline và pointer; ghi thời gian/usage. Restart webhook/broker và callback lặp không mất việc hoặc tạo trùng. Liên quan F03/F04/F20/F26                                                      |
 
 Phạm vi code dự kiến:
 
@@ -919,6 +1479,7 @@ Ví dụ dung lượng truyền tại tổng bitrate trung bình 3 Mbps, chưa g
 - Contract tests kiểm từng operation theo OpenAPI: success/status/Location, 204/304 không body, 400 so với 422, Problem Details và field pointers, 401 challenge, 405 Allow, 428/412/409, Retry-After, no-store và X-Request-Id. Kiểm cả lỗi framework/proxy do hệ thống quản lý, không chỉ domain error trong service.
 - Kiểm idempotency đồng thời, payload khác, key hết hạn/credential hết hạn, đổi actor và retry sau timeout. Cùng key phải trỏ cùng operation; không replay credential bị thu hồi. Phân biệt HTTP response lỗi với JobFailure trong operation đọc thành công.
 - Sandbox Cloudinary: upload video mẫu, eager completion, mất/lặp webhook, manifest/segment authorization, thay version, xóa và đối soát; theo dõi quota phát sinh.
+- Khi tối ưu encoding: bổ sung bộ benchmark mục 6.7.10–6.7.12, metadata/GOP/segment/giải mã, quality review và chi phí; phân biệt profile/codec/output thật với cấu hình mong muốn. ENC01–ENC09 chưa chạy, không lấy HTTP integration hoặc một lần phát 720p làm kết quả VMAF/nén.
 - Playwright cho luồng admin/người xem và lỗi UI; bổ sung thiết bị thật cho codec, HLS native, fullscreen và autoplay. Browser giả lập không thay thế giải mã trên thiết bị thật.
 - Video mẫu gồm phim lẻ, phim bộ nhiều mùa, 24/30 FPS, audio khác nhau, phụ đề tiếng Việt, cảnh tối/chuyển động, file hỏng và nguồn thấp hơn 1080p.
 - Kiểm thử tải API độc lập với CDN; test delivery/video có ngân sách và dataset rõ, không đánh tải vô hạn lên provider.
@@ -978,7 +1539,7 @@ Các đầu việc có thể làm đồng thời sau khi hợp đồng API đư�
 
 Backlog sau MVP, theo ưu tiên:
 
-1. Đánh giá và gợi ý nâng cao: mở API ratings khi schema/UI/test đã sẵn sàng; bổ sung vector nội dung, trending suy giảm và cá nhân hóa khi có dữ liệu. Không dùng việc chưa có các tính năng này để chặn mở MVP đã đạt điều kiện vận hành.
+1. Gợi ý và cá nhân hóa: triển khai REC01–REC09 theo mục 9.2/14.5, từ dữ liệu và content-based đến hybrid theo bằng chứng. Không cần chờ ratings; API đánh giá sao là công việc riêng khi schema/UI/test sẵn sàng. Không dùng việc chưa có học máy để chặn MVP đã đạt điều kiện vận hành.
 2. VIP/thanh toán: entitlement server-side, webhook thanh toán có chữ ký/idempotency, hết hạn/gia hạn nhiều vòng, giới hạn xem đồng thời, kiểm thử quyền tới segment. F07 bắt buộc trước phát hành phần này.
 3. Tối ưu AV1/HEVC và profile theo nội dung sau benchmark; phân tích chi phí mã hóa so với lưu lượng tiết kiệm.
 4. Nhiều hồ sơ, hồ sơ trẻ em, cài đặt ngôn ngữ/audio; gợi ý hành vi, đánh giá offline và A/B test khi đủ dữ liệu.
@@ -988,12 +1549,12 @@ Backlog sau MVP, theo ưu tiên:
 
 Đây là thứ tự lập trình theo module/file và kết quả chạy được. Lịch G0–G3 ở trên là khung điều phối; công việc thử nghiệm, ngân sách và phát hành không thay thế các bước code bên dưới. Code nền độc lập có thể bắt đầu trước khi có credential Cloudinary; nghiệm thu media thật phải dựa trên G0.
 
-Các đường dẫn dưới đây lấy `E:\pj-Flim` làm gốc dự án; source ứng dụng vẫn là phần dự kiến. Packages database/media chỉ chạy ở Node.js, không được import vào frontend bundle hoặc làm lộ secret.
+Các đường dẫn dưới đây lấy `E:\pj-Flim` làm gốc dự án; source thực tế gồm API, worker và web; tên module chi tiết bên dưới là hướng thiết kế, đối chiếu source hiện hành. Database/provider/config chỉ chạy Node; browser chỉ được import helper browser-upload an toàn.
 
 ```text
 pj-Flim/
   apps/api/src/                # NestJS controllers, services, guards
-  apps/web/src/                # Next.js pages, components, hooks, player
+  apps/web/src/                # React/Vite pages, components, auth và player
   apps/worker/src/             # RabbitMQ consumers và tác vụ nền
   packages/contracts/src/      # Error codes, job schemas, generated API types
   packages/database/prisma/    # Schema, migrations, seed
@@ -1005,7 +1566,7 @@ pj-Flim/
 
 | Bước code | Phần cần viết                                                  | Kết quả chạy được                        |
 | --------- | -------------------------------------------------------------- | ---------------------------------------- |
-| C01       | Khung Next.js, NestJS, worker, cấu hình/Docker                 | Web gọi API health, dịch vụ kết nối được |
+| C01       | Khung React/Vite, NestJS, worker, cấu hình/Docker              | Web gọi API health, dịch vụ kết nối được |
 | C02       | Prisma schema, migration, seed và constraints                  | Database mới migrate/seed thành công     |
 | C03       | REST/error registry, filter, validation, OpenAPI và API client | Status/response/code theo hợp đồng       |
 | C04       | Auth/session/role và UI tài khoản                              | Đăng nhập và phân quyền thật             |
@@ -1081,7 +1642,7 @@ Core đã triển khai và nghiệm thu local: outbox confirm, quorum queue/DLQ,
 
 #### C08. Code backend phát video và sự kiện
 
-Trạng thái hiện tại: core API đã chạy local. Trước thử nghiệm công khai phải sửa ST02–ST03; ST01 còn giới hạn CDN như mục 11.1. Admin preview và frontend hooks chưa triển khai.
+Trạng thái hiện tại: core API đã chạy local. Trước thử nghiệm công khai phải sửa ST02–ST03; ST01 còn giới hạn CDN như mục 11.1. Admin preview còn thiếu; frontend đã nối lifecycle session/renewal/events/progress ở Watch và PlaybackTracker.
 
 - Viết `modules/playback/` với `playback-sessions.controller.ts`, service/repository và `can-play-episode` guard cho khách/tài khoản/preview admin.
 - Viết tạo/đóng phiên, manifest đúng phiên bản, idempotency và renewal nhiều vòng khi credential có hạn; từ chối cấp lại sau thu hồi.
@@ -1094,7 +1655,7 @@ Trạng thái hiện tại: core API đã chạy local. Trước thử nghiệm 
 - Viết `apps/web/src/app/admin/` cho titles/seasons/episodes, upload/processing, preview, publication và lỗi thao tác; nối API C05–C08.
 - Thêm trang `/admin/users`, `/admin/roles`, `/admin/audit-logs`, chi tiết diff và audit export; `use-permissions.ts` đọc GET /me, UI ẩn/khóa theo quyền, xử lý MFA/step-up. EDITOR/AUDITOR không thấy nút vượt quyền, API vẫn là nơi quyết định.
 - Viết layout/header/footer, trang chủ/danh mục/chi tiết/tập; components `movie-card.tsx`, `movie-row.tsx`, `episode-list.tsx` và loading/empty/error states.
-- Render metadata công khai theo hợp đồng Next.js; dữ liệu cá nhân/credential không vào cache chung. Tối ưu poster và lazy load, không tải mọi trailer ngay.
+- Render metadata công khai bằng React/Vite; dữ liệu cá nhân/credential không vào cache chung. Tối ưu poster và lazy load, không tải mọi trailer ngay.
 - Kiểm tra: admin tạo phim/tập, upload và xuất bản thật; người xem thấy đúng tập và mở trang xem. Player đầy đủ được ghép ở C10. Public UI có thể làm song song với C06–C08 khi API catalog đã ổn định.
 
 #### C10. Code video player
@@ -1130,8 +1691,91 @@ Bổ sung ST04 và ST06 theo mục 11.1: analytics/retention chưa có consumer 
 - Mỗi bước chia ticket theo lát cắt chạy được: schema/migration → service/repository → controller/DTO/OpenAPI → UI/hook → integration test. Ghi file/module, endpoint, error codes, acceptance và phụ thuộc.
 - Không cần code toàn bộ backend rồi mới frontend: admin nối sau catalog API, upload nối sau intent API, player nối sau playback session. Việc độc lập làm cùng lúc khi hợp đồng đã chốt.
 - Mỗi ticket chạy typecheck/lint, test có ý nghĩa, Postman CLI/UI khi phù hợp; cập nhật OpenAPI/error registry và bằng chứng liên quan. Không gọi file rỗng/mock UI là tính năng đã hoàn tất.
-- Trạng thái NOT_STARTED → IN_PROGRESS → IN_REVIEW → VERIFIED áp dụng cho từng ticket có phạm vi rõ. Hiện C01/C03/C04/C05/C06/C07/C08/C11 đã có các phần backend theo hướng dẫn API; C02 có SQL baseline và Prisma client. Frontend C09/C10 chưa triển khai; C12 mới có một phần kiểm thử. Không coi công đoạn đầy đủ là VERIFIED khi UI, migration, production hoặc nghiệm thu tương ứng còn thiếu. ST01–ST06 mới được ghi nhận, chưa sửa/đạt trong lần cập nhật plan này.
+- Trạng thái NOT_STARTED → IN_PROGRESS → IN_REVIEW → VERIFIED áp dụng cho từng ticket có phạm vi rõ. Hiện C01/C03/C04/C05/C06/C07/C08/C11 đã có các phần backend theo hướng dẫn API; C02 có SQL baseline và Prisma client. Frontend C09/C10 đã có MVP tại apps/web và 51 browser checks; C12 mới có một phần kiểm thử. Không coi công đoạn đầy đủ là VERIFIED khi UI, migration, production hoặc nghiệm thu tương ứng còn thiếu. ST05 IN_PROGRESS; ST01–ST04/ST06 còn OPEN. Chưa ticket streaming nào được coi VERIFIED toàn bộ.
 - Lịch G0–G3 là khung điều phối; C01–C12 là thứ tự lập trình. Chốt lại effort theo code/test thực tế và kết quả G0; không tự đưa rating/VIP/gợi ý nâng cao vào MVP.
+
+### 14.5. Công đoạn triển khai gợi ý và cá nhân hóa REC01–REC09
+
+Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu bổ sung ngày 13/11/2026. **Cả chín ticket hiện NOT_STARTED**; hoàn thành nghiên cứu không đồng nghĩa đã có migration/API/model chạy thật. Chốt effort sau kiểm kê chất lượng/quy mô dữ liệu, không tự hứa lịch huấn luyện hoặc mức tăng tương tác.
+
+| Ticket | Công đoạn code và đầu ra | Phụ thuộc | Tiêu chí nghiệm thu |
+| --- | --- | --- | --- |
+| REC01 | Chốt signal/proof/privacy/reset; thiết kế migration SQL và grants, DTO/hợp đồng event, policy preferences/feedback, định nghĩa eligible candidate và attribution | Auth/ownership hiện có; thống nhất định nghĩa với ST04 | Tài liệu nguồn dữ liệu, schema/index/retention và permission; không nhận user_id/role tùy ý; hợp đồng không coi served là viewed |
+| REC02 | Publisher/queue/consumer analytics riêng; receipts, watermark, user-title aggregation và trending có version; job backfill/retention | REC01, phối hợp ST04 | Replay/crash sau commit không cộng trùng; đối chiếu fixture; opt-out/job epoch; analytics outage không nghẽn HLS/backup hoặc playback |
+| REC03 | Worker Node.js tạo TF-IDF/multi-hot, content neighbors/top-K, feature/config version và fallback | REC01; metadata catalog | Cosine/zero vector/cold item được kiểm; cùng snapshot tái lập được; không chạy N² trong API; không có phim chưa đủ điều kiện |
+| REC04 | Recommendation DTO/controller/service riêng; GET feed, preferences, feedback, reset và event ingestion; scoring/MMR/snapshot cursor/private cache policy | REC02–REC03 | BOLA/cursor sai owner, JWT hết hiệu lực, draft/gỡ phim, 412 preferences và snapshot hết hạn đều đúng; fallback không vượt quyền |
+| REC05 | Trang chủ có các hàng cá nhân, lý do gợi ý, onboarding tùy chọn, Không quan tâm/Hoàn tác/opt-out/reset; impression visibility và click proof | REC04 | UI/mobile/keyboard, không gửi secret; clicked/served/viewed phân biệt; tắt cá nhân hóa/đổi tài khoản không nhận feed cũ; không giả số thống kê |
+| REC06 | Bộ benchmark offline có timeline, full-catalog, cold-start slices, versioned dataset/metrics và báo cáo baseline | REC02–REC05 và cửa sổ dữ liệu đủ | Không future leakage; cùng protocol/seed so được baseline; thiếu data ghi rõ; metrics có định nghĩa và fixture nhỏ tính tay |
+| REC07 | Thử item-to-item; benchmark ALS/BPR/LightFM khi hợp lý; chọn artifact/model tốt nhất và export cho Node serving | REC06 đạt gate dữ liệu | Có số đo so baseline, giới hạn compute, model registry/checksum và rollback; không chọn chỉ vì model phức tạp |
+| REC08 | Experiment assignment, shadow/canary/A-B, dashboard aggregate và quy trình promotion/rollback có audit | REC06; REC07 chỉ khi dùng CF/model học | Power/cohort/metric chốt trước; đủ mẫu, privacy và QoE guardrail đạt; không đổi policy bởi payload client |
+| REC09 | Nghiên cứu nâng cấp two-tower/ANN, chuỗi phiên hoặc artwork/trailer personalization | REC08 có bằng chứng nhu cầu và dữ liệu/asset phù hợp | Thử riêng từng giả thuyết về lợi ích/chi phí; không đưa vào MVP nếu không vượt baseline và điều kiện vận hành |
+
+Trình tự chính: REC01 → REC02/REC03 → REC04 → REC05 → REC06 → REC07 nếu đủ dữ liệu → REC08; REC09 là mở rộng tùy bằng chứng. Baseline cùng thể loại/phổ biến vẫn được dùng khi một nhánh chưa đủ điều kiện.
+
+Source tree dự kiến khi bắt đầu code:
+
+```text
+apps/api/src/dto/recommendations.dto.ts
+apps/api/src/controllers/recommendations.controller.ts
+apps/api/src/services/recommendations.service.ts
+packages/recommendations/         # scoring, eligibility adapter, features/version
+apps/recommendation-worker/       # consumer analytics và job riêng; không ghép worker HLS
+apps/web/src/features/recommendations/
+tests/recommendations.*          # correctness, scope/privacy, queues, offline metrics, browser
+docs/design/sql/                # migration/verification/grants mới khi được triển khai
+```
+
+Những đường dẫn này là đề xuất, chưa được tạo trong lượt nghiên cứu. Khi code phải cập nhật OpenAPI/error registry/RBAC/Prisma client/runbook, giữ DTO/controller/service tách riêng và ghi kết quả thật trong memory.md. Không chạy db push hoặc thay baseline 47 bảng chỉ để biến mô tả thành trạng thái triển khai.
+
+
+### 14.6. Công đoạn triển khai mã hóa và nén đa độ phân giải ENC01–ENC09
+
+Theo nghiên cứu mục 6.7 ngày 13/11/2026. **Cả chín ticket hiện NOT_STARTED**; nghiên cứu đã viết không có nghĩa đã đổi encoder, profile, database hoặc output đang phát. Đây là nhánh tối ưu trên pipeline C06–C08/C10; ưu tiên xác minh baseline và các gate streaming hiện có trước khi mở đa codec/per-shot.
+
+| Ticket | Công đoạn và đầu ra | Phụ thuộc | Tiêu chí nghiệm thu |
+| --- | --- | --- | --- |
+| ENC01 | Kiểm kê source/output/profile account, bộ mẫu được phép và báo cáo baseline H.264/HLS | Pipeline media hiện có; phạm vi/ngân sách mẫu | Kích thước/codec/FPS/color/audio, mức thực tế, usage và giới hạn account ghi rõ; 720p đã thử không bị ghi thành 1080p đã đạt |
+| ENC02 | Hợp đồng encoding config có version, allowlist và fingerprint định nghĩa profile; thiết kế metadata đo và RBAC/audit | ENC01 | Không đổi preset đang dùng tại chỗ; phân biệt target/measured/unknown, tương thích attempt/config guard; migration/grants nếu cần được review |
+| ENC03 | Bộ probe, quality benchmark và báo cáo offline có version, dùng worker/tool cô lập nếu chọn FFmpeg | ENC01–ENC02 | Source checksum, alignment/scale/color/model tái lập; metric/scene review/bytes/processing time; không gọi provider trong unit/contract tests |
+| ENC04 | Tạo profile H.264 candidate và workflow eager async/versioned outputs, reconcile/retry/backup gate; bổ sung verifier | ENC02–ENC03 | Kiểm timeline/GOP/IDR/bitrate theo phạm vi, replay/crash không gán sai READY, backup lỗi chặn sẵn sàng; preview riêng, không tự publish |
+| ENC05 | Bộ chọn ladder per-title có trial budget, loại điểm bị trội và fallback baseline | ENC03–ENC04 | Có báo cáo clip và toàn title, khả năng decode theo mức, chi phí hữu hạn; không dùng target bitrate như kết quả đo |
+| ENC06 | Player chọn output đủ khả năng, kiểm quality switch/seek/audio; UI admin xem profile/quality report | ENC04; ENC05 khi dùng per-title | Manifest/output thật, session pin version, unknown khi thiếu quan sát, fallback hữu hạn; API admin có DTO/controller/service, RBAC/audit/Swagger nếu mở mới |
+| ENC07 | Thử HEVC HLS; thử AV1/VP9 DASH và adapter riêng chỉ khi đạt gate tài khoản/thiết bị/điểm hòa vốn | ENC03–ENC06 | H.264 vẫn có đường phát; ghi codec/container/player/device thật, lượng byte ở chất lượng tương đương, compute/usage; không coi hls.js là DASH player |
+| ENC08 | Telemetry đáng tin, dashboard chất lượng/bytes/cost và canary/promotion/rollback theo asset/output version | ENC04–ENC06, phối hợp ST04/ST05; ENC07 nếu dùng codec mới | Đủ mẫu theo kế hoạch, QoE/quyền/chi phí đạt, phiên cũ không bị mất output, rollback và dọn retention được thử; signed URL expiry vẫn thuộc ST01 |
+| ENC09 | Khảo sát per-shot, HDR/FPS cao hoặc encoder riêng khi có nhu cầu và ngân sách | Baseline/per-title đã đo; ENC08 có dữ liệu vận hành | Thử từng nhánh độc lập với model/color/decoder phù hợp; không đưa vào MVP hoặc nhận là hỗ trợ chỉ bằng tên công nghệ |
+
+Trình tự ưu tiên: ENC01 → ENC02/ENC03 → ENC04 → ENC05 nếu cần → ENC06 → ENC08. ENC07 là nhánh có điều kiện, ENC09 là nghiên cứu tiếp. Không bắt buộc triển khai tất cả codec hoặc per-title mới được bàn giao HD; chất lượng và khả năng phát phải có bằng chứng.
+
+Đường dẫn đề xuất khi bắt đầu code, **chưa tạo package/API trong lượt nghiên cứu**:
+
+```text
+packages/media/src/encoding/           # config, capability, fingerprint, ladder selection
+packages/media/src/quality/            # probe, measured metadata, validation contracts
+scripts/media-benchmark/               # dataset manifest, isolated tools, metric reports
+apps/worker/src/                       # ghép job versioned vào media pipeline có sẵn
+apps/web/src/features/player/          # capability/output selection; DASH adapter nếu chọn
+apps/api/src/{dto,controllers,services}/ # chỉ thêm API quản trị encoding khi cần
+tests/media-encoding.*                 # invariants, failure/replay và fixture output
+```
+
+Công cụ FFmpeg/libvmaf, gọi Cloudinary, video mẫu và quota chỉ được sử dụng trong công đoạn thử tương ứng; không phát sinh chuyển mã hoặc thay output catalog chỉ để cập nhật tài liệu. Mọi kết quả cần được ghi báo cáo có ngày, source/config version và giới hạn; không dùng bộ integration HTTP cũ làm nghiệm thu nén.
+
+### 14.7. Công đoạn tích hợp nguồn điểm và review EXT01–EXT08
+
+Thực hiện theo mục 9.6 và [báo cáo nghiên cứu](../design/external-ratings-reviews-research.md). **Cả tám ticket hiện NOT_STARTED**; hoàn thành nghiên cứu không đồng nghĩa có quyền dữ liệu hoặc importer đã chạy.
+
+| Ticket | Công đoạn và đầu ra | Phụ thuộc | Nghiệm thu |
+| --- | --- | --- | --- |
+| EXT01 | Source registry/policy matrix: fields/use cases, commercial/display/AI, domain/region/retention/purge/attribution, quota và evidence hiện hành | Chốt nguồn/use case; entitlement khi cần | Không coi API key/public page là license; thiếu quyền được đánh dấu chưa duyệt; hợp đồng lưu tham chiếu riêng, không commit credential |
+| EXT02 | Thiết kế migration/grants cho mapping theo entity/scope/version, source policy, rating snapshot, review reference và ingestion run | EXT01 | IMDb/TMDB/Origin ID không lẫn, remake/season/episode và null score đúng; unique/foreign key/RBAC phù hợp, không nhập external author thành user |
+| EXT03 | Adapter TMDB và external worker/publisher/queue riêng; staging, pagination/language, retries/receipts/atomic promotion | EXT01–EXT02, key/quyền TMDB phù hợp | Schema/nullable/429/outage/incomplete run, dedup/crash và policy/mapping generation đạt; không nghẽn HLS/backup |
+| EXT04 | Adapter IMDb TSV cho phạm vi được phép hoặc licensed API/bulk/User Reviews/Summaries đúng entitlement | EXT01–EXT03; quyền IMDb đã chốt | Streaming/limits/checksum/staging, title IDs/field rights và data products tách; không gọi dataset public có review text |
+| EXT05 | Adapter Origin Metacritic; khảo sát Trakt/RT/Letterboxd/publisher chỉ theo quyền/nhu cầu | EXT01–EXT03; hợp đồng/access của từng nguồn | Origin IDs/TV season đúng; scope quote/score/full article và storage/attribution theo văn bản hiện hành; không bật nguồn chưa duyệt |
+| EXT06 | Agent hỗ trợ matching/discovery/summary có evidence/schema/tool boundaries, budget và QA | EXT01–EXT03; quyền AI/derivatives khi dùng text | Không bịa ID/score/quote/consensus, prompt injection/SSRF không vượt quyền, candidate mơ hồ thành draft; không dùng agent cho nguồn loại dự án LLM |
+| EXT07 | DTO/controller/service external read/admin, UI source badges/review cards, attribution/spoiler/AI labels và freshness | EXT02–EXT03; nguồn thêm qua EXT04–EXT06 nếu dùng | Publication/RBAC/audit/ETag/idempotency/cursor đúng; keys không ra frontend, scale/count/scope không gộp sai; cập nhật Swagger/error registry |
+| EXT08 | Contract/fixture/live sandbox có quyền, dashboard quota/stale/error, policy expiry/takedown/purge/restore suppression và runbook | EXT03–EXT07, feed quyền phù hợp | Replay/crash/schema drift/quyền rút giữa run, last-good trong hạn, gỡ text/derivatives đúng và nguồn lỗi không chặn xem; có báo cáo coverage/freshness/usage thật |
+
+Trình tự: EXT01 → EXT02 → EXT03 → EXT07/EXT08; EXT04/EXT05 là các adapter có điều kiện; EXT06 chỉ thêm khi có ích và nguồn cho phép. Không cần chờ gói IMDb/Metacritic để thử TMDB được cấp quyền, cũng không biến external reviews thành điều kiện bàn giao MVP. Bài review do user pj-Flim tự viết/ratings/moderation là scope riêng sau MVP, không được coi đã hoàn thành bởi importer.
 
 ## 15. Các quyết định cần xác minh bằng thử nghiệm
 
@@ -1141,7 +1785,10 @@ Các mặc định sản phẩm đã được đặt để tiếp tục thiết 
 - Cách bảo vệ HLS hoạt động xuyên suốt trên player JS/native và các URL con. VIP chỉ phát hành sau khi kiểm thử hết hạn/gia hạn/thu hồi đạt.
 - Custom domain/cookie/token nếu cần và chi phí tương ứng; MVP miễn phí dùng mô hình truy cập công khai sau xuất bản đã mô tả.
 - Bitrate/profile, segment và buffer phù hợp các mạng người dùng mục tiêu. Các ngưỡng trong tài liệu là điểm khởi đầu, phải ghi kết quả benchmark.
+- Encoding theo mục 6.7: chốt định nghĩa profile có version, codec/container/player/thiết bị, SDR/HDR/FPS nguồn, quality budget và điểm hòa vốn. AV1/VP9 preset hiện được tài liệu Cloudinary mô tả qua DASH; chưa có DASH adapter hoặc bằng chứng quyền account, không chỉ đổi env rồi nhận là đã hỗ trợ. Per-title/per-shot và mức 1080p cần nghiệm thu riêng.
 - Chốt kho backup, budget/retention và thời gian khôi phục media theo mục 12.4/13.3; chính sách mặc định trong tài liệu là điểm khởi đầu cần đối chiếu usage thực tế.
+- Gợi ý/cá nhân hóa: kiểm kê chất lượng metadata và số user-title/event hợp lệ, đo hiệu quả content so baseline, chốt trọng số/half-life/retention, power A-B và ngân sách worker. Các thông số mục 9.2 là cấu hình thử, không phải kết quả nghiệm thu hoặc điều kiện phổ quát cho mọi dataset.
+- Nguồn điểm/review bên ngoài theo mục 9.6/14.7: xác nhận fields/allowed uses, commercial/display/AI processing, scope entity, current terms/entitlement, attribution, storage region/purge/backup và quota trước importer. Không có quyền thì giữ nguồn chưa duyệt; agent không thay giấy phép, review ngoài không phải user ratings pj-Flim.
 - Chốt capability matrix của adapter, hợp đồng event/credential cho khách và schema publication riêng title/episode ở G0/G1. Gia hạn nhiều vòng là bắt buộc khi đưa quyền có hạn vào luồng xem.
 
 ## 16. Điều kiện bàn giao bản MVP

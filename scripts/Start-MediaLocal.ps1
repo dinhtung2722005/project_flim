@@ -4,7 +4,7 @@ Set-Location -LiteralPath $root
 & npm.cmd run worker:configure
 if($LASTEXITCODE -ne 0){throw 'Worker configuration failed.'}
 & (Join-Path $PSScriptRoot 'Start-RabbitMQ.ps1')
-& npm.cmd run build
+& npm.cmd run build:all
 if($LASTEXITCODE -ne 0){throw 'Build failed.'}
 & (Join-Path $PSScriptRoot 'Start-LocalProcess.ps1') -Service relay
 & (Join-Path $PSScriptRoot 'Start-WebhookTunnel.ps1')

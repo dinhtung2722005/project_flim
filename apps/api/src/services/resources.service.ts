@@ -136,7 +136,7 @@ export class ResourcesService {
     return paginated(
       await query(
         this.db,
-        "SELECT * FROM movie.people WHERE ($1::timestamptz IS NULL OR (created_at,id)<($1::timestamptz,$2::uuid)) ORDER BY created_at DESC,id DESC LIMIT $3",
+        "SELECT *,created_at::text AS __cursor_time FROM movie.people WHERE ($1::timestamptz IS NULL OR (created_at,id)<($1::timestamptz,$2::uuid)) ORDER BY created_at DESC,id DESC LIMIT $3",
         [cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],
       ),
       dto.limit,
@@ -243,7 +243,7 @@ export class ResourcesService {
     return paginated(
       await query(
         this.db,
-        "SELECT * FROM movie.homepage_banners WHERE ($1::timestamptz IS NULL OR (created_at,id)<($1::timestamptz,$2::uuid)) ORDER BY created_at DESC,id DESC LIMIT $3",
+        "SELECT *,created_at::text AS __cursor_time FROM movie.homepage_banners WHERE ($1::timestamptz IS NULL OR (created_at,id)<($1::timestamptz,$2::uuid)) ORDER BY created_at DESC,id DESC LIMIT $3",
         [cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],
       ),
       dto.limit,
@@ -380,7 +380,7 @@ export class ResourcesService {
         this.db,
         "SELECT " +
           columns +
-          " FROM movie.content_reports WHERE ($1='' OR status=$1) AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
+          ",created_at::text AS __cursor_time FROM movie.content_reports WHERE ($1='' OR status=$1) AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
         [
           dto.status ?? "",
           cursor?.[0] ?? null,
@@ -417,7 +417,7 @@ export class ResourcesService {
     return paginated(
       await query(
         this.db,
-        "SELECT id,actor_user_id,initiator_user_id,actor_kind,actor_role_codes_snapshot,action,resource_type,resource_id,outcome,safe_diff,reason,error_code,request_id,trace_id,occurred_at FROM movie.audit_logs WHERE occurred_at>=$1::timestamptz AND occurred_at<=$2::timestamptz AND ($3::uuid IS NULL OR actor_user_id=$3::uuid) AND ($4='' OR action=$4) AND ($5::timestamptz IS NULL OR (occurred_at,id)<($5::timestamptz,$6::bigint)) ORDER BY occurred_at DESC,id DESC LIMIT $7",
+        "SELECT id,actor_user_id,initiator_user_id,actor_kind,actor_role_codes_snapshot,action,resource_type,resource_id,outcome,safe_diff,reason,error_code,request_id,trace_id,occurred_at,occurred_at::text AS __cursor_time FROM movie.audit_logs WHERE occurred_at>=$1::timestamptz AND occurred_at<=$2::timestamptz AND ($3::uuid IS NULL OR actor_user_id=$3::uuid) AND ($4='' OR action=$4) AND ($5::timestamptz IS NULL OR (occurred_at,id)<($5::timestamptz,$6::bigint)) ORDER BY occurred_at DESC,id DESC LIMIT $7",
         [
           from,
           to,

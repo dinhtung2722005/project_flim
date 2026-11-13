@@ -61,7 +61,7 @@ export class CatalogService {
       cursor = readCursor(dto.cursor, "titles", filter);
     const rows = await query(
       this.db,
-      "SELECT * FROM movie.titles WHERE ($1='' OR normalized_title LIKE '%'||$1||'%') AND ($2='' OR publication_status=$2) AND ($3::timestamptz IS NULL OR (created_at,id)<($3::timestamptz,$4::uuid)) ORDER BY created_at DESC,id DESC LIMIT $5",
+      "SELECT *,created_at::text AS __cursor_time FROM movie.titles WHERE ($1='' OR normalized_title LIKE '%'||$1||'%') AND ($2='' OR publication_status=$2) AND ($3::timestamptz IS NULL OR (created_at,id)<($3::timestamptz,$4::uuid)) ORDER BY created_at DESC,id DESC LIMIT $5",
       [
         normalize(dto.q ?? ""),
         dto.status ?? "",
@@ -303,7 +303,7 @@ export class CatalogService {
     return paginated(
       await query(
         this.db,
-        "SELECT * FROM movie.seasons WHERE title_id=$1::uuid AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
+        "SELECT *,created_at::text AS __cursor_time FROM movie.seasons WHERE title_id=$1::uuid AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
         [titleId, cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],
       ),
       dto.limit,
@@ -395,7 +395,7 @@ export class CatalogService {
     return paginated(
       await query(
         this.db,
-        "SELECT * FROM movie.episodes WHERE season_id=$1::uuid AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
+        "SELECT *,created_at::text AS __cursor_time FROM movie.episodes WHERE season_id=$1::uuid AND ($2::timestamptz IS NULL OR (created_at,id)<($2::timestamptz,$3::uuid)) ORDER BY created_at DESC,id DESC LIMIT $4",
         [seasonId, cursor?.[0] ?? null, cursor?.[1] ?? null, dto.limit + 1],
       ),
       dto.limit,

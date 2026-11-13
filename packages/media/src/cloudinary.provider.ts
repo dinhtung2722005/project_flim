@@ -172,6 +172,21 @@ export class CloudinaryProvider {
       ...(hls ? { streaming_profile: policy.streamingProfile } : {}),
     });
   }
+  sourcePlaybackUrl(asset: Record<string, any>) {
+    const c = cloudinaryConfiguration();
+    // Existing original only: do not derive a new MP4 when a viewer presses Play.
+    if (asset.source_format !== "mp4") fail("MEDIA_FORMAT_UNSUPPORTED");
+    return cloudinary.url(asset.public_id, {
+      cloud_name: c.cloudName,
+      api_secret: c.apiSecret,
+      secure: true,
+      sign_url: true,
+      resource_type: "video",
+      type: "authenticated",
+      version: asset.provider_version,
+      format: "mp4",
+    });
+  }
   playbackUrl(asset: Record<string, any>, profile: string) {
     const c = cloudinaryConfiguration();
     return cloudinary.url(asset.public_id, {

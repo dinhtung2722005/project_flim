@@ -1,3 +1,6 @@
+import { runPaginationChecks } from "./pagination.integration";
+import { runAuthSecurityChecks } from "./auth-security.integration";
+import { runFrontendChecks } from "./frontend.integration";
 import { runGlobalExceptionChecks } from "./global-exception.integration";
 import { runMfaPolicyChecks } from "./mfa-policy.integration";
 import { runSwaggerChecks } from "./swagger.integration";
@@ -156,6 +159,29 @@ async function main() {
       const test = request(server)[method](path);
       return token ? test.auth(token, { type: "bearer" }) : test;
     };
+    if (process.env.PJ_FLIM_TEST_WEB_ONLY === "true") {
+      const frontendChecks = await runFrontendChecks({
+        server,
+        fixtures,
+        seed,
+      });
+      await mkdir(".local/web", { recursive: true });
+      await writeFile(
+        ".local/web/integration-result.json",
+        JSON.stringify(
+          {
+            frontendChecks,
+            passed: true,
+            database: "isolated temporary PostgreSQL",
+            durationMs: Date.now() - started,
+          },
+          null,
+          2,
+        ),
+      );
+      console.log(JSON.stringify({ event: "frontend.passed", frontendChecks }));
+      return;
+    }
     const exceptionChecks = await runGlobalExceptionChecks({
       api,
       fixtures,
@@ -522,6 +548,13 @@ async function main() {
       memberToken,
     });
     checks += viewerChecks;
+    const paginationChecks = await runPaginationChecks({
+      fixtures,
+      rootId: root.id,
+      titleId,
+      get: (path) => api("get", path, rootToken),
+    });
+    checks += paginationChecks;
     problem(
       await api(
         "post",
@@ -913,8 +946,19 @@ async function main() {
       seed,
     });
     checks += mfaPolicyChecks;
+    const authSecurityChecks = await runAuthSecurityChecks({
+      app,
+      fixtures,
+      seed,
+    });
+    checks += authSecurityChecks;
     const swaggerChecks = await runSwaggerChecks({ server });
     checks += swaggerChecks;
+    const frontendChecks =
+      process.env.PJ_FLIM_TEST_WEB === "true"
+        ? await runFrontendChecks({ server, fixtures, seed })
+        : 0;
+    checks += frontendChecks;
     const liveTables = await fixtures.query(
       "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE'",
     );
@@ -928,9 +972,12 @@ async function main() {
           checks,
           exceptionChecks,
           mfaPolicyChecks,
+          authSecurityChecks,
           swaggerChecks,
+          frontendChecks,
           viewerIncluded: true,
           viewerChecks,
+          paginationChecks,
           workerIncluded: process.env.PJ_FLIM_TEST_WORKER === "true",
           database: "isolated temporary PostgreSQL",
           durationMs: Date.now() - started,

@@ -19,6 +19,15 @@ if(Test-Path -LiteralPath $recordPath){
   $running=$true
  }
 }
+if($running){
+ $previousLog=Get-Content (Join-Path $folder 'tunnel.stderr.log') -Raw -ErrorAction SilentlyContinue
+ if($previousLog -match 'Unauthorized: Tunnel not found'){
+  if($process.Name -ne 'cloudflared.exe'){throw 'Refusing to stop an unrelated tunnel process.'}
+  Stop-Process -Id $old.pid -ErrorAction Stop
+  $running=$false
+  Write-Output 'Expired development tunnel detected; creating a fresh tunnel.'
+ }
+}
 if(-not $running){
  $process=Start-Process -FilePath $binary -ArgumentList @('tunnel','--no-autoupdate','--url','http://127.0.0.1:3001','--protocol','http2') -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput (Join-Path $folder 'tunnel.stdout.log') -RedirectStandardError (Join-Path $folder 'tunnel.stderr.log') -PassThru
  $record=@{pid=$process.Id;entryPoint=$binary;startedAt=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json

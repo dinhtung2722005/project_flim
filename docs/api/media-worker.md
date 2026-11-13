@@ -28,6 +28,8 @@ Video thử 1211,803 giây, 1280x720, 101394973 bytes đã được worker nhậ
 
 Backup local hiện nằm dưới `.local/backups/assets/{assetId}/{providerVersion}/`; có file nguồn và manifest ghi sha256, bytes, provider version, object reference. Không có URL phát hoặc credential trong manifest. Bộ kiểm thử dùng DB PostgreSQL tạm, broker RabbitMQ thật với prefix riêng, provider/CDN mock tại biên mạng; nghiệm thu ở trên dùng Cloudinary/video thật.
 
+Nghiệm thu mới qua giao diện và player: [live streaming](../testing/live-streaming.md). Video thử cũ trong phần lịch sử vẫn DRAFT; phim thử riêng của lượt nghiệm thu UI được xuất bản theo yêu cầu. Phản hồi CDN byproduct trong lúc eager async được chờ có giới hạn; lỗi profile không hợp lệ vẫn dừng xử lý.
+
 ## Khởi động local
 
 Đã có Docker Desktop và PostgreSQL local. Các biến Cloudinary ở `.env.api.local`, DB runtime/worker ở `.env.database.local`.
@@ -40,7 +42,9 @@ powershell -ExecutionPolicy Bypass -File scripts/Start-MediaLocal.ps1
 npm.cmd run worker:smoke
 ```
 
-Script cấu hình không ghi đè secret đã tồn tại; tạo tài khoản/vhost RabbitMQ riêng và callback key ngẫu nhiên. Script khởi động Docker nếu cần, chạy container có label của dự án, build, chạy relay/tunnel webhook, API và worker dưới cửa sổ ẩn. Không dừng container/tiến trình ngoài dự án.
+Script cấu hình không ghi đè secret đã tồn tại; tạo tài khoản/vhost RabbitMQ riêng và callback key ngẫu nhiên. Script tunnel phát hiện cloudflared báo Unauthorized: Tunnel not found và tạo tunnel mới sau khi kiểm PID/entry point; process còn sống không có nghĩa tunnel còn hiệu lực. Khi URL thay đổi phải restart API/worker; callback cũ không tự chuyển sang URL mới.
+
+Script khởi động Docker nếu cần, chạy container có label của dự án, build, chạy relay/tunnel webhook, API và worker dưới cửa sổ ẩn. Không dừng container/tiến trình ngoài dự án.
 
 RabbitMQ chỉ bind localhost:5672 và localhost:15672. User/password nằm trong `.local/rabbitmq/bootstrap.env` và URL kết nối ở `.env.worker.local`; không dùng guest. Volume `pj-flim-rabbitmq-data` lưu dữ liệu bền; image được pin digest trong [script khởi động](../../scripts/Start-RabbitMQ.ps1). Không xóa volume để sửa lỗi mật khẩu; khôi phục credential đang dùng hoặc đổi qua quản trị broker.
 
@@ -156,6 +160,9 @@ Quyền media.retry: ADMIN/SUPER_ADMIN sau MFA. Trả 202, Location tới operat
 Theo dõi qua GET /admin/operations/{id}, /admin/processing-attempts/{id}, /admin/media-assets/{id} và audit logs. Operation FAILED vẫn trả HTTP 200 khi GET; đọc errorCode/errorMessage/errorRetryable. READY/SUCCEEDED không tự làm phim xuất hiện công khai.
 
 ## Kiểm thử và giới hạn vận hành
+
+Kiểm broker riêng, không dùng DB hoặc Cloudinary: `npm.cmd run rabbitmq:smoke`. Cần cấu hình worker hợp lệ và broker loopback; script dùng prefix ngẫu nhiên, dọn đúng queue/exchange của lần chạy và ghi .local/worker/rabbitmq-smoke-result.json. Bao gồm publish confirm/ACK, producer reconnect, prefetch, validation/DLQ, mandatory routing, consumer redelivery và delivery limit. Xem [kết quả Redis/RabbitMQ 13/11/2026](../testing/redis-rabbitmq-2026-11-13.md). Redis chưa được tích hợp; RabbitMQ chạy một node local, chưa nghiệm thu HA hoặc broker restart.
+
 
 ```powershell
 # Truyền password PostgreSQL quản trị qua biến môi trường tiến trình.
