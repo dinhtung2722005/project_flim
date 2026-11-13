@@ -442,3 +442,9 @@ Kiểm tra cuối: Chrome bị hạn chế autoplay phát HLS và MP4 dự phòn
 
 - User requested publishing the current pj-Flim changes to origin/main. Source selection includes the viewer/admin frontend, live search, streaming fixes, auth/pagination fixes, tests and documentation. Local configuration, runtime data, video and unrelated personal documents are excluded.
 - Final build:all passed before publication preparation. Prior validated reports: frontend 202 checks (54 live search), backend regression 1,998 checks. No new feature or model was implemented during publishing. Publication result will be recorded after remote verification.
+
+## Dong bo GitHub da hoan tat - 2026-11-13
+
+- Da push source commit 4d4598909e1537fefbe1e749a3f2e80c52f19c81 len origin/main (dinhtung2722005/project_flim), 78 file gom web user/admin/live search, ban sua streaming/auth/pagination, tests va tai lieu. Da xac minh SHA remote trung source commit sau push; khong force push.
+- Build:all cuoi dat; scan 7 gia tri cau hinh nhay cam dai va mau private-key/GitHub/AWS/JWT tren source duoc chon khong co phat hien. Cac bao cao test 202 frontend va 1.998 backend la bang chung tu cac luot truoc, khong chay lai chi vi Git publication.
+- Env local, video/backup/log/dist/node_modules/.local va tai lieu ca nhan ngoai phim khong duoc stage/push; chung duoc giu nguyen. Commit tai lieu tiep theo ghi nhan ket qua dong bo nay. Khong trien khai he thong Qwen/LangChain/vector hoac thay doi runtime trong luot danh gia tinh kha thi.
