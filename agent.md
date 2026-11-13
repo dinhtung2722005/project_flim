@@ -172,3 +172,8 @@ Cách ghi:
 - Yêu cầu xây dựng các bước được xử lý như lập kế hoạch; không suy thành ủy quyền code tích hợp mới trong lượt này. File docs/plans/website-chatbot-implementation-plan.md bản1.0, agentplan1.6/mainplan2.29.
 - Website đọc dữ liệu qua NestJS tools/gateway chỉ đọc, tái sử dụng public catalog eligibility; không SQL/shell/browser hoặc account/admin data tùy ý. RAG cho catalog/FAQ public, source/version/evidence và live revalidation trước trả lời.
 - Giữ assistant/runs 202/polling đã thiết kế; React chat/FAQ/memory/bounded parentRun và private Python runtime/queue là phần chưa code. Colab snapshot không thay service website; facts-first/template trước prose tự do. OMDb và opt-in cá nhân hóa là mốc mở rộng, không chặn MVP catalog/FAQ.
+
+## GitHub source update — 14/11/2026
+
+- Source commit 684b37c đã push và đối chiếu SHA bằng ls-remote với origin/main. Gồm encoding presets, recommendations content-v1, agent Colab/OMDb và kế hoạch chatbot web; schema50bảng/OpenAPI92operation/70path được mô tả theo code hiện có.
+- Chỉ commit103file source/config mẫu/docs/tests/SQL của pj-Flim. Env local, credential/runtime/cache/model/video và tài liệu cá nhân không publish. Kiểm trước push tại docs/testing/publication-2026-11-14.md; không suy đã nghiệm thu model/Colab/OMDb live hoặc chatbot website.

@@ -594,3 +594,9 @@ Kiểm tra cuối: Chrome bị hạn chế autoplay phát HLS và MP4 dự phòn
 - User đã yêu cầu push code lên GitHub; remote origin là dinhtung2722005/project_flim, nhánh main. Fetch đầu lượt xác nhận HEAD và origin/main không phân kỳ. Phạm vi gồm encoding/recommendations, agent Colab/OMDb, research và plan chatbot; không chỉ tài liệu lượt cuối.
 - Build API/web và web:typecheck đạt. Kiểm lại103encoding checks+23recommendation algorithm+7Node exporter+74Python contracts đạt; Python dùng HTTP/model/encoder fixtures. Notebook10cell/15bundlefiles/12source AST/hash/source consistency/outputs sạch đạt,176local links hợp lệ. Không chạy lại backend2309/browser227, không live Qwen/E5/Colab/OMDb hoặc Cloudinary để push.
 - Allowlist source/project, scan credential local và decoded notebook đạt; loại toàn bộ env local/runtime/build/media và tài liệu cá nhân YHDP. Report docs/testing/publication-2026-11-14.md, manifest/scan riêng .local/publication. Chuẩn bị commit và normal fast-forward push; chỉ ghi xác minh thành công sau khi remote phản hồi.
+
+## 14/11/2026 — GitHub đã nhận source
+
+- Push source commit 684b37c52f0ff289a29bf68444fd89732831a3da lên origin/main thành công; git ls-remote xác nhận SHA remote trùng HEAD sau push. Repo: https://github.com/dinhtung2722005/project_flim.
+- 103 file gồm encoding/recommendations, PoC Colab/OMDb, tests/SQL/docs và plan chatbot. Build/typecheck và103encoding+23recommendation+7exporter+74Python tests đạt trong lượt; notebook AST/hash/source/output scan đạt. Không claim full model/cloud/live provider hoặc E2E website.
+- Credential/env local/runtime/model/video/build output và 62 file tài liệu cá nhân ngoài phạm vi đều giữ trên máy. Không force-push, đổi branch hoặc ghi đè thay đổi remote. Trạng thái kiểm riêng .local/publication/result.json; commit metadata tiếp theo ghi lại kết quả source đã xác minh.
