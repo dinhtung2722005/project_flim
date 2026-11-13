@@ -1,0 +1,3 @@
+-r requirements-test.txt
+sentence-transformers==6.3.0
+ddgs==9.16.1

@@ -80,3 +80,5 @@ Không dùng filter HTTP để nuốt uncaughtException/unhandledRejection cấp
 Build và toàn bộ 1.070 kiểm tra đã đạt, gồm 509 assertion cho exception handler; báo cáo ở .local/api/integration-result.json. Không thêm endpoint thử lỗi vào ứng dụng production và không thay schema database.
 
 Tham khảo: [NestJS exception filters](https://docs.nestjs.com/exception-filters), [Problem Details RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html).
+
+Bổ sung 13/11/2026: registry hiện có 74 code; RECOMMENDATION_FEED_EXPIRED (409, retryable=false) báo snapshot hết hạn/bị evict hoặc preference epoch đổi. Người dùng làm mới feed trang đầu, không tự replay mutation. Xem [API gợi ý](recommendations.md).

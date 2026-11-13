@@ -1,6 +1,7 @@
 // Business error registry from the product plan.
 export const ERROR_STATUS: Record<string, number> = {
   REQUEST_INVALID: 400,
+  RECOMMENDATION_FEED_EXPIRED: 409,
   RESOURCE_CONFLICT: 409,
   REQUEST_TIMEOUT: 408,
   UPSTREAM_BAD_RESPONSE: 502,

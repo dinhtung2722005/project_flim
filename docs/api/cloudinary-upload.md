@@ -27,6 +27,10 @@ Tài khoản hiện tại đã trả lỗi giới hạn **104857600 bytes (100 M
 
 Cloudinary preset **không hỗ trợ giới hạn dung lượng riêng cho từng preset**. Ứng dụng kiểm tra dung lượng trước khi cấp chữ ký, helper kiểm tra file trước upload, backend xác minh lại metadata sau upload; giới hạn cứng trên đường truyền trực tiếp là giới hạn tài khoản Cloudinary. [Tài liệu preset chính thức](https://cloudinary.com/documentation/upload_presets).
 
+## Preset mã hóa/nén đa độ phân giải
+
+Ngày 13/11/2026: upload mới chọn encodingPreset từ data-saver-v1, balanced-720p-v1 hoặc balanced-1080p-v1, mặc định balanced-720p-v1. API giữ snapshot theo nguồn; worker tạo/kiểm Cloudinary profile có hash và xác minh H.264/AAC/rungs trước READY cùng backup. Intent cũ giữ profile riêng như hd. Xem [encoding runbook](encoding.md) cho API/UI, cấu hình và đo byte/Chrome thật; không tự chuyển mã lại catalog.
+
 ## API
 
 Cần access JWT theo MFA policy hiện hành, quyền `media.upload` (EDITOR, ADMIN, SUPER_ADMIN). Mỗi intent chỉ cho người tạo đọc, lấy chữ ký và xác minh; người khác nhận 404.

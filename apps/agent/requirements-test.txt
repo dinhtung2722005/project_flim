@@ -1,0 +1,7 @@
+# Direct versions verified against PyPI 2026-11-13; Linux/Python >=3.11.
+langchain-core==1.8.0
+langchain-ollama==1.1.0
+pydantic==2.14.3
+httpx==0.28.1
+numpy==2.2.6
+faiss-cpu==1.16.0

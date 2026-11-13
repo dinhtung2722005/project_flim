@@ -3,6 +3,14 @@ import { v2 as cloudinary } from "cloudinary";
 import { ApiError, fail } from "../../backend-core/src/errors";
 import { cloudinaryConfiguration, VIDEO_FORMATS } from "./cloudinary.config";
 
+import {
+  EncodingPresetId,
+  EncodingSnapshot,
+  assertEncodingSnapshot,
+  representations,
+  canonicalRepresentations,
+} from "./encoding-profiles";
+
 cloudinary.config({ hide_sensitive: true });
 export type UploadPolicy = {
   assetId: string;
@@ -15,6 +23,8 @@ export type UploadPolicy = {
   sourceFormat: string;
   maxBytes: number;
   maxDurationSeconds: number;
+  encodingPreset?: EncodingPresetId;
+  encoding?: EncodingSnapshot;
   streamingProfile: string;
   profileVersion: string;
   signatureTimestamp: number;
@@ -201,12 +211,70 @@ export class CloudinaryProvider {
       streaming_profile: profile,
     });
   }
+  async assertStreamingProfile(plan: EncodingSnapshot) {
+    let response: any;
+    try {
+      try {
+        response = await cloudinary.api.get_streaming_profile(
+          plan.profileName,
+          this.options(),
+        );
+      } catch (error: any) {
+        if ((error?.http_code ?? error?.error?.http_code) !== 404) throw error;
+        try {
+          await cloudinary.api.create_streaming_profile(plan.profileName, {
+            ...this.options(),
+            display_name: "pj-Flim " + plan.presetId,
+            representations: representations(plan),
+          } as any);
+        } catch (created: any) {
+          if (
+            ![409, 400].includes(
+              created?.http_code ?? created?.error?.http_code,
+            )
+          )
+            throw created;
+        }
+        response = await cloudinary.api.get_streaming_profile(
+          plan.profileName,
+          this.options(),
+        );
+      }
+    } catch (error) {
+      providerError(error);
+    }
+    const data = response?.data;
+    if (
+      !data ||
+      data.name?.toLowerCase() !== plan.profileName ||
+      data.predefined !== false ||
+      JSON.stringify(canonicalRepresentations(data.representations)) !==
+        JSON.stringify(canonicalRepresentations(representations(plan)))
+    )
+      fail(
+        "MEDIA_PROVIDER_BAD_RESPONSE",
+        "Streaming profile differs from the immutable encoding definition.",
+      );
+    // Never update a built-in or previously created profile in place.
+  }
   async requestHls(
     asset: Record<string, any>,
     policy: UploadPolicy,
-    callbackUrl: string,
+    callbackUrl?: string,
   ) {
     this.signedUpload(policy);
+    if (policy.encoding) {
+      assertEncodingSnapshot(policy.encoding, {
+        width: Number(asset.width),
+        height: Number(asset.height),
+      });
+      if (
+        policy.streamingProfile !== policy.encoding.profileName ||
+        policy.profileVersion !== policy.encoding.profileVersion
+      )
+        fail("MEDIA_PROVIDER_BAD_RESPONSE");
+      await this.assertStreamingProfile(policy.encoding);
+    }
     try {
       return await cloudinary.uploader.explicit(asset.public_id, {
         ...this.options(),

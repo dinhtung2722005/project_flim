@@ -11,6 +11,12 @@ import { uploadVideoDirect } from "../../../../../packages/media/src/browser-upl
 import { api, type Row } from "../../lib/api";
 import { useAuth, useNotice } from "../../lib/state";
 import { Badge, ErrorBox, asError } from "../../components/ui";
+import {
+  ENCODING_PRESETS,
+  DEFAULT_ENCODING_PRESET,
+  type EncodingPresetId,
+} from "../../../../../packages/contracts/src/encoding";
+
 type RecordIds = {
   intentId: string;
   assetId: string;
@@ -35,6 +41,9 @@ export function UploadPanel({
     }
   });
   const [file, setFile] = useState<File | null>(null),
+    [encodingPreset, setEncodingPreset] = useState<EncodingPresetId>(
+      DEFAULT_ENCODING_PRESET,
+    ),
     [busy, setBusy] = useState(false),
     [progress, setProgress] = useState(0),
     [phase, setPhase] = useState(""),
@@ -128,7 +137,11 @@ export function UploadPanel({
         await api("/admin/episodes/" + episode.id + "/upload-intents", {
           method: "POST",
           headers: { "Idempotency-Key": crypto.randomUUID() },
-          body: { expectedBytes: file.size, sourceFormat: format },
+          body: {
+            expectedBytes: file.size,
+            sourceFormat: format,
+            encodingPreset,
+          },
           signal: controller.signal,
         })
       ).data;
@@ -228,6 +241,27 @@ export function UploadPanel({
       <ErrorBox error={error} />
       {auth.can("media.upload") && (
         <>
+          <label>
+            Chất lượng và dung lượng video
+            <select
+              aria-label="Chất lượng và dung lượng video"
+              value={encodingPreset}
+              disabled={busy}
+              onChange={(e) =>
+                setEncodingPreset(e.target.value as EncodingPresetId)
+              }
+            >
+              {ENCODING_PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="muted">
+            {ENCODING_PRESETS.find((p) => p.id === encodingPreset)?.description}{" "}
+            Các mức thực tế phụ thuộc video gốc.
+          </p>
           <label className="upload-drop">
             <UploadCloud size={28} />
             <strong>{file ? file.name : "Chọn video để tải lên"}</strong>
@@ -311,6 +345,27 @@ export function UploadPanel({
               </strong>
             </span>
           </div>
+          {asset.encoding && (
+            <p className="muted">
+              Cấu hình:{" "}
+              {ENCODING_PRESETS.find((p) => p.id === asset.encoding.presetId)
+                ?.name ?? asset.encoding.presetId}{" "}
+              · H.264 / AAC
+            </p>
+          )}
+          {Array.isArray(asset.renditions) && asset.renditions.length > 0 && (
+            <div>
+              <strong>Các mức đã xác minh</strong>
+              <ul>
+                {asset.renditions.map((r: Row) => (
+                  <li key={r.width + "x" + r.height}>
+                    {r.width} × {r.height} ·{" "}
+                    {(Number(r.bandwidth) / 1000000).toFixed(2)} Mbps
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {operation?.status === "RUNNING" && (
             <progress
               aria-label="Tiến trình xử lý"

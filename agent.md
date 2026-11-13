@@ -18,6 +18,7 @@ Cập nhật nền: 11/11/2026, múi giờ Asia/Saigon. Tiến trình thay đổ
 - Với công việc đã được yêu cầu/ủy quyền, tiếp tục thực hiện đến kết quả chạy và kiểm tra được. Chỉ hỏi khi thiếu thông tin thực sự cần thiết.
 - Đọc source và hướng dẫn liên quan trước khi sửa; không kết luận một tính năng đã có chỉ vì xuất hiện trong plan.
 - Tôn trọng cấu trúc DTO/controller/service đã được người dùng yêu cầu tách riêng.
+- Ngày 13/11/2026, yêu cầu mới “giúp tôi build agent” cho phép code PoC Colab sau giai đoạn plan-only. Đã có notebook/source/exporter/tests, agentplan1.6/mainplan2.29. **IN_PROGRESS:** AG01/02/04/05/08/11/12/13/15/16. **NOT_STARTED:** AG03/06/07/09/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Backend/DB/RabbitMQ/UI không đổi; không cài model Windows, public Ollama hoặc dùng Colab free làm API/queue worker thường trực.
 - Không mở rộng sang xây frontend, triển khai public, thay hạ tầng hoặc xử lý ticket khác khi nhiệm vụ hiện tại không bao gồm.
 - Không coi bản local, test mock hoặc một lệnh build thành bằng chứng đã sẵn sàng production.
 
@@ -70,11 +71,11 @@ tests/               integration HTTP/client/worker
 - Playback ưu tiên HLS; source_format=mp4 đã verified có delivery.fallback URL ký tới nguồn authenticated cùng asset/version. Player recovery hữu hạn, hỗ trợ Đổi cách phát và nút Phát video khi autoplay bị chặn; MP4 không ABR, không tạo eager/transformation mới, vẫn chịu giới hạn URL ký không tự hết hạn.
 - Độ phân giải UI chỉ dùng level HLS thực và videoHeight của khung hình; MP4/native không giả chọn rendition. Thử lại HLS từ MP4 phải lưu tiến trình và đóng phiên cũ trước khi tạo phiên mới.
 - Video truyền trực tiếp Cloudinary CDN tới client. Node không proxy toàn bộ segment hoặc tạo transformation mỗi lần Play.
-- Encoding/nén đa độ phân giải nghiên cứu tại plan 6.7/14.6, ENC01–ENC09 đều NOT_STARTED. Eager hiện dùng profile trong policy (config mặc định hd), không có encoder FFmpeg/per-title/VMAF nội bộ; bằng chứng hiện tại 5 mức 180/270/360/540/720, không gọi là đã hỗ trợ 1080p/HDR/đa codec. Profile mới phải có định nghĩa/version bất biến và gate attempt/backup/preview; AV1/VP9 preset Cloudinary hiện là DASH, cần adapter/gate riêng, không chỉ đổi env. Không chạy transcode/catalog benchmark chỉ để sửa docs.
+- Encoding baseline H.264/AAC đã triển khai 13/11/2026: data-saver-v1/balanced-720p-v1/balanced-1080p-v1, mặc định upload mới balanced-720p-v1; intent cũ giữ profile như hd. Recipe source-aware ở packages/media/src/encoding-profiles.ts, browser-safe IDs tại packages/contracts/src/encoding.ts; verification pin snapshot/profile/version/hash vào expected_policy, worker provision profile hash chỉ tạo/kiểm không update tại chỗ, verifier kiểm rung/codec/kích thước/không upscale trước HLS+backup READY. Admin UploadPanel có preset và mức thực; retry giữ cấu hình. Cloudinary/Chrome đã thử clip 720p + fixture synthetic 1080p, 16 lần đổi mức; không suy ra chất lượng phim/HDR/đa codec đã đạt. ENC02 baseline DONE, ENC01/03/04/06 IN_PROGRESS, ENC05/07–09 NOT_STARTED. Chưa FFmpeg/per-title/VMAF/HEVC/AV1/DASH; xem docs/api/encoding.md và docs/testing/encoding-2026-11-13.md. Không tự chuyển mã catalog đang phát hoặc ghi đè preset đã phát hành.
 - Player cleanup được theo dõi ở apps/web/src/lib/playback-cleanup.ts, giữ Promise dispose single flight cả sau unmount. Logout phải dừng player và chờ dọn phiên trước khi thu hồi auth (timeout5giây/best effort khi offline), tránh bỏ lại phiên và chạm quota.
 - Phiên phát pin asset version. Progress dùng generation/sequence, chống phiên cũ ghi đè và không cộng trùng khoảng xem.
-- Nguồn điểm/review bên ngoài nghiên cứu tại docs/design/external-ratings-reviews-research.md, plan 9.6/14.7 và EXT01–EXT08 NOT_STARTED; chưa có IDs/schema/importer/API/UI nguồn ngoài. IMDb TSV không có review text; Metacritic có paid/approved Origin API, quote khác toàn bài. TMDB là ưu tiên thử theo quyền; policy nguồn phải kiểm display/storage/AI/region/purge. Runtime agent chưa có: chỉ dùng để hỗ trợ có bằng chứng, không vượt điều kiện API/bot/paywall hoặc tự publish dữ liệu.
-- Gợi ý hiện chỉ cùng thể loại ở PublicCatalogService.recommendations. Nghiên cứu tại plan 9.2/14.5 (REC01–REC09) là thiết kế chưa triển khai: không có personalized feed, impression pipeline, model hoặc schema recommendation. Khi code, giữ eligibility/ownership/opt-out và analytics queue riêng; không dùng media publisher hiện tại như thể đã xử lý playback.events.accepted.
+- Nguồn điểm/review bên ngoài nghiên cứu tại docs/design/external-ratings-reviews-research.md bản1.1, plan2.27 mục9.6/14.7 và EXT01–EXT08 NOT_STARTED; chưa có IDs/schema/importer/API/UI nguồn ngoài. IMDb TSV không có review text; Metacritic có paid/approved Origin API, quote khác toàn bài. TMDB là ưu tiên thử theo quyền; RT có tuyến Origin paid/approved, OMDb không có review-list và Terms có điều kiện indexing/derivatives; Letterboxd loại khỏi agent mặc định. Nguồn Việt Nam Moveek/Galaxy chưa xác minh public API/quyền, VnExpress RSS có điều kiện riêng. Policy nguồn tách fetch/store/display/translate/summarize/embed/train/cloudTransfer và kiểm region/purge; quyền display không tự mở raw review/embedding/LLM trên Colab. Agent plan1.5 có PoC catalog/search facts-first/OMDb; TMDB adapter notebook và DDGS URL-only tùy chọn, chưa importer/review summary/approval workflow. Không vượt điều kiện API/bot/paywall hoặc tự publish.
+- Gợi ý content-v1 đã có 13/11/2026 tại packages/recommendations/src/content.ts và DTO/controller/service riêng: TF-IDF/multi-hot/cosine/MMR, opt-in mặc định false, watchlist/accepted coverage đúng active asset/version, title-level cap/decay. UI /for-you có lý do chung/dismiss/undo/toggle; feed private no-store/snapshot HMAC 10 phút, tối đa 5/user, 1.000 candidate, top 100, revalidate eligibility/feedback/completion mỗi trang. Preference ETag/version khóa cùng transaction với feed/feedback, opt-out xóa feedback/snapshots nhưng giữ thư viện; bật lại đọc dữ liệu hiện tại, không gọi là reset. Migration movie-recommendations-v1.sql thêm 3 bảng, tổng 50; OpenAPI 92/70, registry 74, DTO43/service11/controller13. API timer prune500 expired/min SKIP LOCKED; API CRUD, worker/auditor không đọc bảng private. Public related giữ cùng thể loại. REC01/03/04/05 IN_PROGRESS, REC02/06–09 NOT_STARTED; chưa reset/analytics/CF/feature worker/offline benchmark/A-B. Giữ queue analytics riêng khi bổ sung sau, không reuse media publisher như đã xử lý playback.events.accepted. Xem docs/api/recommendations.md và docs/design/recommendation-algorithms.md.
 - Redis trong plan hiện chưa tích hợp: không client/cấu hình/container; không mô tả cache/rate limit hiện có là Redis phân tán. Chỉ triển khai khi có công việc tương ứng.
 - Outbox/inbox/job state phải ghi bền và có idempotency/lease; không đưa video hoặc credential rõ vào RabbitMQ.
 - Với cursor thời gian, query phải cấp timestamp PostgreSQL nguyên độ chính xác qua __cursor_time; paginated dùng giá trị này và bỏ khỏi data JSON. Không chuyển khóa cursor qua Date JavaScript làm mất microsecond và bỏ sót bản ghi cùng thời điểm. Có tests/pagination.integration.ts và trường paginationChecks trong báo cáo.
@@ -97,6 +98,7 @@ Dùng PowerShell và npm.cmd tại E:\pj-Flim. Đọc file tiếng Việt với 
 ```powershell
 npm.cmd run build:all
 npm.cmd run web:dev
+npm.cmd run test:recommendations
 npm.cmd run test:web
 npm.cmd run typecheck
 npm.cmd run openapi:export
@@ -141,3 +143,32 @@ Cách ghi:
 - Ghi rõ đã làm/đã kiểm tra/chưa làm. Nếu không chạy lại test, nói rõ; không sao chép số test cũ thành kết quả của lần sửa mới.
 - Không lưu PID, tunnel URL tạm hoặc số đo chưa kiểm chứng như dữ liệu cố định. Trỏ tới file trạng thái riêng tư nếu cần tra cứu.
 - Không tạo watcher/daemon để cập nhật memory; trách nhiệm cập nhật thuộc lượt làm việc có thay đổi.
+
+
+## Agent Colab: invariant PoC 13/11/2026
+
+- Đọc apps/agent/README.md trước sửa. notebooks/movie-agent-colab.ipynb sinh bởi npm.cmd run agent:notebook; sửa Python/cell/requirements/tests phải build lại, giữ outputs rỗng/hash/source khớp.
+- Demo4phim giả; catalog thật chỉ metadata public được phép cloud/embedding, exporter loopback, không account/history/token/signed URL. Snapshot≤1000/5MB/TTL24h; rights là khai báo, hash không xác thực nguồn; không sửa ngày để qua expiry.
+- Facts/evidence theo lượt, CATALOG/HYBRID, không render free model prose/điểm tự nhớ. OMDb là nguồn điểm được chọn, IMDb/Metascore qua verified mapping; TMDB manual verified mapping; DDGS allowlisted HTTPS URL/read_verified:false, không article/summary.
+- Ollama loopback trong Colab; reuse/stop đối chiếu PID identity/process sở hữu. Checkpoint whitelist, không key/prompt/weights/pickle; kiểm catalog/model/index version/TTL.
+- Đã kiểm44Python qua Docker Linux (FAISS/ChatOllama thật, model/encoder/HTTP fixtures),7Node exporter, AST10cell/8source, public export1title đọc lại bằng Python. Chưa Qwen/E5/Colab/provider live. Xem docs/testing/colab-agent-2026-11-13.md, không dùng số API/web cũ như test PoC.
+- Windows Python bị Application Control; không gỡ policy. Docker tests cô lập, không sửa service/media queues. Direct pins chưa transitive lock hoặc Colab stack validation.
+
+## Bổ sung runtime agent — 14/11/2026
+
+- Installer Colab tự kiểm/cài curl và zstd thiếu qua apt-get quyền root, giữ version Ollama đã pin; lỗi từng giai đoạn và cell4 chỉ hiện diagnostic an toàn. Timeout installer900s. Không diễn giải OLLAMA_INSTALL_FAILED cũ thành chắc chắn thiếu zstd khi chưa đọc log.
+- Notebook cũ mở cùng kernel có thể giữ module cũ: khi thay bundle yêu cầu Restart session, chạy từ cell1. Giữ kiểm NumPy mismatch, không bỏ guard để che lỗi ABI.
+- 52 Python contract tests đã đạt (44 cũ+8 installer). GPU passthrough Docker kiểm được; phiên full dependency/runtime audit bị ngắt trong pip install, chưa inference Qwen/E5 và chưa nghiệm thu Colab. Không khẳng định notebook không thể lỗi hoặc đã có quyền điều khiển Chrome/Google.
+
+## OMDb được chọn — 14/11/2026
+
+- Agent0.2.0/notebook đọc OMDB_API_KEY từ Colab Secrets; ENABLE_OMDB/OMDB_MAPPINGS, HYBRID trên catalog thật. Demo/CATALOG không gọi ngoài. Tools chỉ nhận title_id; candidate không tự verified, rating kiểm IMDb ID/tên/năm/loại. TMDB giữ riêng, chỉ lộ tools TMDB khi có token.
+- Evidence/cards external_ratings tách IMDb/10 và Metascore critic/100; thiếu→null, không Metacritic User Score/review. Key query được che trong log httpx/httpcore, không request URL/raw error/payload trong output hoặc checkpoint.
+- Cache RAM1giờ/200 entries, client cell8 giữ qua câu hỏi;2requests/run,900/client không phải quota account/day. Kiểm mapping/snapshot freshness trước cache. Không thêm backend/schema/API/queue/UI hoặc gọi OMDb live khi chưa key.
+- create_demo(now=...) dùng clock fixture cố định, default vẫn live TTL; tránh contract tests hết hạn/phụ thuộc ngày Colab. Build lại notebook sau mọi sửa bundled source; restart session khi đổi source. 74 tests đạt (52 trước+20 OMDb+2clock), model/HTTP là fixture; chưa Colab/Qwen/E5/live API.
+
+## Lộ trình chatbot website — 14/11/2026
+
+- Yêu cầu xây dựng các bước được xử lý như lập kế hoạch; không suy thành ủy quyền code tích hợp mới trong lượt này. File docs/plans/website-chatbot-implementation-plan.md bản1.0, agentplan1.6/mainplan2.29.
+- Website đọc dữ liệu qua NestJS tools/gateway chỉ đọc, tái sử dụng public catalog eligibility; không SQL/shell/browser hoặc account/admin data tùy ý. RAG cho catalog/FAQ public, source/version/evidence và live revalidation trước trả lời.
+- Giữ assistant/runs 202/polling đã thiết kế; React chat/FAQ/memory/bounded parentRun và private Python runtime/queue là phần chưa code. Colab snapshot không thay service website; facts-first/template trước prose tự do. OMDb và opt-in cá nhân hóa là mốc mở rộng, không chặn MVP catalog/FAQ.

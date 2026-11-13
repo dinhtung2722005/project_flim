@@ -35,5 +35,5 @@ for (const [field, model] of [
 }
 writeFileSync(file, schema);
 console.log(
-  "Introspected 47-table movie schema; normalized five inverse relations for Prisma. Database was not changed. See .local/api/prisma-introspection.log for SQL constraint warnings.",
+  "Introspected movie schema (baseline + applied additive migrations); normalized five inverse relations for Prisma. Database was not changed. See .local/api/prisma-introspection.log for SQL constraint warnings.",
 );

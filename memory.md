@@ -1,6 +1,6 @@
 # Tiến trình dự án pj-Flim
 
-Snapshot cập nhật ngày 13/11/2026, Asia/Saigon. Đọc cùng [agent.md](agent.md); kiểm tra source/bằng chứng trước khi dựa vào snapshot để thực hiện bước mới.
+Snapshot cập nhật ngày 14/11/2026, Asia/Saigon. Đọc cùng [agent.md](agent.md); kiểm tra source/bằng chứng trước khi dựa vào snapshot để thực hiện bước mới.
 
 ## Yêu cầu và quyết định đã chốt
 
@@ -12,26 +12,27 @@ Snapshot cập nhật ngày 13/11/2026, Asia/Saigon. Đọc cùng [agent.md](age
 - Người dùng yêu cầu global exception handler; đã chuẩn hóa và kiểm thử.
 - Ngày 11/11/2026: theo yêu cầu bỏ mã MFA, local dùng AUTH_MFA_REQUIRED=false. API local chỉ cần email và mật khẩu; không xóa factor/recovery. Yêu cầu sau đó đã bỏ hoàn toàn đăng nhập Swagger, UI/spec local mở trực tiếp. Production luôn yêu cầu MFA; mặc định cờ true.
 - Yêu cầu mới: giữ ngữ cảnh trong agent.md, tiến trình trong memory.md và cập nhật khi có thay đổi quan trọng. AGENTS.md là điểm đọc đầu tiên cho agent trong project.
+- Ngày 13/11/2026: yêu cầu mới “giúp tôi build agent” mở phạm vi code PoC Colab. Đã có notebook/source/exporter/tests; xem apps/agent/README.md, agentplan1.6/mainplan2.29. **IN_PROGRESS:** AG01/02/04/05/08/11/12/13/15/16. **NOT_STARTED:** AG03/06/07/09/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Chưa Colab/GPU/Qwen/E5 hoặc website integration/model Windows/mount Drive.
 
 ## Snapshot đã xác minh gần nhất
 
 | Hạng mục          | Trạng thái                                                          |
 | ----------------- | ------------------------------------------------------------------- |
-| Plan đang dùng    | [Phiên bản 2.20](docs/plans/movie-streaming-platform-plan.md)        |
+| Plan đang dùng    | [Phiên bản 2.29](docs/plans/movie-streaming-platform-plan.md)        |
 | Backend design    | [Thiết kế backend](docs/design/movie-backend-design.md)             |
-| Database          | pj_flim, schema movie, PostgreSQL local, 47 bảng                    |
+| Database          | pj_flim, schema movie, PostgreSQL local, 50 bảng                    |
 | RBAC              | 5 role, 18 permission, 44 liên kết; API/worker dùng login giới hạn  |
-| OpenAPI           | 87 operation trên 67 path, gồm 49 operation admin                   |
-| Error registry    | 73 code                                                             |
-| DTO               | 40 class, 11 nhóm trong apps/api/src/dto                            |
-| Service           | 10 service trong apps/api/src/services                              |
-| Controller        | 12 controller trong 6 file tại apps/api/src/controllers             |
+| OpenAPI           | 92 operation trên 70 path, gồm 49 operation admin                   |
+| Error registry    | 74 code                                                             |
+| DTO               | 43 class, 12 nhóm trong apps/api/src/dto                            |
+| Service           | 11 service trong apps/api/src/services                              |
+| Controller        | 13 controller trong 7 file tại apps/api/src/controllers             |
 | Exception handler | GlobalExceptionFilter qua APP_FILTER, mapper riêng trong exceptions |
 | RabbitMQ          | Broker thật; rabbitmq:smoke đạt 9 nhóm/42 assertion, một node local |
 | Redis             | Chưa tích hợp, cổng local 6379 không lắng nghe                     |
 | Frontend/player   | React/Vite: UI người xem/admin và HLS cơ bản, ST05 IN_PROGRESS      |
 
-Gợi ý hiện hành chỉ cùng thể loại; thiết kế cá nhân hóa đã nghiên cứu tại plan 9.2/14.5, REC01–REC09 chưa triển khai.
+Gợi ý hiện hành có content-v1 tại /for-you và public related cùng thể loại; REC01/03/04/05 IN_PROGRESS, REC02/06–09 NOT_STARTED. AI agent có PoC notebook độc lập; chưa website/model Colab thật.
 
 Không có migration/schema mới trong các lượt API người xem, tách source và global exception. SQL baseline/Prisma client đang được dùng; chưa có Prisma Migrate.
 
@@ -448,3 +449,148 @@ Kiểm tra cuối: Chrome bị hạn chế autoplay phát HLS và MP4 dự phòn
 - Da push source commit 4d4598909e1537fefbe1e749a3f2e80c52f19c81 len origin/main (dinhtung2722005/project_flim), 78 file gom web user/admin/live search, ban sua streaming/auth/pagination, tests va tai lieu. Da xac minh SHA remote trung source commit sau push; khong force push.
 - Build:all cuoi dat; scan 7 gia tri cau hinh nhay cam dai va mau private-key/GitHub/AWS/JWT tren source duoc chon khong co phat hien. Cac bao cao test 202 frontend va 1.998 backend la bang chung tu cac luot truoc, khong chay lai chi vi Git publication.
 - Env local, video/backup/log/dist/node_modules/.local va tai lieu ca nhan ngoai phim khong duoc stage/push; chung duoc giu nguyen. Commit tai lieu tiep theo ghi nhan ket qua dong bo nay. Khong trien khai he thong Qwen/LangChain/vector hoac thay doi runtime trong luot danh gia tinh kha thi.
+
+
+## Vẽ lại đánh giá YHDP theo 38 nhóm đầu vào, bỏ nhánh duyệt — 13/11/2026
+- Theo yêu cầu mới, đối chiếu toàn bộ T01–T12, R01–R12, C01–C14 trong tài liệu dữ liệu đầu vào; cập nhật bộ So_do_danh_gia_nang_luc_backend. Luồng chính còn 5 làn/33 ô/38 đường nối. Bỏ actor và API duyệt, ReviewCase/ReviewDecision; dùng AssessmentIssue kèm điều kiện tiếp tục từ dữ liệu bổ sung/sửa nguồn/nhiệm vụ mới.
+- Thêm hình 04-input-data (định lượng, định tính, truy vết của ba nguồn), bảng input-mapping.md bao phủ 38 nhóm và bản sao nguyên nội dung đầu vào trong inputs/. Tách ActivitySnapshot/AssessmentUnit, giữ trước/sau hỗ trợ, trì hoãn/nhiệm vụ mới, ngữ cảnh lúc người học trả lời và bộ nhớ ngắn/dài hạn.
+- Đồng bộ sequence, ERD, PNG/SVG/Mermaid, hai nguồn XML .drawio, mô hình vị trí và viewer ngoại tuyến. Thêm tools/build-diagrams.py để dựng hai hình có bố cục cố định. Kết quả LLM chưa đủ kiểm chứng/căn cứ giữ đề xuất; thiếu dữ liệu không thành 0. Test hợp lệ có thể làm mốc khi không Chat/ít ôn.
+- Kiểm tra: 4 logic Mermaid parse được, sequence/ERD dựng được; đủ 38 nhóm, 19 link Markdown nội bộ và các bảng hợp lệ. XML/UTF-8 hợp lệ; hình chính và hình đầu vào không tràn chữ, không có nhãn đè ô hoặc đường đi xuyên ô. Viewer 4 tab/zoom/drag và link cục bộ đạt, không gọi mạng; báo cáo data-validation.json, visual-validation.json, render-validation.json.
+- File đầu vào gốc ở hai thư mục giữ nguyên hash, bản inputs/ trùng nguồn. Sao lưu baseline tại TEMP/codex-assessment-before-input-revision-2026-11-13; kiểm hash trước ghi đè và đối chiếu toàn bộ file sau sao chép. Chỉ thay tài liệu YHDP, không sửa mã/runtime phim hoặc Word, không chạy lại kiểm thử ứng dụng.
+
+
+## Kế hoạch AI agent, chưa triển khai — 13/11/2026
+
+- Người dùng chọn Ollama local cho Qwen2.5:7b, sau đó làm rõ chỉ muốn viết kế hoạch. Phạm vi hiện tại là tài liệu, dừng mọi triển khai.
+- Đã tạo docs/plans/movie-ai-agent-plan.md: use case viewer/admin, NestJS + Python/FastAPI/LangChain, E5/FAISS hybrid, tool boundary/evidence, TMDB/OMDb/DDGS có điều kiện, run API bất đồng bộ, database/queue/state, opt-in, quota/cancel/lease/generation/purge, công đoạn AG01–AG11 và nghiệm thu. Tất cả ticket code NOT_STARTED.
+- Đồng bộ plan chính 2.21 tại 9.7/14.8, README và agent.md. REC/EXT/ENC/ST không đổi trạng thái; chưa có endpoint/schema/Swagger/model mới.
+- Trước khi làm rõ yêu cầu, có tạo 3 file assistant controller/DTO/service chưa đăng ký vào app và thử tải runtime tại .local/agent; Python portable bị Windows Application Control chặn, Ollama zip chỉ tải một phần. Đã gỡ đúng 3 file chưa tracked và toàn bộ thư mục riêng của thử nghiệm, kiểm junction đích nằm trong thư mục đó trước dọn; không còn process tải/runtime của tác vụ được phát hiện tại lúc rà soát. Không tắt/bypass policy, không đổi source ứng dụng đã có, env, dependency hoặc database.
+- Chỉ kiểm tra tài liệu/liên kết/trạng thái Git và việc dọn file. Không chạy build/test frontend/backend/model cho thay đổi tài liệu này. Chưa cài/benchmark Ollama, Qwen hoặc embedding; chưa gọi API nguồn ngoài bằng credential.
+
+- Kiểm tài liệu cuối: 14 mục, 11 ticket AG01–AG11 và 98 liên kết nội bộ trong 5 tài liệu hợp lệ; UTF-8/bảng/code fence và git diff --check đạt. Xác nhận plan 2.21 có 9.7/14.8, ba file assistant và .local/agent đã gỡ, không có diff source apps/packages/scripts/tests hoặc dependency của tác vụ này.
+
+
+## Bổ sung search vào kế hoạch agent — 13/11/2026
+
+- Theo yêu cầu mới, chỉ mở rộng tài liệu; chưa code/cài runtime. Plan agent 1.1 thêm mục 5.5–5.8: mode CATALOG/WEB/HYBRID/AUTO, metadata API và web tools, query planning tiếng Việt/Anh, explicit web option, bảo vệ dữ liệu cá nhân, entity matching, URL/content dedup, ranking, safe fetch và evidence theo field.
+- Thiết kế run input/output có search mode/lang/date/source filters, search results/citations/ngày/freshness/availableOnPlatform; phân biệt discovery snippet với nguồn đã đọc, thông tin ngoài kho với phim xem được, PARTIAL/EMPTY/lỗi theo mode. Có budget/cache/policy revoke/fallback/UI và kiểm thử tương ứng.
+- Thêm AG12–AG14 NOT_STARTED; gate AG11 bao gồm search khi phát hành nhánh web. Đồng bộ plan chính 2.22 tại 9.7/14.8, README và agent.md; giữ lịch sử kế hoạch 2.21/AG01–AG11 trước đó. REC/EXT/ENC/ST không đổi trạng thái.
+- Tham khảo tài liệu gốc TMDB search workflow, OMDb parameters và DDGS; không gọi API bằng key hoặc chạy agent. Chỉ kiểm tra tài liệu/liên kết/Git, không chạy test ứng dụng cho thay đổi tài liệu.
+
+- Kiểm tra tài liệu cuối đạt: 5 file, 99 liên kết nội bộ, 14 ticket AG01–AG14, các mục search 5.5–5.8, bảng/code fence/UTF-8 và git diff --check hợp lệ. Không có diff source ứng dụng hoặc dependency; chưa triển khai/search runtime.
+
+
+## Chọn Google Colab để thử agent — 13/11/2026
+
+- Người dùng muốn chạy agent trên Google Colab. Tiếp tục phạm vi lập kế hoạch đã chốt; chưa tạo notebook, cài runtime, tải model, mở tunnel, mount Drive hoặc gọi dịch vụ bằng key.
+- Chuyển thiết kế PoC từ Ollama trên Windows sang Qwen2.5:7b/Ollama/ChatOllama/E5/FAISS trong runtime Colab, nhập câu hỏi qua cell. Giữ RAG/tool calling/search và giới hạn model/tools; backend/NestJS/PostgreSQL/RabbitMQ ở máy/server.
+- Plan agent 1.2 thêm 9.1–9.5: notebook 10 cell, GPU/quota thực, model smoke, snapshot catalog tối thiểu có provenance/schema/hash/TTL, cloud privacy, tùy chọn Drive checkpoint, bootstrap sau reset, secrets/output và backend revalidation. Luồng HTTP tích hợp chỉ là thiết kế sau; PoC mặc định snapshot nạp/xuất có kiểm soát.
+- Phân biệt notebook tương tác với dịch vụ website dài hạn: không dùng Colab free làm distributed RabbitMQ worker, public Ollama/API 24/7 hoặc giữ phiên bằng thủ thuật. Khi cần phục vụ liên tục, dùng host phù hợp; Colab localhost không trỏ về PC. Nguồn tham khảo Colab FAQ/Ollama FAQ.
+- AG02 chuyển sang runtime Colab; thêm AG15 notebook và AG16 snapshot/cloud boundary, tất cả AG01–AG16 NOT_STARTED. Đồng bộ plan chính 2.23, README, agent.md và snapshot memory; giữ lịch sử các lựa chọn local trước đây. REC/EXT/ENC/ST giữ nguyên.
+- Chưa có bằng chứng inference GPU/model/tool/embedding/checkpoint hay chất lượng/latency trên Colab; không dùng số đo máy Windows làm nghiệm thu runtime Google.
+
+- Kiểm tra tài liệu cuối đạt: 5 file, 100 liên kết nội bộ, 16 ticket AG01–AG16 và 5 mục Colab 9.1–9.5; version 1.2/2.23, UTF-8/bảng/code fence và git diff --check hợp lệ. Không có diff source ứng dụng/dependency; không chạy build/test ứng dụng hoặc notebook/model cho thay đổi kế hoạch này.
+
+
+## Process 05 YHDP: thuật toán và LLM, giữ nguyên process cũ — 13/11/2026
+- Theo yêu cầu tạo ảnh process flow mới thể hiện rõ xử lý dữ liệu thành kết quả, thêm diagrams/05-processing-to-result.svg/.png/.mmd/.drawio/.model.json vào So_do_danh_gia_nang_luc_backend. Thêm ảnh dễ tìm tại E:/pj-Flim/Process_danh_gia_du_lieu_moi.png. Toàn bộ process 01 và hình 02–04 giữ nguyên hash, không ghi đè hoặc đổi mtime khi nội dung không đổi.
+- Hình mới có 27 ô/30 đường nối: dữ liệu từ DB Học tập/Chat và bộ nhớ, chuẩn hóa, tách ý bằng LLM 1 khi cần, ba nhánh thuật toán định lượng/thuật toán định tính có cấu trúc/LLM 2 chấm nội dung mở, ghép kết quả, kiểm điều kiện dùng, tổng hợp theo người học/chủ đề và lưu hồ sơ. Có nhánh quan sát/chờ; không có actor chuyên gia.
+- Bổ sung processing-flow.md giải thích đầu vào/đầu ra và ví dụ; tools/build-processing-flow.py chỉ nạp lớp dựng hình, không thực thi hoặc dựng lại process cũ; tools/render-processing-flow.cjs chỉ xuất PNG mới. Viewer mở process mới trước, có tab process cũ, thêm liên kết README; API đọc vẫn độc lập.
+- Kiểm tra: 5 logic Mermaid parse; XML/UTF-8, 30 link Markdown và bảng hợp lệ. Hình mới không tràn chữ/nhãn, không đè ô hoặc đi xuyên ô; LLM không có đường bỏ qua kiểm tra/tổng hợp để ra hồ sơ. Viewer 5 tab, zoom/100%/kéo hình và link cục bộ đạt, 0 request mạng, 0 pageerror. Báo cáo processing-render-validation.json, processing-visual-validation.json, processing-data-validation.json.
+- Kiểm hash trước ghi đè, chỉ thay README/index và thêm file mới; bản sao ở pj-Flim đối chiếu SHA-256 từng file. File đầu vào gốc ở hai thư mục giữ nguyên. Backup baseline tại TEMP/codex-assessment-before-process05-2026-11-13. Đây là thiết kế tài liệu, không sửa source/runtime dự án phim, Word hoặc chạy lại kiểm thử ứng dụng.
+
+
+## Process 06 YHDP theo mẫu swimlane ProcessOn — 13/11/2026
+- Người dùng yêu cầu vẽ theo https://www.processon.io/blog/business-process-diagram-tutorial. Đã đọc lại bài và xem hình minh họa; tạo 06-processon-swimlane với 5 cột trách nhiệm cố định: Người học, Backend học tập, Backend Chat, Module đánh giá, LLM đánh giá. Chữ nhật là công việc có động từ, hình thoi có nhãn nhánh, bo tròn là đầu/cuối, mũi tên là luồng xử lý. Không dùng DB làm bước nghiệp vụ hoặc dùng loại dữ liệu làm actor.
+- Giữ rõ thuật toán chuẩn hóa/tính số liệu/xử lý nhãn/kiểm tra/tổng hợp và LLM tách ý/chấm nội dung. Có DB Học tập, DB Chat, bộ nhớ ngắn/dài hạn và DB Đánh giá trong công việc đọc/ghi; quan sát/thiếu cơ sở đi nhánh chờ. Kết thúc là lưu hồ sơ, API đọc độc lập ở process 01. Không có actor chuyên gia, không tuyên bố đầy đủ BPMN hoặc đã nhập tài khoản ProcessOn.
+- Xuất PNG/SVG/Mermaid/.drawio/model JSON; ảnh dễ tìm E:/pj-Flim/Process_danh_gia_swimlane.png. Thêm processon-swimlane.md, hai helper tools; viewer mặc định bản 06, vẫn có các bản 01/05. Chỉ thay README/index và thêm file mới, toàn bộ hình cũ và ảnh root bản 05 giữ nguyên hash/mtime.
+- Kiểm tra: 5 làn/25 ô/28 đường nối, mọi ô trong đúng làn, mọi quyết định có nhãn và mọi ô đi được từ Start; không chồng ô/nhãn/chữ hoặc đường đi xuyên ô; LLM không bỏ qua cổng kiểm tra/tổng hợp để ghi hồ sơ. XML/UTF-8, 39 link Markdown, 6 logic Mermaid, viewer 6 tab/zoom/100%/drag và link cục bộ đạt, 0 request mạng/0 pageerror. Báo cáo swimlane-render-validation.json, swimlane-visual-validation.json, swimlane-data-validation.json.
+- Đối chiếu SHA-256 trước/sau sao chép. File đầu vào gốc hai thư mục và ảnh Process_danh_gia_du_lieu_moi.png giữ nguyên. Backup tại TEMP/codex-assessment-before-process06-2026-11-13. Chỉ tài liệu YHDP, không sửa mã/runtime phim/Word hoặc chạy kiểm thử ứng dụng.
+
+## Tài liệu Word giải thích 25 khối đánh giá YHDP — 13/11/2026
+- Theo yêu cầu giải thích từng thành phần và vai trò các khối, tạo Giai_thich_so_do_danh_gia_nang_luc.docx ngay tại E:/pj-Flim, đồng thời có bản trong So_do_danh_gia_nang_luc_backend. Nguồn Markdown: diagram-block-guide.md; README có liên kết để tìm lại.
+- Giải thích 5 làn, đủ 25 khối/28 đường nối của Process 06 theo đầu vào, đầu ra, trách nhiệm, lý do và nhánh tiếp theo. Nêu ranh giới DB Học tập/Chat/Đánh giá, bộ nhớ ngắn/dài hạn, thuật toán, hai vai trò LLM, rubric và điều kiện sử dụng kết quả. Có ví dụ test không Chat, chỉ hỏi, sửa sau gợi ý, giảm độ chính xác trong bài dài, đính chính và cập nhật đúng phạm vi để tránh tính liên tục.
+- Bản cuối 24 trang, 7 bảng, 5 hình: toàn cảnh và 4 trích đoạn từ SVG gốc; nội dung chính A4, hình chi tiết A3 ngang. Đã mở chỉ đọc bằng Microsoft Word ẩn và xuất PDF vào TEMP để kiểm tra bố cục; không trang trắng, không chữ vượt biên, đủ 25 mã khối trong bản đã dựng. DOCX ZIP/XML, tiếng Việt và 52 liên kết nội bộ hợp lệ; báo cáo guide-docx-validation.json. Helper export-diagram-guide.py và render-guide-details.cjs chỉ sinh tài liệu mới.
+- Đối chiếu SHA-256 cho 59 file trong bộ tài liệu và bản DOCX ở gốc. Chỉ README cũ được thêm liên kết; mọi hình/process cũ, Word Danh_gia_nang_luc_nguoi_hoc.docx và hai tài liệu dữ liệu đầu vào giữ nguyên. Baseline và PDF kiểm tra tại TEMP/codex-assessment-guide-docx-2026-11-13.
+- Đây là tài liệu thiết kế, chưa triển khai cơ chế đánh giá hoặc chuẩn điểm. Không sửa source/runtime, API, schema, plan phim, không chạy kiểm thử ứng dụng, không commit/push.
+
+## Triển khai encoding/nén đa độ phân giải — 13/11/2026
+
+- Người dùng yêu cầu thực hiện encoding; phạm vi AI agent vẫn chỉ kế hoạch. Đã code 3 preset H.264/AAC data-saver-v1/balanced-720p-v1/balanced-1080p-v1 (mặc định mới 720p), recipe source-aware, không upscale/loại mức trùng, keyframe interval yêu cầu 2s. Intent cũ giữ policy, không chuyển mã catalog hoặc thay active asset đang phát.
+- API upload DTO nhận enum encodingPreset; verification lưu snapshot/profile/hash theo metadata Cloudinary cùng transaction attempt/outbox. Worker kiểm hash/current attempt/quyền, create-or-verify profile có hash và từ chối drift; HLS verifier thêm đủ rung/codec/dimensions trước READY cùng backup. Admin chọn preset, xem target config và rendition đã verify. Không thêm bảng/route/permission/error code, giữ 47 bảng/87 operation/73 code; OpenAPI cập nhật field.
+- Test mới tests/encoding.integration.ts, media HTTP và worker new-policy trên DB tạm, frontend selector. Build API/web/typecheck/OpenAPI đạt. Kết quả cuối: backend/worker 2.168 checks (103 encoding), workerIncluded=true, frontendChecks=0; frontend-only 203 trên DB tạm khác. Chạy riêng vì suite admin cũ giả định fixture people/banner trống; các lần combined thất bại không được gọi là đạt. Broker ban đầu dừng, đã khởi động pj-Flim RabbitMQ để chạy kiểm thử, không purge/restart queue dữ liệu ứng dụng.
+- Live Cloudinary: asset authenticated riêng từ clip được phép 1280x720/45s/4.831.990 bytes, 3 preset verify; Chrome giải mã/chuyển đủ 11 mức 240/360/480/720. Fixture synthetic canvas+audio WebM 1920x1080/8,024s tạo HLS thật tới 1080 và Chrome đạt 5 mức. Không fake READY hoặc xuất bản phim trong DB thật; conformance fixture không phải benchmark chất lượng phim.
+- Đo media bytes đầy đủ có Content-Range/length: saver 480=3.720.332 (-23,0%), 360=2.748.936 (-43,1%), 240=1.922.112 (-60,2%); balanced720=5.172.444 (+7,0%). Khác độ phân giải/container, không cam kết cùng chất lượng hoặc luôn nhỏ hơn nguồn. Chưa VMAF/GOP probe toàn bitstream/per-title/HDR/đa codec/device/load. ENC02 baseline DONE; ENC01/03/04/06 IN_PROGRESS, ENC05/07–09 NOT_STARTED; ST01–ST06 giữ nguyên.
+- Runbooks docs/api/encoding.md và docs/testing/encoding-2026-11-13.md; cập nhật plan2.24/README/upload/worker/agent/env mẫu. CLI test:encoding, encoding:smoke, encoding:player-smoke, encoding:fixture; live commands có opt-in và chỉ asset test riêng; report/state/video/screenshots trong .local/encoding và full-hd, không commit.
+- Khởi động lại đúng API/worker/relay + tunnel dev. Record tunnel cũ trỏ PID bị tái sử dụng bởi svchost; chỉ archive state file sau kiểm, không dừng process đó. API health/schema enum, worker connected và tunnel webhook đã kiểm: timestamp hợp lệ nhưng thiếu chữ ký bị chặn 401 WEBHOOK_SIGNATURE_INVALID. S3/fixed webhook/AMQPS production vẫn chưa nghiệm thu. Không thay auth/MFA/Swagger policy, không commit/push, giữ nguyên tài liệu YHDP cá nhân.
+
+- Kiểm tra cuối: build:all đạt, runtime API/worker/webhook đều đạt; scan 31 file chọn lọc với 9 giá trị cấu hình nhạy cảm và 126 link nội bộ không có phát hiện; OpenAPI vẫn 87 operation/67 path, git diff --check đạt. Report riêng .local/encoding/{runtime-result,review-result}.json. Không chạy lại suite chỉ vì cập nhật tài liệu; không commit/push.
+
+## Triển khai gợi ý và cá nhân hóa content-v1 — 13/11/2026
+
+- Theo yêu cầu tiếp theo sau encoding, đã triển khai bản gợi ý nội dung, giữ AI agent ở phạm vi kế hoạch. Thuật toán TypeScript tại packages/recommendations/src/content.ts: sparse TF-IDF/multi-hot theo metadata, nhóm L2 + sqrt(weight), cosine profile, decay 30 ngày/cap5 theo title, recency và MMR .8/.2. Không dùng LLM, dữ liệu user khác hoặc điểm/review nguồn ngoài.
+- Service/DTO/controller riêng, năm operation GET /me/recommendations, GET/PATCH preferences, PUT/DELETE feedback; Swagger schemas và RECOMMENDATION_FEED_EXPIRED409 trong registry. Mặc định enabled=false, chỉ đọc watchlist/progress khi opt-in; q(D) dựa accepted watched_seconds đúng active asset/version, không coi seek/ended là xem. Feedback loại candidate/seed, hideCompleted tính tất cả tập hiện phát được; tắt cờ cho phép xem lại phim đã hoàn thành.
+- Snapshot owner/model/surface/epoch/expiry có HMAC, TTL10 phút,5/user,100 item; mỗi trang revalidate catalog/feedback/completion và không refill vị trí bị gỡ. Cắt retrieval1.000 candidate,100 saved+100 qualified seed,30genres/credits,180token và10k vocabulary,200rerank; candidateTruncated thông báo cắt. Chưa index/worker feature offline hoặc SLA tải.
+- Preference ETag/version khóa cùng transaction, stale412 và thiếu428; opt-out xóa feedback/snapshots giữ thư viện, bật lại đọc dữ liệu hiện tại. Không gọi đó là reset watermark. Feed private/no-store; UI /for-you có toggle/lý do/dismiss/undo gần nhất/tải thêm, remount owner và hủy request/logout/generation. Không có impression/click/trending giả.
+- Migration reviewed docs/design/sql/movie-recommendations-v1.sql thêm3bảng cùng grant, đã áp dụng local47→50; baseline/hash cũ giữ nguyên. CLI db:recommendations có opt-inenv, từ chối system DB/partial schema, kiểm columns/grants, chạy lại applied=false. Prisma introspect/generate đạt. API CRUD, worker/auditor không đọc bảng private; timer API prune500expired/phút SKIP LOCKED, cleanup lỗi log tên sự kiện an toàn. Initialize/Test-Database nhận baseline47 hoặc migration50; kiểm thực tế36SQL assertions rollback +8deny đạt.
+- Build:all/typecheck/web:typecheck/OpenAPI đạt. Backend/worker2.309 checks trên DB tạm (141 recommendation gồm23 thuật toán), workerIncluded=true, frontendChecks=0; frontend-only227 checks (24 recommendation) trên DB tạm khác. Kiểm cursorBOLA/tamper/expiry, current feedback/publication, quota5snapshot, opt-out, conflictparallelETag, seek vscoverage/endproof, zero vector/MMR, narrowgrants và cleanup. Browser1440/390 không tràn ngang/pageerror, delayedresponse sau logout không sang tài khoản khác. Không giả READY hoặc sửa phim/progress thật.
+- Các lần fixture mới thất bại do enum HIDDEN, active_assetNULL khi vẫnPUBLISHED và thiếu endedproof đã được sửa theo invariant hiện có; không nới constraint/bỏ test. Controlledcheckbox async được test bằng click +đợi trạng thái lưu. Chạy backend/frontend tách vì fixturecũ people/banner. Bằng chứng .local/recommendations/{backend-result,frontend-result,browser-result,runtime-result,review-result}.json; không commit credential/artifact.
+- API local đã restart đúng PID/entry bằng script hiện hành, health200; OpenAPI92operation/70path, DTO43/service11/controller13/error74. Feedanonymous401; Chrome /for-you→login, menu mobile hiện và0pageerror. Lần smoke sát startup chưa ready; lượt sau đạt, không đổiport/auth/MFA. Mediaworker/broker/relay không restart hoặc purge chỉ vì gợi ý.
+- Cập nhật plan2.25/README/database/frontend/API/agent và tài liệu thuật toán/runbook/báo cáo. REC01/03/04/05 IN_PROGRESS, REC02/06–09 NOT_STARTED; ST/ENC/EXT/AG giữ trạng thái. Chưa reset có watermark, eventanalytics, collaborative/embedding model, fullcatalog/timeline benchmark, A-B/uplift, productionload hoặc nhiều profile. Không commit/push; giữ nguyên tài liệu YHDP/Word cá nhân.
+
+## Rà soát lại nguồn điểm/review bằng agent — 13/11/2026
+
+- Theo yêu cầu nghiên cứu mới, đã dùng ba agent read-only cho IMDb/OMDb, Metacritic và TMDB/Trakt/publisher/RT/Letterboxd; agent gốc đối chiếu nguồn và nghiên cứu thêm Moveek/Galaxy/VnExpress RSS. Chưa gọi API bằng key, tải dataset, đăng ký/mua gói, gửi liên hệ, code importer hoặc cài agent runtime.
+- Nghiên cứu nguồn1.1 bổ sung: IMDb TSV không có text, User Reviews add-on/AI Summaries tách entitlement; EULA public của listing hạn chế derivatives customer-facing, không suy quyền summary/dịch. OMDb lookup/Swagger không có review-list, plot=full là synopsis; response fields cần liveverify, CC BY-NC/footer và Terms/indexing/derivatives cần chốt phạm vi, trả quota không chứng minh quyền upstream.
+- Metacritic có Origin paid/approved/no trial, quote khác toàn bài; PDF direct404/index không có hiệu lực/version được xác minh, Fandom Media Terms direct402. RT cũng có API Origin paid/approval, Movie/Show/Season/Episode theo OriginID; schema có scores/quote/comment nhưng không full article body. Trial chung không chứng minh RT trial/quota.
+- TMDB ưu tiên adapter theo license/attribution, Trakt app-scoped có quota/policy riêng; Guardian access phân biệt text/AI/commercial. Letterboxd loại khỏi agent mặc định. Moveek có trang review nhưng chưa xác minh public API/rights, Galaxy redirectloop, VnExpress RSS có điều kiện cá nhân/phi lợi nhuận và XML chưa được công cụ parse. Không tuyên bố các nguồn Việt không có API đối tác.
+- Thiết kế adapter fetch/quota/parse/score xác định; agent matching/discovery/draft/QA có evidence/schema và giới hạn. Quyền tách fetch/store/display/translate/summarize/embed/train/cloudTransfer; UNKNOWN không tự được phép, Colab cần processor/region/usecase. Aggregate score không thành ma trậnuser-item hoặc review gốc từ model.
+- Đồng bộ plan2.26 tại9.6/14.7, agentplan1.3 mục15, README vàagent.md. EXT01–EXT08, AG01–AG16 giữ NOT_STARTED; content-v1/50bảng/92operation/74error và các trạng thái REC/ENC/ST không đổi. Không thay runtime/auth/schema/frontend, không commit/push; giữ tài liệu YHDP cá nhân.
+
+- Kiểm tra tài liệu cuối đạt: 6 file, 144 liên kết nội bộ và 22 anchor hợp lệ, code fence/UTF-8/version 1.1–2.26–1.3 và git diff --check đạt. Đối chiếu SHA-256 xác nhận 143 file source/schema/package/database giữ nguyên trong lượt nghiên cứu; không chạy lại build/API/browser cho thay đổi tài liệu. Báo cáo riêng .local/research/external-review-result.json.
+
+
+## 13/11/2026 — Build PoC agent trên Google Colab
+
+- Yêu cầu mới “giúp tôi build agent” mở phạm vi code sau giai đoạn plan-only. Mọi file ở E:\pj-Flim, không DocPrep. Notebook standalone nhúng source/hash,10cell,demo4phim; không cần push GitHub trước.
+- apps/agent có catalog schema/hash/rights/TTL, multilingual E5/FAISS/RRF filter trước top-K, LangChain/ChatOllama bounded loop, registry evidence/final facts-only, TMDB candidate/rating manual mapping và DDGS link-only tắt mặc định.
+- Ollama0.40.16/Qwen2.5:7b; E5 revision614241f622f53c4eeff9890bdc4f31cfecc418b3; context8192 thử4096 nếu OOM. Direct pins chưa full lock; digest ghi khi pull thật. Không tải model vào PC.
+- Exporter public loopback≤1000/TTL24h; thực tế xuất1title và Python nhập/schema/hash thành công. Không gửi snapshot lên Google thay người dùng.
+- Checkpoint ZIP whitelist/vectors.npy no pickle, model/index/catalog/TTL validation; owned-process guard. Không public API/Ollama, tunnel hoặc RabbitMQ consumer.
+- Kiểm thử44Python đạt trong Docker Linux với libs thật và model/encoder/HTTP fixtures;7Node exporter đạt. Notebook10cell/8source AST/hash/source consistency/outputs sạch đạt. Report private .local/agent-build/python-test-result.json; docs/testing/colab-agent-2026-11-13.md.
+- Chưa chạy Colab/GPU/Qwen/E5/live TMDB/DDGS, benchmark/reset thật hoặc full Colab dependency stack. Windows Python bị Application Control; dùng Docker, không thay policy. Không chạy lại API/worker/web suites.
+- Mainplan2.27/agentplan1.4 có matrix partial; EXT01–08 vẫn NOT_STARTED, REC/ENC/ST giữ nguyên. Database50bảng/OpenAPI92operation70path/error74 không đổi. Không commit/push, đổi hạ tầng/API/schema/UI hoặc đụng tài liệu YHDP cá nhân.
+
+## 14/11/2026 — Chẩn đoán Ollama và kiểm notebook
+
+- Người dùng gặp NumPy loaded-version mismatch rồi OLLAMA_INSTALL_FAILED ở cell4. Traceback chưa có install.log nên nguyên nhân Colab cụ thể chưa được xác nhận. Đối chiếu installer chính thức hiện cần zstd cho tar.zst.
+- Đã sửa runtime: kiểm/cài curl/zstd thiếu bằng apt-get trong Colab root; tách lỗi dependency/download/script/timeout, giữ pinned Ollama và owned-process guard; timeout installer300→900s. Cell4 hiện safe code/hint/missing tools, không tự in raw log. Cần Restart session khi thay notebook để tránh module cũ trong memory.
+- 52 Python tests đạt trong Docker Linux:44 cũ+8 installer (APT/download/process mocked, không cài binary thật). Notebook rebuild10cell/12bundlefiles; static AST đạt 10 cell/9 Python source, outputs sạch và bundle hash đúng sau sửa.
+- User yêu cầu kiểm toàn notebook và hỏi truy cập browser. Không có connected browser tool/Chrome debugging đã xác nhận. TinyFish được tìm thấy và gợi ý nhưng chưa kết nối; cloud browser riêng không tự truy cập phiên Chrome hiện tại.
+- Docker nhận RTX3050 laptop6GB, RAM Docker~7.9GB; test GPU thật được bắt đầu trong container cô lập. Phiên bị ngắt trong cài full dependencies (log riêng .local/agent-runtime-check/live-dependencies.log), container không còn chạy. Chưa model/E5 inference hoặc Colab E2E; không coi là package compatibility failure hoặc runtime pass.
+- Yêu cầu tiếp theo: giải pháp điểm IMDb/Metacritic; đối chiếu lại OMDb docs/key1000daily/terms, IMDb datasets/GraphQL và Fabric Origin paid/approved/no Metacritic trial. Chưa gọi API bằng key, thêm provider/schema hay nhập điểm thật. EXT/AG tiếp tục trạng thái IN_PROGRESS/NOT_STARTED hiện hành.
+
+## 14/11/2026 — Chọn và tích hợp OMDb vào agent
+
+- Theo yêu cầu dùng OMDb, tạo apps/agent/pjflim_agent/omdb.py và nối2tools search_omdb_metadata/get_imdb_metacritic_ratings vào HYBRID. Tìm candidate theo catalog, cần mapping verified; lookup kiểm ID/tên/năm±1/movie-series. Demo/CATALOG không gọi ngoài.
+- Chuẩn hóa imdbRating/imdbVotes/Metascore, N/A/field thiếu→null, giá trị sai schema/range bị chặn. Provenance OMDB+IMDB/METACRITIC, timestamp/TTL; không fake User Score/vote count/link Metacritic detail. Cards có external_ratings từ facts đã kiểm.
+- HTTPS fixed/timeout8s/256KB/no redirect, HTTP200 Error được phân loại; không in raw error/request URL. Log filter che query apikey; API key chỉ Colab Secrets OMDB_API_KEY, không env/source/checkpoint.
+- Cache RAM1giờ/LRU200,2calls/run và900/client; cell8 giữ client qua câu hỏi. Không có quota account/day toàn hệ thống; key/runtime/client khác vẫn dùng chung quota provider. Cache kiểm mapping và snapshot expiry trước trả.
+- Phát hiện test fixture ngày14 không chạy với clock host ngày13: sửa create_demo rõ now dùng clock fixture, default vẫn live expiry. Không sửa TTL/validation public snapshot để bỏ lỗi.
+- 74 Python tests đạt Docker Linux:52 cũ+20OMDb+2clock, HTTP MockTransport/model fixtures; không key live/Qwen/E5/Colab E2E. Artifact .local/agent-build/omdb-contract-result.json; báo cáo docs/testing/omdb-2026-11-14.md. Notebook10cell/15bundlefiles được rebuild, version0.2.0.
+- Runbook/README/plan được đồng bộ: main2.28, agent1.5, AG08/12/13 IN_PROGRESS và EXT/REC/ENC/ST giữ trạng thái. Không đổi API/schema/UI/media, không commit/push hoặc lấy key qua chat. Cần người dùng tạo/activate OMDb key và thêm Secrets, dùng catalog thật/mapping để nghiệm thu live.
+
+## 14/11/2026 — Các bước build chatbot đọc dữ liệu web
+
+- Đã viết docs/plans/website-chatbot-implementation-plan.md bản1.0: hiện trạng, kiến trúc, data boundary,12bước, tools, retrieval/index sync, live revalidation, run/outbox/RabbitMQ, REST/Swagger, React UI/follow-up/memory, OMDb/cá nhân hóa, nghiệm thu và3mốc bàn giao.
+- Dựa trên PublicCatalogController/PublicCatalogService và content-v1 hiện có; không dùng HTML scraping hoặc cấp raw SQL/DB credential cho LLM. Chỉ catalog/FAQ public, private context sau opt-in/ownership; signed media URL không vào prompt.
+- Giữ namespace assistant/runs 202+polling đã đề xuất, source/evidence validator và facts-first renderer; cần mở schema FAQ/NEEDS_INPUT, memory theo parentRun owner-bound, refetch dữ liệu từng lượt. Colab chỉ PoC, website host chọn sau model baseline.
+- Đồng bộ agentplan1.6/mainplan2.29, README/root+agent, agent.md/memory. Lượt này chỉ tài liệu; không đổi source/API/schema/permission/broker/UI hoặc trạng thái AG/EXT/REC/ENC/ST. Không chạy lại tests runtime/model cho thay đổi kế hoạch. Không commit/push; giữ các sửa PoC/media/recommendations và tài liệu cá nhân trước đó.
+
+- Kiểm tài liệu cuối:12bước/6bảng/56hàng,176liên kết nội bộ trong11Markdown hợp lệ, UTF-8/code fence/secret scan và git diff --check đạt. So SHA-256 của161file source/schema/package xác nhận không đổi code; không chạy tests ứng dụng/model trong lượt kế hoạch. Báo cáo riêng .local/agent-build/website-chatbot-plan-review.json.
+
+## 14/11/2026 — Chuẩn bị push toàn bộ cập nhật pj-Flim
+
+- User đã yêu cầu push code lên GitHub; remote origin là dinhtung2722005/project_flim, nhánh main. Fetch đầu lượt xác nhận HEAD và origin/main không phân kỳ. Phạm vi gồm encoding/recommendations, agent Colab/OMDb, research và plan chatbot; không chỉ tài liệu lượt cuối.
+- Build API/web và web:typecheck đạt. Kiểm lại103encoding checks+23recommendation algorithm+7Node exporter+74Python contracts đạt; Python dùng HTTP/model/encoder fixtures. Notebook10cell/15bundlefiles/12source AST/hash/source consistency/outputs sạch đạt,176local links hợp lệ. Không chạy lại backend2309/browser227, không live Qwen/E5/Colab/OMDb hoặc Cloudinary để push.
+- Allowlist source/project, scan credential local và decoded notebook đạt; loại toàn bộ env local/runtime/build/media và tài liệu cá nhân YHDP. Report docs/testing/publication-2026-11-14.md, manifest/scan riêng .local/publication. Chuẩn bị commit và normal fast-forward push; chỉ ghi xác minh thành công sau khi remote phản hồi.

@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {
   IsIn,
+  ValidateIf,
   IsInt,
   IsString,
   IsUUID,
@@ -11,7 +12,22 @@ import {
 } from "class-validator";
 import { VIDEO_FORMATS } from "../../../../packages/media/src/cloudinary.config";
 
+import {
+  ENCODING_PRESETS,
+  EncodingPresetId,
+} from "../../../../packages/contracts/src/encoding";
+
 export class CreateUploadIntentDto {
+  @ApiProperty({
+    required: false,
+    enum: ENCODING_PRESETS.map((p) => p.id),
+    default: "balanced-720p-v1",
+    description:
+      "Immutable H.264/AAC ABR preset; source dimensions cap the actual outputs.",
+  })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(ENCODING_PRESETS.map((p) => p.id))
+  encodingPreset?: EncodingPresetId;
   @ApiProperty({
     description:
       "Exact original file size in bytes; verified against Cloudinary.",

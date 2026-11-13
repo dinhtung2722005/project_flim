@@ -1,3 +1,5 @@
+import { RecommendationsController } from "./controllers/recommendations.controller";
+import { RecommendationsService } from "./services/recommendations.service";
 import { GlobalExceptionFilter } from "./filters/global-exception.filter";
 import { HealthController } from "./controllers/health.controller";
 import {
@@ -36,6 +38,7 @@ import {
 @Module({
   imports: [JwtModule.register({})],
   controllers: [
+    RecommendationsController,
     PublicCatalogController,
     AccountsController,
     PlaybackController,
@@ -50,6 +53,7 @@ import {
     ResourcesController,
   ],
   providers: [
+    RecommendationsService,
     GlobalExceptionFilter,
     { provide: APP_FILTER, useExisting: GlobalExceptionFilter },
     PublicCatalogService,

@@ -2,6 +2,8 @@
 
 Đã triển khai local trong E:\pj-Flim ngày 10/11/2026, Asia/Saigon. Có 27 operation mới; tổng OpenAPI 87 operation/67 path, gồm 49 operation admin. Registry có 73 mã lỗi. Build và 1.070 kiểm tra HTTP/client/worker trên PostgreSQL tạm riêng đã đạt, gồm 194 kiểm tra cho người xem và 509 assertion cho global exception handler.
 
+Bổ sung 13/11/2026: [5 operation gợi ý cá nhân hóa](recommendations.md), nâng tổng hiện hành lên 92 operation/70 path, registry 74 code và 50 bảng. Số 27 operation/47 bảng dưới đây là baseline người xem ngày 10/11; các route cũ giữ nguyên.
+
 Source: [controllers](../../apps/api/src/controllers/viewer.controllers.ts), [DTO](../../apps/api/src/dto/README.md), [schema Swagger](../../apps/api/src/viewer.openapi.ts), [kiểm thử](../../tests/viewer.integration.ts). Không cần thay schema, migration hoặc grant: dùng 47 bảng hiện có và runtime pj_flim_api.
 
 ## Hợp đồng chung

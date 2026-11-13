@@ -89,7 +89,11 @@ export async function runMediaIntegration(c: {
   };
   const createPath =
     "/api/v1/admin/episodes/" + c.episodeId + "/upload-intents";
-  const payload = { expectedBytes: 1024, sourceFormat: "mp4" };
+  const payload = {
+    expectedBytes: 1024,
+    sourceFormat: "mp4",
+    encodingPreset: "balanced-1080p-v1",
+  };
   const issue = (
     token = c.editorToken,
     key: string = randomUUID(),
@@ -113,6 +117,22 @@ export async function runMediaIntegration(c: {
     process.env.CLOUDINARY_UPLOAD_PRESET = "pj_flim_test_signed";
     process.env.CLOUDINARY_MAX_VIDEO_BYTES = "1048576";
     await expect(issue(c.memberToken), 403, "AUTH_FORBIDDEN");
+    await expect(
+      issue(c.editorToken, randomUUID(), {
+        ...payload,
+        encodingPreset: "unknown",
+      }),
+      422,
+      "VALIDATION_FAILED",
+    );
+    await expect(
+      issue(c.editorToken, randomUUID(), {
+        ...payload,
+        encodingPreset: null,
+      } as any),
+      422,
+      "VALIDATION_FAILED",
+    );
     await expect(issue(c.auditorToken), 403, "AUTH_FORBIDDEN");
     await expect(
       c.api("post", createPath, c.editorToken).send(payload),
@@ -237,6 +257,27 @@ export async function runMediaIntegration(c: {
     assert.deepEqual(verified[0].body, verified[1].body);
     checks++;
     const result = verified[0].body;
+    const pinned = (
+      await c.fixtures.query(
+        "SELECT i.expected_policy,a.config_hash FROM movie.upload_intents i JOIN movie.media_attempts a ON a.asset_id=i.verified_asset_id WHERE i.id=$1",
+        [intent.id],
+      )
+    ).rows[0];
+    assert.equal(pinned.expected_policy.encoding.presetId, "balanced-1080p-v1");
+    assert.equal(pinned.expected_policy.encoding.rungs.at(-1).height, 1080);
+    assert.equal(
+      pinned.expected_policy.streamingProfile,
+      pinned.expected_policy.encoding.profileName,
+    );
+    checks += 3;
+    await expect(
+      issue(c.editorToken, key, {
+        ...payload,
+        encodingPreset: "data-saver-v1",
+      }),
+      409,
+      "IDEMPOTENCY_KEY_REUSED",
+    );
     assert.equal(result.processingStatus, "UPLOADED");
     checks++;
     const after = lookups;

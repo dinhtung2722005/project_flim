@@ -1,0 +1,7 @@
+{
+  "ollama": "0.40.16",
+  "model": "qwen2.5:7b",
+  "modelDigestPolicy": "record on first pull; reject drift within restored checkpoint",
+  "embeddingModel": "intfloat/multilingual-e5-small",
+  "embeddingRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+}

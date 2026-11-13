@@ -1,3 +1,9 @@
+import {
+  createEncodingSnapshot,
+  fittedDimensions,
+  processingConfigHash,
+  assertEncodingSnapshot,
+} from "../packages/media/src/encoding-profiles";
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -328,6 +334,112 @@ export async function runWorkerIntegration(c: Input) {
       (e) => (e as any).code === "42501",
     );
     checks++;
+    // New immutable encoding policy completes the same backup/READY gate on a disposable DB.
+    const encoded = await fixture();
+    const legacyPolicy = (
+      await c.fixtures.query(
+        "SELECT expected_policy FROM movie.upload_intents WHERE verified_asset_id=$1",
+        [encoded.assetId],
+      )
+    ).rows[0].expected_policy;
+    const encoding = createEncodingSnapshot("balanced-720p-v1", {
+      width: 1280,
+      height: 720,
+    });
+    const encodedPolicy = {
+      ...legacyPolicy,
+      encodingPreset: encoding.presetId,
+      encoding,
+      streamingProfile: encoding.profileName,
+      profileVersion: encoding.profileVersion,
+    };
+    const encodedHash = processingConfigHash(encodedPolicy);
+    await c.fixtures.query(
+      "UPDATE movie.upload_intents SET expected_policy=$2 WHERE verified_asset_id=$1",
+      [encoded.assetId, encodedPolicy],
+    );
+    await c.fixtures.query(
+      "UPDATE movie.media_attempts SET config_hash=$2,profile_version=$3 WHERE id=$1",
+      [encoded.attemptId, encodedHash, encoding.profileVersion],
+    );
+    await c.fixtures.query(
+      "UPDATE movie.media_outputs SET config_hash=$2,profile_version=$3 WHERE attempt_id=$1",
+      [encoded.attemptId, encodedHash, encoding.profileVersion],
+    );
+    class EncodedProvider extends FakeProvider {
+      override async assertStreamingProfile(p: any) {
+        assertEncodingSnapshot(p, { width: 1280, height: 720 });
+      }
+      override deliveryUrl(asset: any, policy: any, hls = false) {
+        return hls
+          ? "https://res.cloudinary.com/test-cloud/encoded/master.m3u8"
+          : super.deliveryUrl(asset, policy, hls);
+      }
+    }
+    const legacyFetch = globalThis.fetch;
+    globalThis.fetch = async (input, options) => {
+      if (
+        String(input) ===
+        "https://res.cloudinary.com/test-cloud/encoded/master.m3u8"
+      )
+        return new Response(
+          "#EXTM3U\n" +
+            encoding.rungs
+              .map((r, i) => {
+                const d = fittedDimensions(r, { width: 1280, height: 720 });
+                return (
+                  "#EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=" +
+                  d.width +
+                  "x" +
+                  d.height +
+                  ',CODECS="avc1.64001f,mp4a.40.2"\n' +
+                  i +
+                  ".m3u8\n"
+                );
+              })
+              .join(""),
+        );
+      return legacyFetch(input, options);
+    };
+    try {
+      const encodedWorker = new MediaWorker(
+        store,
+        new EncodedProvider(),
+        backup,
+      );
+      const encodedJobs = await jobs(encoded);
+      const encodedHls = encodedJobs.find(
+        (j: any) => j.handler === "media.hls",
+      );
+      const encodedBackup = encodedJobs.find(
+        (j: any) => j.handler === "media.backup",
+      );
+      await encodedWorker.run(encodedHls.id);
+      assert.notEqual((await state(encoded)).processing_status, "READY");
+      checks++;
+      await encodedWorker.run(encodedBackup.id);
+      assert.equal((await state(encoded)).processing_status, "READY");
+      checks++;
+      const encodedOutput = (
+        await c.fixtures.query(
+          "SELECT rendition_summary FROM movie.media_outputs WHERE attempt_id=$1",
+          [encoded.attemptId],
+        )
+      ).rows[0];
+      assert.deepEqual(
+        encodedOutput.rendition_summary.map((r: any) => r.height),
+        [240, 360, 480, 720],
+      );
+      checks++;
+      assert.ok(
+        encodedOutput.rendition_summary.every((r: any) =>
+          r.codecs.includes("avc1"),
+        ),
+      );
+      checks++;
+    } finally {
+      globalThis.fetch = legacyFetch;
+    }
     const f = await fixture(),
       list = await jobs(f),
       hls = list.find((j: any) => j.handler === "media.hls"),

@@ -30,3 +30,9 @@ Desktop.ini
 
 # Unrelated personal documents stored at the project root
 /*.docx
+
+# Python agent runtime
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/

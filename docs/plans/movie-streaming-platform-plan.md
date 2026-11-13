@@ -1,8 +1,26 @@
 # Kế hoạch hoàn chỉnh: Web xem phim với Node.js và Cloudinary
 
-Ngày lập: 08/11/2026. Cập nhật: 13/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.20.
+Ngày lập: 08/11/2026. Cập nhật: 14/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.29.
 
 Tài liệu giải thích triển khai: [Thuật toán stream video](../design/streaming-algorithms.md). Đã có UI/player cơ bản tại apps/web; phân biệt cấu hình hiện tại với các thuật toán minh họa và ma trận nghiệm thu còn thiếu. Tài liệu không hoàn tất ST01–ST06.
+
+Phiên bản 2.29 (14/11/2026): bổ sung [12 bước build chatbot website](website-chatbot-implementation-plan.md): catalog/FAQ read-only gateway, model baseline, index/live revalidation, run/outbox/RabbitMQ, REST/Swagger, React chat/memory, OMDb/cá nhân hóa và nghiệm thu. [Agentplan1.6](movie-ai-agent-plan.md) liên kết lộ trình; đây là thay đổi tài liệu, chưa code chatbot hoặc đổi API/schema/UI. AG/EXT/REC/ENC/ST không đổi trạng thái.
+
+Phiên bản 2.28 (14/11/2026): chọn OMDb cho lookup điểm IMDb/Metascore trong [agent Colab](../../apps/agent/README.md), [agentplan1.5](movie-ai-agent-plan.md). Mapping verified, provenance/null, cache/budget và Secrets; chưa key live/provider ingest backend/schema/UI. Sửa installer curl/zstd và demo clock; xem [kiểm thử OMDb](../testing/omdb-2026-11-14.md). AG08/12/13 vẫn IN_PROGRESS; EXT/REC/ENC/ST không đổi.
+
+Phiên bản 2.27 (13/11/2026): triển khai [PoC Colab](../../apps/agent/README.md) và [notebook](../../notebooks/movie-agent-colab.ipynb) độc lập: Qwen/Ollama, E5/FAISS, bounded tools/evidence, snapshot, TMDB tùy chọn và DDGS link-only. [Agent plan1.4](movie-ai-agent-plan.md) có trạng thái partial;44Python/7Node tests và static notebook đạt, chưa Qwen/E5/GPU Colab thật. Không đổi API/schema/UI/media; EXT/REC/ENC/ST giữ nguyên.
+
+Phiên bản 2.26 (13/11/2026): rà soát lại nguồn điểm/review bằng ba agent; [nghiên cứu 1.1](../design/external-ratings-reviews-research.md#9-kết-quả-rà-soát-bổ-sung-phiên-bản-11) bổ sung IMDb User Reviews EULA, OMDb response/quyền có điều kiện, Rotten Tomatoes API qua Origin, nguồn Việt Nam và workflow adapter/agent/Colab. EXT01–EXT08 và AG01–AG16 vẫn NOT_STARTED; không code importer, gọi key hoặc thay runtime/schema. Content-v1 giữ nguyên.
+
+Phiên bản 2.25 (13/11/2026): triển khai [gợi ý content-v1](../api/recommendations.md) và [thuật toán](../design/recommendation-algorithms.md): TF-IDF/multi-hot/cosine/MMR, watchlist/coverage hợp lệ khi opt-in, năm API private, snapshot 10 phút, feedback/hoàn tác và trang Dành cho bạn. Migration tăng 47→50 bảng, OpenAPI 92 operation/70 path, registry 74 code. REC01/03/04/05 IN_PROGRESS; REC02/06–09 NOT_STARTED. Chưa reset watermark, analytics/trending, worker feature offline, CF hoặc A/B; AI agent vẫn chỉ kế hoạch. [Kiểm thử](../testing/recommendations-2026-11-13.md).
+
+Phiên bản 2.24 (13/11/2026): triển khai [encoding H.264/AAC đa độ phân giải](../api/encoding.md): ba preset tiết kiệm/720p/1080p, snapshot theo nguồn và hash, Cloudinary profile bất biến, worker/verifier/backup gate, admin chọn preset và xem mức thật. [Kiểm thử](../testing/encoding-2026-11-13.md): API/worker 2.168 + frontend 203 trên DB tạm riêng; Cloudinary/Chrome live 11 mức clip 720p và 5 mức fixture Full HD tới 1080p. Đo byte cho thấy 480/360/240p giảm 23/43/60% trên một mẫu; 720p tăng 7%, không hứa nén luôn nhỏ hơn. Không tự xuất bản, chuyển mã catalog cũ hoặc đổi schema; per-title/VMAF/đa codec/HDR chưa làm.
+
+Phiên bản 2.23 (13/11/2026): chuyển môi trường thử agent sang Google Colab theo yêu cầu. [Plan agent](movie-ai-agent-plan.md) bản 1.2 có notebook tương tác, Qwen/Ollama trong runtime, E5/FAISS, snapshot catalog, cloud data boundary, checkpoint/reset và AG15–AG16; AG02 ưu tiên Colab. Backend/PostgreSQL/RabbitMQ vẫn ở máy/server, Colab free không thành queue worker/API website thường trực. Chỉ lập kế hoạch, chưa tạo notebook/cài model/chạy Colab.
+
+Phiên bản 2.22 (13/11/2026): mở rộng [kế hoạch agent](movie-ai-agent-plan.md) bản 1.1 với search CATALOG/WEB/HYBRID/AUTO, metadata/search tools, query routing, dedup/ranking, nguồn/citation/freshness, cache/budget/fallback và AG12–AG14. Search web có lựa chọn rõ, không tự gửi dữ liệu cá nhân hoặc coi phim ngoài kho là xem được. Chỉ cập nhật tài liệu, tất cả ticket agent chưa bắt đầu.
+
+Phiên bản 2.21 (13/11/2026): bổ sung [kế hoạch AI agent](movie-ai-agent-plan.md), kiến trúc NestJS + Python/LangChain + Ollama Qwen local, E5/FAISS, retrieval có kiểm quyền, nguồn TMDB/OMDb/review có policy, database/API dự kiến và AG01–AG11. Theo xác nhận của người dùng, đây chỉ là kế hoạch; chưa code/cài runtime/đổi schema. Các file thử tạo trước khi làm rõ yêu cầu đã được gỡ. REC/EXT/ENC/ST giữ nguyên trạng thái.
 
 Phiên bản 2.20 (13/11/2026): triển khai live search trên thanh tìm phim: từ 2 ký tự, debounce 300 ms, tối đa 6 gợi ý theo bộ lọc, loading/empty/error/retry, abort/chặn response cũ, IME và combobox bàn phím. Frontend-only 202 kiểm tra đạt (54 live search), 4 mẫu responsive và 6 probe runtime read-only. Không đổi API/schema/backend/media; search ranking/cache vẫn như trước, ST/REC/ENC/EXT giữ trạng thái. [Báo cáo](../testing/live-search-2026-11-13.md).
 
@@ -294,15 +312,15 @@ Luồng resume và luồng telemetry được tách riêng. `PUT /me/watch-progr
 
 ### 6.7. Nghiên cứu mã hóa, nén và tạo nhiều độ phân giải
 
-Ngày nghiên cứu: 13/11/2026. **Trạng thái: thiết kế và backlog; chưa thay profile Cloudinary, chuyển mã lại catalog hoặc chạy benchmark trong lượt này.** Các khoảng bitrate, số mẫu, ngưỡng chất lượng và tỷ lệ rollout dưới đây là cấu hình thử của pj-Flim, không phải kết quả đã đo hoặc mặc định bắt buộc của provider.
+Ngày nghiên cứu: 13/11/2026. **Cập nhật triển khai: đã có baseline H.264/AAC với preset có version, source-aware ladder và HLS verification; xem [encoding runbook](../api/encoding.md) và [bằng chứng mới](../testing/encoding-2026-11-13.md).** Catalog cũ giữ nguyên, các nhánh tối ưu chất lượng/per-title/đa codec vẫn là backlog. Các khoảng bitrate, số mẫu, ngưỡng chất lượng và tỷ lệ rollout dưới đây là cấu hình thử của pj-Flim, không phải kết quả đã đo hoặc mặc định bắt buộc của provider.
 
 #### 6.7.1. Hiện trạng và mục tiêu
 
 | Hạng mục | Đã có trong source/bằng chứng | Phần cần làm |
 | --- | --- | --- |
-| Chuyển mã | Cloudinary provider gọi `explicit` với eager async, `streaming_profile` từ upload policy và `format=m3u8`; mặc định config là `hd` | Kiểm kê nội dung profile thực tế, lập profile mới có version khi tối ưu |
-| Các mức chất lượng | Hai asset trong [báo cáo full-stack](../testing/full-stack-2026-11-13.md) có 5 mức 180/270/360/540/720; đã thử phát 720/360/Auto | Không coi bảng 360/480/720/1080 ở mục 6.2 là output hiện tại; chưa nghiệm thu 1080p, HDR hoặc codec khác |
-| Xác minh HLS | Verifier đọc master, resolution/bandwidth, VOD ENDLIST, tổng EXTINF; đọc một phần segment đầu của mỗi variant | Chưa giải mã toàn bộ, đo VMAF, kiểm IDR/căn GOP hoặc đối chiếu bitrate thật; HTTP 200/206 không đủ chứng minh chất lượng |
+| Chuyển mã | Cloudinary provider gọi `explicit` với eager async, `streaming_profile` từ upload policy và `format=m3u8`; intent mới dùng encodingPreset (mặc định balanced-720p-v1); intent cũ giữ profile như `hd` | Kiểm kê nội dung profile thực tế, lập profile mới có version khi tối ưu |
+| Các mức chất lượng | Hai asset trong [báo cáo full-stack](../testing/full-stack-2026-11-13.md) có 5 mức 180/270/360/540/720; đã thử phát 720/360/Auto | Preset mới có 240/360/480/720 và 1080 khi nguồn đủ; đã kiểm Chrome/Cloudinary Full HD bằng fixture tổng hợp, chưa nghiệm thu chất lượng phim Full HD/HDR/codec khác |
+| Xác minh HLS | Verifier thêm số rung/kích thước/codec/không upscale theo snapshot cho preset mới; giữ VOD/timeline/segment gate, legacy tương thích | Chưa giải mã toàn bộ, đo VMAF, kiểm IDR/căn GOP hoặc đối chiếu bitrate thật; HTTP 200/206 không đủ chứng minh chất lượng |
 | Điều kiện sẵn sàng | Attempt/config/profile đúng và HLS đã verify, backup nguồn VERIFIED; admin xuất bản riêng | Giữ gate hiện có khi thêm phiên bản encoding; không tự công khai bằng webhook |
 | Phát dự phòng | MP4 fallback là nguồn authenticated đã xác minh, URL ký cùng asset/version | Có thể lớn hoặc codec không phù hợp; chưa có MP4 fallback tối ưu riêng, không có ABR |
 | Công cụ | Node điều phối, RabbitMQ xử lý nền, Cloudinary chuyển mã/CDN | Chưa có FFmpeg encoder hoặc bộ đo chất lượng nội bộ; thêm công cụ chỉ khi bắt đầu ticket |
@@ -617,14 +635,14 @@ pg_trgm hỗ trợ độ tương tự chuỗi và index tìm gần đúng. [Tài
 
 ### 9.2. Thuật toán gợi ý phim và cá nhân hóa
 
-Nghiên cứu cập nhật ngày 13/11/2026. **Trạng thái: đã nghiên cứu/thiết kế, chưa triển khai cá nhân hóa.** Hợp đồng API, bảng, cấu hình, hệ số và mục tiêu dưới đây là đề xuất cho các ticket REC01–REC09 tại mục 14.5; không phải tính năng đã có hoặc số đo hiệu quả.
+Nghiên cứu cập nhật ngày 13/11/2026. **Trạng thái: đã triển khai một phần, content-v1 chạy được.** Phạm vi thực tế tại [runbook](../api/recommendations.md) và [thuật toán đang chạy](../design/recommendation-algorithms.md): Node content-based có giới hạn, opt-in, preferences/feedback/snapshots và trang /for-you. Các phần analytics/worker/model/reset/experiment dưới đây tiếp tục là thiết kế mục tiêu, không phải chức năng đã có hoặc số đo hiệu quả. REC01/03/04/05 IN_PROGRESS, các ticket còn lại NOT_STARTED.
 
 #### 9.2.1. Hiện trạng và phạm vi
 
 - Source hiện tại: PublicCatalogService.recommendations lấy phim có chung thể loại, bỏ phim nguồn, lọc công khai/phát được và sắp published_at/id. Đây là gợi ý theo ngữ cảnh phim, không học sở thích tài khoản.
 - Có titles/title_genres/people/credits, watchlist, watch_progress, playback_sessions/watch_events/playback_event_batches và outbox. watch_progress là trạng thái tiến độ hiện hành, không phải nhật ký đầy đủ mọi lần xem hoặc dữ liệu đánh giá sao.
 - title_daily_stats có schema, nhưng consumer tổng hợp analytics/trending chưa triển khai. Publisher media hiện chỉ dispatch media.processing.requested và media.webhook.received; playback.events.accepted chưa tự động trở thành feature gợi ý.
-- Chưa có impression/click attribution riêng cho gợi ý, sở thích/opt-out, Không quan tâm, model registry hoặc bảng embedding. Redis chưa tích hợp. Ratings, nhiều profile và entitlement/VIP cũng chưa có trong bản hiện hành.
+- Đã có preference opt-in mặc định false, Không quan tâm/hoàn tác, snapshot và feed private content-v1; schema 50 bảng. Chưa có impression/click attribution, reset watermark, model registry hoặc bảng embedding. Redis chưa tích hợp. Ratings, nhiều profile và entitlement/VIP cũng chưa có trong bản hiện hành.
 - Giữ gợi ý cùng thể loại làm baseline. MVP hiện có không bị chặn bởi việc chưa triển khai học máy. Nâng cấp theo thứ tự: đo dữ liệu → content-based → hybrid → thử nghiệm → mô hình lớn khi có bằng chứng cần thiết.
 
 Đơn vị xếp hạng là **title**, không phải từng episode. Hiện nhận diện sở thích ở cấp tài khoản; không gọi đó là sở thích riêng từng người trong tài khoản dùng chung. Khi có profiles, phải thiết kế lại scope, ownership và di chuyển dữ liệu rõ ràng.
@@ -846,7 +864,7 @@ Lưu snapshot/top-K trong PostgreSQL trước; cache Redis chỉ là tùy chọn
 
 #### 9.2.10. REST API dự kiến và phân quyền
 
-Ngoài route GET /titles/:id/recommendations đang có, các route cá nhân hóa còn lại dưới đây chưa được code và chưa nằm trong OpenAPI hiện hành. Phải có DTO/controller/service riêng, error registry và Swagger khi triển khai.
+Content-v1 đã có GET feed, GET/PATCH preferences, PUT/DELETE feedback với DTO/controller/service/error registry/Swagger riêng; hợp đồng thực tế tại API gợi ý (PUT trả 204). Event ingestion/reset/status dưới đây vẫn là thiết kế chưa code. PATCH bản đầu nhận đủ enabled và hideCompleted; onboarding, reset watermark và event proof chưa có.
 
 | Route dưới /api/v1 | Ý nghĩa | Xác thực/kết quả |
 | --- | --- | --- |
@@ -854,7 +872,7 @@ Ngoài route GET /titles/:id/recommendations đang có, các route cá nhân hó
 | GET /me/recommendations?surface=home&limit=20&cursor=… | Feed/snapshot cá nhân hoặc fallback khi đã tắt | JWT/session của chính user; 200, data/page và metadata version/mode |
 | GET /me/recommendation-preferences | Đọc lựa chọn hiện hành và ETag/revision để sửa | JWT/session, ownership; 200 |
 | PATCH /me/recommendation-preferences | Bật/tắt, lựa chọn onboarding được whitelist | Ownership, If-Match/revision; 200 |
-| PUT /me/recommendation-feedback/:titleId | Đặt NOT_INTERESTED | Ownership; idempotent, 200 |
+| PUT /me/recommendation-feedback/:titleId | Đặt NOT_INTERESTED | Ownership; idempotent, 204 trong content-v1 |
 | DELETE /me/recommendation-feedback/:titleId | Hoàn tác Không quan tâm | Ownership; idempotent, 204 |
 | POST /me/recommendation-events | Batch impression/click có proof gắn snapshot/item/scope | 202 sau receipt/outbox bền; tối đa 50 event/64KB theo hợp đồng chốt |
 | POST /me/recommendation-resets | Yêu cầu xóa/reset hồ sơ suy ra theo epoch mới | Ownership, Idempotency-Key; 202 và operation theo owner |
@@ -953,7 +971,7 @@ Sắp theo season/episode number có unique constraint; lấy tập kế tiếp 
 
 ### 9.6. Nguồn điểm số và bài review bên ngoài
 
-Nghiên cứu ngày 13/11/2026 bằng ba agent theo yêu cầu người dùng. Chi tiết nguồn, endpoints, giới hạn kiểm chứng và thiết kế: [IMDb, Metacritic và các nguồn rating/review](../design/external-ratings-reviews-research.md). **Đây là nghiên cứu; chưa có importer, schema, credential hoặc API/UI external reviews chạy thật.** Rating thành viên pj-Flim là tính năng riêng, không phải dữ liệu nhập từ nguồn khác.
+Nghiên cứu và rà soát lại ngày 13/11/2026 bằng ba agent theo yêu cầu người dùng; báo cáo hiện phiên bản 1.1. Chi tiết nguồn, endpoints, giới hạn kiểm chứng và thiết kế: [IMDb, Metacritic và các nguồn rating/review](../design/external-ratings-reviews-research.md). **Đây là nghiên cứu; chưa có importer, schema, credential hoặc API/UI external reviews chạy thật.** Rating thành viên pj-Flim là tính năng riêng, không phải dữ liệu nhập từ nguồn khác.
 
 | Nguồn | Quyết định thiết kế và gate |
 | --- | --- |
@@ -961,21 +979,39 @@ Nghiên cứu ngày 13/11/2026 bằng ba agent theo yêu cầu người dùng. C
 | Metacritic | Có API qua Fabric Origin, account duyệt + gói core trả phí/ToS; không có trong Free Trial. Match Origin Movie/Show ID, không dùng IMDb ID thay thế; quote/link khác toàn bài, user score khác audience text |
 | TMDB | Ưu tiên adapter thử đầu tiên nếu phù hợp license/attribution; movie/TV review API, phân trang/ngôn ngữ, rating nullable. Commercial cần tuyến cấp phép; chưa thử bằng key |
 | Trakt | Nhánh app-scoped ratings/comments theo policy hiện hành, không bulk harvest/mirror catalog |
-| Rotten Tomatoes/Letterboxd | Licensing/approval/embedding theo nguồn; không xem endpoint public là quyền import, không dùng agent trái điều kiện dự án/API |
+| OMDb | Lookup có điều kiện, không có review-list được tài liệu hóa; trả quota không chứng minh quyền commercial/upstream/AI |
+| Rotten Tomatoes | Licensing trực tiếp hoặc Origin paid/approval; Movie/Show/Season/Episode theo Origin ID, quote/comment khác full article |
+| Letterboxd | Access policy loại recommendation/data-analysis/LLM/GPT; không chọn làm nguồn agent mặc định |
+| Moveek/Galaxy/VnExpress | Moveek có review, Galaxy có Góc điện ảnh nhưng chưa xác minh API/rights; VnExpress RSS có điều kiện riêng, không mặc định toàn văn/AI |
 | Publisher/RSS | API/feed/quyền riêng của tòa soạn cho full article; chưa có quyền thì chỉ card/link với metadata hợp lệ hoặc biên tập độc lập |
 
 Quyết định kỹ thuật:
 
 - API/ETL xác định cho thu thập; agent hỗ trợ source research, matching, discovery và draft QA/summary **chỉ khi quyền xử lý cho phép**. External text không phải instruction; không cấp agent quyền tự mua gói, lấy secret, vượt login/bot block hoặc publish DB.
 - Mapping có entity type/scope/version, IMDb `tt...`, TMDB media type và Origin ID riêng. Phân biệt movie/series/season/episode, remake và mùa kỹ thuật của phim lẻ; candidate mơ hồ cần admin duyệt.
-- Tách source policy, external mappings, rating snapshots, review references và ingestion runs; tên bảng/API trong nghiên cứu là đề xuất, chưa thay baseline 47 bảng/87 operation.
+- Tách source policy, external mappings, rating snapshots, review references và ingestion runs; tên bảng/API trong nghiên cứu là đề xuất, chưa thêm bảng/API external; trạng thái hiện tại sau content-v1 là 50 bảng/92 operation trên 70 path.
 - Queue/publisher/consumer external data riêng; outbox media hiện chỉ hai loại media event, chưa hỗ trợ ingestion này. Fetch → staging/validate → check policy/mapping version → atomic promotion; replay/429/outage/incomplete snapshot không tạo điểm giả.
 - Hiển thị từng nguồn/thang điểm/count/scope/freshness/linkback. Không đổi tỷ lệ positive thành điểm trung bình, không cộng votes giữa nguồn, không gọi điểm tự tính là Metascore hoặc external user review là review pj-Flim.
 - Nội dung quote, full text, dịch, AI summary và ML/embeddings có quyền riêng; source policy kiểm field/allowed uses, region, retention/cache/backup/purge/expiry/attribution. Thiếu quyền thì không nhập/hiển thị trường đó; quyền với dữ liệu review phải được xác minh riêng theo nguồn/use case.
 - API public chỉ trả dữ liệu đã được phép và title đã xuất bản; admin DTO/controller/service, RBAC/audit/ETag/idempotency và Swagger chỉ bổ sung khi code. Outage nguồn không chặn playback/media READY.
 - Giới hạn nghiên cứu: PDF ToS Metacritic do provider liên kết trả 404, Fandom Terms gặp 402, Letterboxd embed guide gặp 403; không viện nội dung indexed/bản cũ như điều khoản hiện hành. Quota/giá/coverage/quyền account chưa xác minh thực.
 
+Bổ sung rà soát 1.1: OMDb không có review-list được tài liệu hóa, plot=full là synopsis; không mặc định quota trả phí cấp quyền upstream. Rotten Tomatoes có adapter route chính thức qua Origin, còn Moveek/Galaxy chưa xác minh public API/quyền và VnExpress RSS có điều kiện riêng. Agent dùng adapter xác định cho số liệu, chỉ matching/discovery/summary có evidence; quyền display không tự cấp quyền translate/embed/train/cloud transfer lên Colab. [Chi tiết nguồn, endpoint và thử nghiệm đề xuất](../design/external-ratings-reviews-research.md#9-kết-quả-rà-soát-bổ-sung-phiên-bản-11).
+
 Lộ trình EXT01–EXT08 tại mục 14.7 đều NOT_STARTED. Không tải dataset, gọi API có phí, cài framework agent, gửi yêu cầu licensing hoặc đưa review lên web trong lượt nghiên cứu. ST01–ST06, REC01–REC09 và ENC01–ENC09 giữ nguyên.
+
+### 9.7. Kế hoạch AI agent trên Google Colab cho phim và review
+
+Theo yêu cầu build mới, [agent plan1.6](movie-ai-agent-plan.md) chuyển sang **COLAB_POC_IMPLEMENTED, chờ runtime thật**. Đã tạo notebook/source/exporter/tests theo [runbook](../../apps/agent/README.md); chưa Colab/Qwen/E5/GPU. Các bullet dưới là kiến trúc mục tiêu; PoC chỉ CATALOG/HYBRID, facts/cards, OMDb IMDb/Metascore, TMDB tùy chọn/DDGS link-only, chưa backend/UI/worker AI hoặc review summary.
+
+- Giữ NestJS/PostgreSQL/RabbitMQ trên máy/server, sở hữu auth/session/RBAC, eligibility, DTO/audit và dữ liệu chính. PoC chạy Python/LangChain/Ollama/E5/FAISS tương tác trong Colab; FastAPI và queue worker là phương án dịch vụ dài hạn trên host phù hợp.
+- MVP tìm/hỏi/gợi ý phim từ catalog nội bộ; E5 đa ngôn ngữ + FAISS thử hybrid keyword/semantic, bộ lọc SQL bắt buộc, kiểm publication trước và sau suy luận. Cá nhân hóa watchlist chỉ opt-in và đúng owner.
+- Nhánh admin matching/discovery/summary dùng TMDB/OMDb hoặc nguồn đã được phép; kết quả là draft có evidence, không tự publish và không bịa điểm/review khi thiếu nguồn. DDGS tùy chọn, không phải API có SLA hoặc quyền copy toàn bài.
+- Khi tích hợp website dài hạn, dùng API run bất đồng bộ 202/polling, quota/lease/generation/deadline và topology RabbitMQ AI riêng. PoC Colab free dùng snapshot nạp có kiểm soát, câu hỏi trong notebook, không consumer distributed queue thường trực/public Ollama; kết quả cần backend kiểm lại khi dùng trên web.
+- Tool allowlist/schema/evidence validator, prompt injection/SSRF/ownership, retention/purge và kill switch được thiết kế cùng tính năng. Endpoint/bảng/mã lỗi trong tài liệu đều dự kiến, chưa nằm trong runtime/OpenAPI.
+- Search có chế độ Trong kho/Trên web/Kết hợp và AUTO có kiểm quyền; search router, query planning, metadata API/DDGS adapter, dedup/ranking và safe fetch/citation tại plan agent 5.5–5.8. Phân biệt discovery snippet với field đã xác minh, nguồn ngoài với phim xem được, PARTIAL khi một nhánh lỗi; không tự gửi watchlist/hội thoại ra search engine.
+- Notebook/snapshot/checkpoint/reset/cloud privacy tại plan agent 9.1–9.5; không mặc định luôn có GPU T4 hoặc giữ toàn bộ môi trường sau reset. Chỉ mount/lưu Drive theo scope được phép khi triển khai.
+- Lộ trình AG01–AG16 tại mục 14.8; không tự đánh dấu REC/EXT/ENC/ST hoàn tất hoặc xem kích thước model/GPU là bằng chứng hiệu năng.
 
 ## 10. Dữ liệu và API
 
@@ -1001,7 +1037,7 @@ Lộ trình EXT01–EXT08 tại mục 14.7 đều NOT_STARTED. Không tải data
 - Unique email chuẩn hóa, slug, số mùa/tập, watchlist và progress theo user/episode; chỉ một asset active cho mỗi episode. Rating sau MVP có unique theo user/title.
 - Role/permission codes và bảng nối có unique constraint; users giữ status/authVersion, phiên giữ MFA/step-up timestamps và token family. Secret MFA được mã hóa, token/recovery codes lưu hash; không đặt các trường này trong public/admin DTO mặc định.
 - Các bảng hỗ trợ được cụ thể hóa trong thiết kế backend: auth_replay_receipts (receipt credential ngắn hạn có mã hóa), policy_locks (invariant quản trị cuối), media_outputs/source_backups, resume_heads/playback_event_batches và operations/idempotency_records/scheduled_jobs. Đây là phần schema của C02, không được bỏ qua chỉ vì bảng tổng quan rút gọn.
-- Cá nhân hóa sau MVP có các quan hệ đề xuất tại mục 9.2.9: preferences/feedback, user-title features, item neighbors, model versions, snapshots/exposures, processed events và experiment assignments. Chúng chưa nằm trong baseline 47 bảng; phải có migration/grants/retention trước khi triển khai REC01–REC02.
+- Cá nhân hóa sau MVP có các quan hệ đề xuất tại mục 9.2.9: preferences/feedback, user-title features, item neighbors, model versions, snapshots/exposures, processed events và experiment assignments. Ba bảng preferences/feedback/snapshots đã thêm bằng movie-recommendations-v1.sql cùng grants/retention, tổng 50 bảng; user-title features/neighbors/model/exposure/processed events/experiments còn chưa có. Baseline 47 bảng giữ nguyên; không dùng Prisma db push.
 - Baseline database bổ sung homepage_banners, system_settings (chỉ cấu hình không chứa secret) và title_daily_stats (tổng hợp có version định nghĩa); tổng 47 bảng. Kiểu dữ liệu, FK ghép, partial unique và grants lấy từ database design/DDL; C02 cần chuyển thành migration Prisma kèm SQL thủ công và kiểm thử trên PostgreSQL server riêng.
 - audit_logs có append-only policy, allowlisted diff và index mục 7.5; audit_exports giữ owner/scope/status/expiresAt và storage reference riêng tư. Security event failures không bị xóa do rollback transaction nghiệp vụ.
 - Index khóa ngoại, publication/date, watch progress theo user/updated_at, outbox theo trạng thái/next_attempt_at; phân vùng watch_events khi dữ liệu đo được yêu cầu.
@@ -1019,7 +1055,7 @@ Lộ trình EXT01–EXT08 tại mục 14.7 đều NOT_STARTED. Không tải data
 
 ### 10.3. Danh mục endpoint và status thành công
 
-Các API cá nhân hóa mới tại mục 9.2.10 là đề xuất của REC04, chưa có trong OpenAPI/runtime hiện hành; không suy ra đã triển khai chỉ từ bảng kế hoạch.
+Đã có năm operation content-v1 tại [API gợi ý](../api/recommendations.md): GET feed, GET/PATCH preferences, PUT/DELETE feedback. Tổng hiện tại 92 operation/70 path. Event ingestion/reset ở mục 9.2.10 vẫn là đề xuất, chưa có trong runtime/OpenAPI.
 
 
 Các path sau có tiền tố `/api/v1`. Status là hành vi của API ứng dụng; upload trực tiếp/CDN Cloudinary có giao thức riêng. `201` trả `Location` tới tài nguyên vừa tạo; `202` trả receipt/status URL sau khi công việc đã được ghi bền.
@@ -1696,7 +1732,7 @@ Bổ sung ST04 và ST06 theo mục 11.1: analytics/retention chưa có consumer 
 
 ### 14.5. Công đoạn triển khai gợi ý và cá nhân hóa REC01–REC09
 
-Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu bổ sung ngày 13/11/2026. **Cả chín ticket hiện NOT_STARTED**; hoàn thành nghiên cứu không đồng nghĩa đã có migration/API/model chạy thật. Chốt effort sau kiểm kê chất lượng/quy mô dữ liệu, không tự hứa lịch huấn luyện hoặc mức tăng tương tác.
+Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu bổ sung ngày 13/11/2026. **REC01/03/04/05 IN_PROGRESS; REC02/06–09 NOT_STARTED**. Đã có bản content-v1 dùng snapshot thư viện hiện tại, chưa hoàn tất toàn bộ yêu cầu từng ticket. Chốt effort sau kiểm kê chất lượng/quy mô dữ liệu, không tự hứa lịch huấn luyện hoặc mức tăng tương tác.
 
 | Ticket | Công đoạn code và đầu ra | Phụ thuộc | Tiêu chí nghiệm thu |
 | --- | --- | --- | --- |
@@ -1710,9 +1746,23 @@ Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu
 | REC08 | Experiment assignment, shadow/canary/A-B, dashboard aggregate và quy trình promotion/rollback có audit | REC06; REC07 chỉ khi dùng CF/model học | Power/cohort/metric chốt trước; đủ mẫu, privacy và QoE guardrail đạt; không đổi policy bởi payload client |
 | REC09 | Nghiên cứu nâng cấp two-tower/ANN, chuỗi phiên hoặc artwork/trailer personalization | REC08 có bằng chứng nhu cầu và dữ liệu/asset phù hợp | Thử riêng từng giả thuyết về lợi ích/chi phí; không đưa vào MVP nếu không vượt baseline và điều kiện vận hành |
 
-Trình tự chính: REC01 → REC02/REC03 → REC04 → REC05 → REC06 → REC07 nếu đủ dữ liệu → REC08; REC09 là mở rộng tùy bằng chứng. Baseline cùng thể loại/phổ biến vẫn được dùng khi một nhánh chưa đủ điều kiện.
+Phạm vi đã làm và còn lại (content-v1):
 
-Source tree dự kiến khi bắt đầu code:
+| Ticket | Trạng thái | Bằng chứng / phần còn lại |
+| --- | --- | --- |
+| REC01 | IN_PROGRESS | Migration 3 bảng, grants/ownership, opt-in/out, snapshot expiry/cleanup đã có; reset watermark và event/proof contract đầy đủ còn thiếu |
+| REC02 | NOT_STARTED | Chưa queue/publisher/projector analytics, aggregate/trending hoặc event backfill |
+| REC03 | IN_PROGRESS | TF-IDF/multi-hot/cosine + MMR Node trong request có giới hạn, zero vector/fallback kiểm được; chưa worker/index/neighbors/artifact offline |
+| REC04 | IN_PROGRESS | 5 operation, DTO/controller/service, ETag/owner/snapshot HMAC/eligibility; chưa reset/event ingestion |
+| REC05 | IN_PROGRESS | Trang riêng /for-you, lý do, toggle, dismiss/undo, mobile và logout race; chưa nhiều hàng trang chủ, reset hoặc impression/click proof |
+| REC06 | NOT_STARTED | Fixture công thức/HTTP không thay benchmark timeline/full-catalog hoặc đánh giá người dùng |
+| REC07 | NOT_STARTED | Chưa collaborative model/hybrid artifact |
+| REC08 | NOT_STARTED | Chưa shadow/canary/A-B hoặc số đo uplift |
+| REC09 | NOT_STARTED | Chưa two-tower/ANN/sequence/artwork personalization |
+
+Bản đầu phục vụ trực tiếp từ watchlist/progress đã được backend chấp nhận, nên không phụ thuộc REC02 để chạy; không dùng snapshot đó như lịch sử event hoặc popular counts. Retrieval cắt 1.000 candidate và xử lý trong request là ngoại lệ MVP có giới hạn, cần chuyển offline khi catalog/tải tăng. Khách dùng catalog/related public; /for-you cần tài khoản. Fallback mới là recency + MMR, chưa có thống kê phổ biến thật. Trình tự phần còn lại giữ REC01 → REC02/REC03 → REC04/05 → REC06 → REC07 khi đủ dữ liệu → REC08; REC09 tùy bằng chứng.
+
+Source tree mục tiêu; DTO/controller/service/packages content-v1 đã có, recommendation-worker và analytics vẫn chưa triển khai:
 
 ```text
 apps/api/src/dto/recommendations.dto.ts
@@ -1730,7 +1780,19 @@ Những đường dẫn này là đề xuất, chưa được tạo trong lượ
 
 ### 14.6. Công đoạn triển khai mã hóa và nén đa độ phân giải ENC01–ENC09
 
-Theo nghiên cứu mục 6.7 ngày 13/11/2026. **Cả chín ticket hiện NOT_STARTED**; nghiên cứu đã viết không có nghĩa đã đổi encoder, profile, database hoặc output đang phát. Đây là nhánh tối ưu trên pipeline C06–C08/C10; ưu tiên xác minh baseline và các gate streaming hiện có trước khi mở đa codec/per-shot.
+Theo nghiên cứu mục 6.7 và [triển khai encoding](../api/encoding.md), cập nhật 13/11/2026. Đã code baseline H.264/AAC có preset/version/hash và kiểm Cloudinary/Chrome thật; không đánh dấu toàn bộ nhánh nâng cao hoàn tất.
+
+| Ticket | Trạng thái hiện tại | Phạm vi đã đạt / còn thiếu |
+| --- | --- | --- |
+| ENC01 | IN_PROGRESS | Có clip thật 720p, fixture 1080p và số byte; chưa corpus đại diện/usage/color/FPS toàn kho |
+| ENC02 | DONE cho baseline H.264/HLS | Preset allowlist, snapshot/version/hash, profile drift guard, DTO/audit/Swagger; chưa đa codec |
+| ENC03 | IN_PROGRESS | Có đo byte-range/Chrome decode/manifest; chưa quality metrics/VMAF/probe GOP toàn bitstream |
+| ENC04 | IN_PROGRESS | Eager async immutable profile, attempt/backup/retry gate và verifier; chưa GOP/IDR/full-device gate |
+| ENC05 | NOT_STARTED | Chọn rung theo kích thước nguồn đã có; chưa per-title trial/RD optimization |
+| ENC06 | IN_PROGRESS | Admin chọn preset/xem levels, Chrome chuyển mức 16 trường hợp; chưa device/codec matrix và quality report sâu |
+| ENC07–ENC09 | NOT_STARTED | HEVC/AV1/VP9, production canary/QoE và per-shot/HDR chưa làm |
+
+Bảng dưới là hợp đồng công việc đầy đủ, không phải mọi tiêu chí đều đã đạt. Source clip/provider smoke không thay thế benchmark chất lượng và rollout production.
 
 | Ticket | Công đoạn và đầu ra | Phụ thuộc | Tiêu chí nghiệm thu |
 | --- | --- | --- | --- |
@@ -1746,7 +1808,7 @@ Theo nghiên cứu mục 6.7 ngày 13/11/2026. **Cả chín ticket hiện NOT_ST
 
 Trình tự ưu tiên: ENC01 → ENC02/ENC03 → ENC04 → ENC05 nếu cần → ENC06 → ENC08. ENC07 là nhánh có điều kiện, ENC09 là nghiên cứu tiếp. Không bắt buộc triển khai tất cả codec hoặc per-title mới được bàn giao HD; chất lượng và khả năng phát phải có bằng chứng.
 
-Đường dẫn đề xuất khi bắt đầu code, **chưa tạo package/API trong lượt nghiên cứu**:
+Đường dẫn mở rộng cho phần chưa làm; code baseline hiện ở packages/contracts/src/encoding.ts, packages/media/src/encoding-profiles.ts, provider/verifier/worker và UploadPanel. Không có endpoint hoặc migration mới:
 
 ```text
 packages/media/src/encoding/           # config, capability, fingerprint, ladder selection
@@ -1770,12 +1832,39 @@ Thực hiện theo mục 9.6 và [báo cáo nghiên cứu](../design/external-ra
 | EXT02 | Thiết kế migration/grants cho mapping theo entity/scope/version, source policy, rating snapshot, review reference và ingestion run | EXT01 | IMDb/TMDB/Origin ID không lẫn, remake/season/episode và null score đúng; unique/foreign key/RBAC phù hợp, không nhập external author thành user |
 | EXT03 | Adapter TMDB và external worker/publisher/queue riêng; staging, pagination/language, retries/receipts/atomic promotion | EXT01–EXT02, key/quyền TMDB phù hợp | Schema/nullable/429/outage/incomplete run, dedup/crash và policy/mapping generation đạt; không nghẽn HLS/backup |
 | EXT04 | Adapter IMDb TSV cho phạm vi được phép hoặc licensed API/bulk/User Reviews/Summaries đúng entitlement | EXT01–EXT03; quyền IMDb đã chốt | Streaming/limits/checksum/staging, title IDs/field rights và data products tách; không gọi dataset public có review text |
-| EXT05 | Adapter Origin Metacritic; khảo sát Trakt/RT/Letterboxd/publisher chỉ theo quyền/nhu cầu | EXT01–EXT03; hợp đồng/access của từng nguồn | Origin IDs/TV season đúng; scope quote/score/full article và storage/attribution theo văn bản hiện hành; không bật nguồn chưa duyệt |
-| EXT06 | Agent hỗ trợ matching/discovery/summary có evidence/schema/tool boundaries, budget và QA | EXT01–EXT03; quyền AI/derivatives khi dùng text | Không bịa ID/score/quote/consensus, prompt injection/SSRF không vượt quyền, candidate mơ hồ thành draft; không dùng agent cho nguồn loại dự án LLM |
+| EXT05 | Adapter Origin Metacritic/RT theo entitlement; Trakt/publisher theo quyền, OMDb có điều kiện; Letterboxd loại khỏi agent mặc định | EXT01–EXT03; hợp đồng/access của từng nguồn | Origin IDs/TV season đúng; scope quote/score/full article và storage/attribution theo văn bản hiện hành; không bật nguồn chưa duyệt |
+| EXT06 | Agent hỗ trợ matching/discovery/summary có evidence/schema/tool boundaries, field-level rights, cloud-transfer gate, budget và QA | EXT01–EXT03; quyền AI/derivatives khi dùng text | Không bịa ID/score/quote/consensus, prompt injection/SSRF không vượt quyền, candidate mơ hồ thành draft; không dùng agent cho nguồn loại dự án LLM |
 | EXT07 | DTO/controller/service external read/admin, UI source badges/review cards, attribution/spoiler/AI labels và freshness | EXT02–EXT03; nguồn thêm qua EXT04–EXT06 nếu dùng | Publication/RBAC/audit/ETag/idempotency/cursor đúng; keys không ra frontend, scale/count/scope không gộp sai; cập nhật Swagger/error registry |
 | EXT08 | Contract/fixture/live sandbox có quyền, dashboard quota/stale/error, policy expiry/takedown/purge/restore suppression và runbook | EXT03–EXT07, feed quyền phù hợp | Replay/crash/schema drift/quyền rút giữa run, last-good trong hạn, gỡ text/derivatives đúng và nguồn lỗi không chặn xem; có báo cáo coverage/freshness/usage thật |
 
 Trình tự: EXT01 → EXT02 → EXT03 → EXT07/EXT08; EXT04/EXT05 là các adapter có điều kiện; EXT06 chỉ thêm khi có ích và nguồn cho phép. Không cần chờ gói IMDb/Metacritic để thử TMDB được cấp quyền, cũng không biến external reviews thành điều kiện bàn giao MVP. Bài review do user pj-Flim tự viết/ratings/moderation là scope riêng sau MVP, không được coi đã hoàn thành bởi importer.
+
+### 14.8. Công đoạn AI agent AG01–AG16
+
+Lộ trình triển khai web cụ thể: [12 bước chatbot đọc dữ liệu website](website-chatbot-implementation-plan.md). Đây là phần phân rã công việc, không bổ sung ticket đã DONE hoặc endpoint đã tồn tại.
+
+Chi tiết phụ thuộc, đầu ra, API/database/thuật toán và nghiệm thu nằm trong [kế hoạch AI agent, mục 11–12](movie-ai-agent-plan.md). **IN_PROGRESS:** AG01/02/04/05/08/11/12/13/15/16. **NOT_STARTED:** AG03/06/07/09/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Xem mục16 plan agent để phân biệt code PoC với gate còn thiếu.
+
+| Ticket | Công đoạn | Điều kiện chính |
+| --- | --- | --- |
+| AG01 | Chốt use case, tool/data/privacy và benchmark | Tách viewer/catalog với admin/external |
+| AG02 | Colab Python/Ollama/Qwen, lock dependency và model smoke trong notebook | GPU/quota thực, model/tool/JSON/memory/timing được đo |
+| AG03 | Migration/grants, run state/outbox và internal contract | Owner/lease/generation/idempotency/retention |
+| AG04 | Keyword/E5/FAISS hybrid, snapshot và index sync | Eligibility, version, rebuild/revoke/purge |
+| AG05 | Agent tools read-only và bounded loop/grounding | Không bịa ID/claim/nguồn; timeout/cancel/budget |
+| AG06 | NestJS DTO/controller/service, API run, lỗi và Swagger | Auth/ownership/quota/202 polling |
+| AG07 | Cá nhân hóa watchlist opt-in | Đồng bộ REC01/privacy, không giả thành recommender đã học |
+| AG08 | Provider TMDB/OMDb/matching/evidence và worker riêng | EXT01–EXT03, key/quyền phù hợp |
+| AG09 | UI hỏi/chờ/hủy/cards/citations/lỗi | Sau API, mobile/keyboard/render an toàn |
+| AG10 | Admin research/draft/review có người kiểm | EXT06–EXT07 và quyền AI, không tự publish |
+| AG11 | E2E/model thật/security/load/runbook/rollout | Báo cáo đo thực, kill switch/rollback, ghi rõ nhánh chưa làm |
+| AG12 | Search router/query planning/provider adapters và run schema | Mode/opt-in/source policy, không lộ dữ liệu qua truy vấn |
+| AG13 | Dedup/ranking/safe fetch/evidence/cache/fallback | Budget, citations, SSRF/freshness/policy revoke |
+| AG14 | UI search mode/source panels và benchmark search E2E | PARTIAL/EMPTY/nguồn/ngày, không giả phim ngoài kho xem được |
+| AG15 | Notebook agent Colab tương tác, bootstrap/checkpoint/cleanup | Không worker/API public thường trực, thử phiên mới/reset |
+| AG16 | Snapshot catalog/cloud data boundary/backend revalidation | Schema/hash/provenance/TTL/policy, không secret/private data |
+
+PoC ưu tiên: AG01/AG02 → AG15 cho model smoke, sau đó AG04/AG05 và AG16 cho dữ liệu catalog; search thêm AG12/AG13. Kiến trúc website dài hạn: AG01 → AG02 → AG03–AG06 → AG09 → AG11 cho MVP catalog; AG07 và AG08/AG10 mở theo dữ liệu/quyền. Không đợi gói IMDb/Metacritic trả phí mới có thể thử catalog agent. Search web/kết hợp đi theo AG12 → AG13 → AG14 và bổ sung vào gate AG11 khi bật. Không tự commit/push hoặc public dịch vụ khi mới hoàn tất kế hoạch.
 
 ## 15. Các quyết định cần xác minh bằng thử nghiệm
 

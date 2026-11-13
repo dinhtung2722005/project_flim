@@ -1,5 +1,7 @@
 # Endpoint ?? tri?n khai
 
+Bổ sung 13/11/2026: tổng hiện hành **92 operation/70 path**; 5 operation mới GET feed, GET/PATCH preferences, PUT/DELETE feedback tại [API gợi ý](recommendations.md). Bảng cũ dưới đây mô tả baseline 87 operation.
+
 C?p nh?t 10/11/2026. T?ng h?p t? [OpenAPI](openapi.json): 87 operation/67 path, g?m 49 operation admin. Xem [API ng??i xem](viewer-api.md) v? [h??ng d?n chung](README.md).
 
 ## Public / Catalog

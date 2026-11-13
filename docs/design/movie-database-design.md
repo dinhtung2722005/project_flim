@@ -15,6 +15,8 @@ Các file đi kèm:
 
 Database local `pj_flim` đã được tạo ngày 10/11/2026 trên PostgreSQL 17.11 tại `127.0.0.1:5432`, schema `movie`, theo DDL này; xem [hướng dẫn kết nối và script](../../database/README.md). Đã có Prisma client và [API admin](../api/README.md); đã có worker RabbitMQ/HLS/webhook/backup local; chưa có Prisma Migrate hoặc frontend. DDL dùng schema `movie`, không có `DROP` và không tự tạo các role toàn cụm PostgreSQL.
 
+Bổ sung triển khai 13/11/2026: baseline 47 bảng giữ nguyên, [migration recommendation](sql/movie-recommendations-v1.sql) thêm ba bảng preferences/feedback/snapshots, tổng 50 bảng. FK/index/giới hạn/retention và grants tại [runbook API](../api/recommendations.md); ERD/bảng dưới đây mô tả baseline, không phải toàn bộ schema sau migration. Frontend React/Vite hiện đã có.
+
 ## 1. Quy ước dữ liệu
 
 | Quy ước            | Thiết kế                                                                                                                      |

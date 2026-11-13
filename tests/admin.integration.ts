@@ -1,3 +1,4 @@
+import { runEncodingChecks } from "./encoding.integration";
 import { runPaginationChecks } from "./pagination.integration";
 import { runAuthSecurityChecks } from "./auth-security.integration";
 import { runFrontendChecks } from "./frontend.integration";
@@ -50,6 +51,8 @@ async function main() {
   // Test the default MFA policy independently of the developer local override.
   process.env.AUTH_MFA_REQUIRED = "true";
   checks += await runBrowserUploadChecks();
+  const encodingChecks = await runEncodingChecks();
+  checks += encodingChecks;
   const started = Date.now(),
     databaseName = "pj_flim_test_" + randomBytes(6).toString("hex");
   if (!/^pj_flim_test_[a-f0-9]{12}$/.test(databaseName))
@@ -90,6 +93,7 @@ async function main() {
       "movie-database-schema.sql",
       "movie-database-rbac-seed.sql",
       "movie-database-grants.sql",
+      "movie-recommendations-v1.sql",
     ])
       await fixtures.query(await readFile("docs/design/sql/" + file, "utf8"));
     process.env.DATABASE_URL = apiUrl.toString();
@@ -962,7 +966,7 @@ async function main() {
     const liveTables = await fixtures.query(
       "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE'",
     );
-    assert.equal(liveTables.rows[0].count, 47);
+    assert.equal(liveTables.rows[0].count, 50);
     checks++;
     await mkdir(".local/api", { recursive: true });
     await writeFile(
@@ -970,6 +974,7 @@ async function main() {
       JSON.stringify(
         {
           checks,
+          encodingChecks,
           exceptionChecks,
           mfaPolicyChecks,
           authSecurityChecks,

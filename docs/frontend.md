@@ -168,3 +168,7 @@ Nghiệm thu provider/CDN/video thật có lệnh streaming:smoke riêng và c�
 ## Phần chưa có giao diện
 
 Email verification/reset password, MFA enrollment, subtitle/audio selection, admin preview phim nháp, gán credits, API/UI đổi trạng thái xử lý report và dashboard analytics nâng cao vẫn cần bổ sung. People/banner/settings/đọc report đã có màn hình quản trị. Trang người xem chưa đọc banner hoặc site settings để thay thương hiệu/header; ảnh vẫn nhập provider reference có sẵn. Bản này ưu tiên luồng xem và quản trị nội dung cơ bản; không coi mọi API hiện có đã có màn hình.
+
+## Gợi ý cá nhân hóa — 13/11/2026
+
+Trang /for-you cần đăng nhập, có link Dành cho bạn trên menu. Mặc định opt-out; người dùng bật để dùng phim đã lưu/coverage hợp lệ, chọn ẩn phim đã xem hết, xem lý do, Không quan tâm/hoàn tác phản hồi gần nhất và tải thêm. Preference dùng ETag, lỗi 412 yêu cầu tải lại; feed hết hạn có nút thử lại. Request hủy khi unmount/logout và state remount theo tài khoản. Không lưu feed xuống browser storage. [API và giới hạn](api/recommendations.md), [thuật toán](design/recommendation-algorithms.md).

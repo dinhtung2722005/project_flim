@@ -451,7 +451,7 @@ export class ResourcesService {
   async mediaAsset(id: string) {
     const row = await one(
       this.db,
-      "SELECT id,episode_id,provider,internal_version,processing_status,lifecycle_status,backup_status,duration_seconds,width,height,bytes,current_attempt_id,version,created_at,updated_at FROM movie.video_assets WHERE id=$1::uuid",
+      "SELECT a.id,a.episode_id,a.provider,a.internal_version,a.processing_status,a.lifecycle_status,a.backup_status,a.duration_seconds,a.width,a.height,a.bytes,a.current_attempt_id,a.version,a.created_at,a.updated_at,i.expected_policy->'encoding' AS encoding,COALESCE(o.rendition_summary,'[]'::jsonb) AS renditions FROM movie.video_assets a LEFT JOIN movie.upload_intents i ON i.verified_asset_id=a.id AND i.status='VERIFIED' LEFT JOIN movie.media_outputs o ON o.attempt_id=a.current_attempt_id AND o.format='HLS' AND o.status='READY' AND o.verified_at IS NOT NULL WHERE a.id=$1::uuid",
       [id],
     );
     if (!row) fail("RESOURCE_NOT_FOUND");

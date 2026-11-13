@@ -1,8 +1,10 @@
 # Nghiên cứu dữ liệu điểm số và bài review từ các website phim
 
-Ngày xác minh: **13/11/2026**, Asia/Saigon. Dự án: pj-Flim tại E:\pj-Flim. Đã dùng ba agent nghiên cứu độc lập IMDb, Metacritic và các nguồn khác, sau đó đối chiếu tài liệu sơ cấp và source dự án. **Phạm vi: nghiên cứu/thiết kế; chưa tải bulk dataset, gọi API bằng credential, mua gói, gửi liên hệ hoặc triển khai importer.** Truy cập được tài liệu không chứng minh đã có quyền dùng dữ liệu trong production.
+Phiên bản: **1.1**. Ngày xác minh lại: **13/11/2026**, Asia/Saigon. Dự án: pj-Flim tại E:\pj-Flim. Đã dùng ba agent nghiên cứu độc lập IMDb, Metacritic và các nguồn khác, sau đó đối chiếu tài liệu sơ cấp và source dự án. **Phạm vi: nghiên cứu/thiết kế; chưa tải bulk dataset, gọi API bằng credential, mua gói, gửi liên hệ hoặc triển khai importer.** Truy cập được tài liệu không chứng minh đã có quyền dùng dữ liệu trong production.
 
 Liên quan: [plan hiện hành](../plans/movie-streaming-platform-plan.md), mục 9.6/14.7; [schema hiện tại](../../packages/database/prisma/schema.prisma), [publisher media hiện tại](../../apps/worker/src/outbox.ts). Hiện chưa có external IDs, bảng điểm/review bên ngoài, adapter nguồn hoặc UI review; `titles.age_rating` là phân loại độ tuổi, không phải điểm IMDb. Rating của thành viên pj-Flim cũng là tính năng riêng sau MVP.
+
+Cập nhật triển khai14/11/2026: [agent notebook](../../apps/agent/README.md) đã có adapter OMDb lookup thử nghiệm theo verified mapping; chưa gọi live bằng key, chưa backend importer/schema/API/UI. Nội dung nghiên cứu1.1 bên dưới giữ phạm vi thời điểm13/11.
 
 ## 1. Kết luận và thứ tự ưu tiên
 
@@ -12,8 +14,9 @@ Liên quan: [plan hiện hành](../plans/movie-streaming-platform-plan.md), mụ
 | Metacritic | Fabric Origin có API Metascore/User Score và critic quote/link/author/publication | Account được duyệt + core subscription trả phí + ToS riêng; chưa có quyền thì chỉ chuẩn bị mapping/link tham chiếu |
 | TMDB | Rating/votes riêng TMDB và user reviews qua API movie/TV | Ưu tiên thử đầu tiên nếu phù hợp non-commercial/attribution; commercial cần tuyến cấp phép |
 | Trakt | Ratings/votes, comments/reviews và mapping qua API | Nhánh tiếp theo cho tính năng app; policy cấm harvesting/mirror/resale, không dùng để xây bản sao catalog |
-| Rotten Tomatoes | API/data feed theo quy trình licensing/đối tác | Quyền/coverage theo thỏa thuận; chưa có hợp đồng thì chưa nhập điểm/review |
+| Rotten Tomatoes | Licensing trực tiếp hoặc API chính thức qua Fabric Origin: score, consensus, critic quote và các trường community theo schema | Origin cần paid core/approval/Terms; chưa có entitlement thì chưa nhập; full article vẫn cần quyền publisher |
 | Letterboxd | API xét duyệt, member RSS, hướng dẫn ratings embed | Có loại dự án không nhận, gồm LLM/GPT/recommendation/data analysis; không chọn làm phụ thuộc bắt buộc |
+| OMDb | Lookup theo IMDb ID; response lịch sử có IMDb/Metascore/RT, không có review-list được tài liệu hóa | CC BY-NC/footer khác phạm vi production; Terms personal/non-commercial, indexing/derivatives cần xác nhận; chưa gọi live |
 | Publisher, ví dụ Guardian | Content API/RSS hoặc feed theo điều kiện publisher | Lấy bài review đúng phạm vi cấp phép; quote feed của aggregator không cấp toàn văn bài báo |
 
 **Đề xuất của dự án:** bắt đầu adapter TMDB khi đã có quyền/key đúng mục đích; xem Trakt cho app-scoped reviews. IMDb/Metacritic/Rotten Tomatoes đi theo hợp đồng phù hợp nếu cần chính các điểm đó. Không dùng scraper/agent như một cách thay thế quyền dữ liệu. Khi thiếu quyền, UX vẫn có card liên kết nguồn được biên tập, không cần sao chép điểm hoặc toàn bài. Các hàng là quyết định thiết kế; nguồn chứng minh khả năng/điều kiện được dẫn trong từng mục dưới.
@@ -93,7 +96,7 @@ Metascore và User Score phải tách; user votes không tham gia Metascore. Kh�
 
 Trang Origin liên kết ToS Metacritic qua IVA/Fabric, nhưng PDF trả 404 khi mở trong lần nghiên cứu. Search index còn hiển thị các ràng buộc về vị trí lưu trữ, giữ nguyên nội dung, attribution/purge và số quote; **không coi nội dung indexed là hợp đồng hiện hành**. Phải lấy bản có hiệu lực và schedule trước khi chốt PostgreSQL/kho lưu/UX. Không đưa các con số hoặc điều kiện địa lý từ bản không truy cập được thành cấu hình production.
 
-Footer Metacritic dẫn Fandom Terms of Use; công cụ gặp 402 nên chưa đọc được bản hiện hành. Robots có quy tắc theo user-agent, không thay giấy phép nội dung. [Origin với link ToS](https://developer.origin.fabricdata.com/origin/apis-all/metacritic-api-docs), [Fandom Terms](https://www.fandom.com/terms-of-use), [Metacritic robots](https://www.metacritic.com/robots.txt)
+Rà soát lại: còn có tuyến [Fandom Media Terms](https://www.fandom.com/terms-of-service-pp1), cần phân biệt với Terms chung cho wiki. Công cụ vẫn gặp 402 khi đọc trực tiếp nên chưa xác nhận đầy đủ bản hiện hành. Robots có quy tắc theo user-agent, không thay giấy phép nội dung. [Origin với link ToS](https://developer.origin.fabricdata.com/origin/apis-all/metacritic-api-docs), [Fandom Terms](https://www.fandom.com/terms-of-use), [Metacritic robots](https://www.metacritic.com/robots.txt)
 
 Phạm vi cần xác minh: field được cấp, domain/app/territory, storage region, cache/retention/backup/purge, logo/link placement, số/cách chọn quote, dịch/AI processing và quota. Không áp giấy phép CC của Fandom wiki cho Metacritic. Chưa liên hệ provider thay người dùng; có thể chuẩn bị yêu cầu qua [Metacritic support](https://metacritichelp.zendesk.com/hc/en-us/requests/new).
 
@@ -242,4 +245,113 @@ Khi tóm tắt sample “Most Helpful” hoặc một ngôn ngữ, nêu đúng m
 6. Thử sandbox API thật chỉ khi có credential/quyền/ngân sách tương ứng; ghi freshness/coverage/language/latency/usage và hạn chế. Chưa có key/hợp đồng thì báo chưa thử, không giả response thành công.
 7. Rà lại điều khoản ngay trước production: nghiên cứu có ngày nhưng chính sách/coverage/quota có thể đổi.
 
-Chưa xác minh: hợp đồng/entitlement của pj-Flim ở mọi provider, quyền thương mại/chuyển nội dung sang LLM, giá thực, completeness và tốc độ cập nhật của feed trả phí, API live/coverage review tiếng Việt, điều khoản Fandom hiện tại và PDF Metacritic có hiệu lực. Không có runtime/key/importer mới hoặc kết quả test frontend/backend trong lượt này. Backlog thực hiện nằm ở mục 14.7 của plan, tất cả NOT_STARTED.
+Chưa xác minh: hợp đồng/entitlement của pj-Flim ở mọi provider, quyền thương mại/chuyển nội dung sang LLM, giá thực, completeness và tốc độ cập nhật của feed trả phí, API live/coverage review tiếng Việt, điều khoản Fandom hiện tại và PDF Metacritic có hiệu lực. Không có runtime/key/importer mới hoặc kết quả test frontend/backend trong lượt nghiên cứu này. Content-v1 cá nhân hóa đã triển khai độc lập sau nghiên cứu ban đầu: schema hiện 50 bảng, OpenAPI 92 operation/70 path; nó chưa dùng điểm/review bên ngoài. Backlog thực hiện nằm ở mục 14.7 của plan, tất cả NOT_STARTED.
+
+## 9. Kết quả rà soát bổ sung phiên bản 1.1
+
+Đã giao **ba agent nghiên cứu song song** IMDb/OMDb, Metacritic và các nguồn còn lại, rồi đối chiếu các tài liệu quan trọng. Phần bổ sung tập trung vào cách lấy dữ liệu thực tế, tách điểm với review, điều kiện cho agent/Colab và nguồn tiếng Việt. Đây vẫn là nghiên cứu: EXT01–EXT08 chưa triển khai; không tự dùng credential, đăng ký gói, gửi email hoặc lấy bulk data.
+
+### 9.1. Chọn đúng tuyến lấy IMDb và OMDb
+
+IMDb có ba tuyến khác mục đích: TSV cho aggregate trong phạm vi được cho phép; GraphQL/ADX theo licensed product; User Reviews add-on cho văn bản review. Rating plugin website cũ đã deprecated. Không dùng GraphQL nội bộ của website như API công khai được cấp quyền. [Help về ratings plugin](https://help.imdb.com/article/imdb/track-movies-tv/can-i-use-your-ratings-on-my-website/GU66FTMF7DHVZBHZ)
+
+Bổ sung quan trọng: [EULA liên kết từ listing User Reviews](https://d7umqicpi7263.cloudfront.net/eula/CCWcTizFt9kSVBHiUnyUo2TVL0CsbnDAKY6cH4-YN0M) phân biệt internal analysis với sử dụng customer-facing, hạn chế sửa/tạo sản phẩm dẫn xuất khi đưa ra người dùng, và quy định attribution, refresh, removal, chấm dứt. Đây là văn bản công khai của listing, chưa phải hợp đồng pj-Flim. Trước khi dịch/tóm tắt review để hiển thị, phải đối chiếu quyền cụ thể; không suy license review raw bao gồm quyền xuất bản bản tóm tắt AI.
+
+OMDb có thể là adapter thử nghiệm theo quyền, nhưng không gọi nó là API chính thức IMDb:
+
+~~~text
+GET https://www.omdbapi.com/?i={imdbId}&type=movie&plot=short&apikey={SERVER_KEY}
+GET https://www.omdbapi.com/?t={title}&y={year}&type=movie&apikey={SERVER_KEY}
+GET https://www.omdbapi.com/?s={query}&page={page}&apikey={SERVER_KEY}
+~~~
+
+Đây là mẫu tham số tài liệu, chưa thực thi. Dùng HTTPS; key được backend thêm theo contract provider, không đưa vào frontend hoặc URL log. [OMDb docs](https://www.omdbapi.com/), [Swagger công bố](https://www.omdbapi.com/swagger.json)
+
+Các field thường gặp gồm imdbRating, imdbVotes, Metascore và Ratings[{Source,Value}], nhưng Swagger hiện không mô tả đầy đủ response schema; ví dụ ở [repository chính thức là dữ liệu lịch sử](https://github.com/omdbapi/OMDb-API/issues/102), không phải kiểm chứng payload hiện tại. Chuẩn hóa N/A/field vắng thành null; không hứa mọi title có đủ IMDb/Metacritic/RT. plot=full chỉ là nội dung tóm tắt phim, không phải bài review. API key page hiện nêu free 1.000 request/ngày, phải đối chiếu lại quota khi cấp key. [OMDb API keys](https://www.omdbapi.com/apikey.aspx)
+
+Ngoài footer CC BY-NC 4.0, [Terms OMDb](https://www.omdbapi.com/legal.htm) còn giới hạn personal/non-commercial, indexing và sản phẩm dẫn xuất. Cần xác nhận phạm vi áp dụng bằng văn bản nếu làm web công khai/agent; không tự giải quyết khác biệt bằng cách chọn điều khoản thuận tiện hơn hoặc trả Patreon. Payload từ một aggregator không chứng minh quyền chuyển tiếp IMDb/Metacritic/RT.
+
+### 9.2. Metacritic và Rotten Tomatoes đều có tuyến Origin
+
+Metacritic dùng Origin Movie/Show ID; TV còn có SeasonNumber. Match bằng [Entertainment Metadata Match](https://developer.origin.fabricdata.com/origin/apis-all/entertainment-api-docs/metadata-match-guide) khi chưa có mapping, đối chiếu loại phim/tên/năm/cast/director. Success của API matching không bảo đảm đúng phim; trường hợp mơ hồ giữ draft. Header server-side Ocp-Apim-Subscription-Key được ưu tiên thay query key. [Origin getting started](https://developer.origin.fabricdata.com/origin)
+
+PDF ToS Metacritic direct URL vẫn 404, dù công cụ có thể đọc bản được search engine lập chỉ mục. Nội dung index có các yêu cầu về region lưu trữ, số/cách chọn quote, attribution và purge; **chưa xác minh ngày/version/hiệu lực**, nên chỉ dùng để lập câu hỏi hợp đồng, không cấu hình production theo bản index. Cần lấy văn bản áp dụng và xác nhận storage/cloud/AI trước lúc bật nguồn. [PDF do Origin liên kết](https://ivastorage.blob.core.windows.net/docs/Terms%20of%20Service%20to%20Use%20Metacritic%20Content%20from%20IVA_1%5B19188%5D.pdf)
+
+Rotten Tomatoes cũng có [API chính thức qua Origin](https://developer.origin.fabricdata.com/origin/apis-all/rotten-tomatoes-api-docs), ngoài tuyến licensing trực tiếp. Trang giới thiệu yêu cầu paid core subscription, developer approval, Fandango Terms và branding. Dữ liệu có Tomatometer/Audience Scores, critic snippets, consensus và trạng thái chứng nhận; chưa có entitlement của pj-Flim.
+
+~~~text
+GET https://api.origin.fabricdata.com/RottenTomatoes/Movie?MovieId={originMovieId}
+GET https://api.origin.fabricdata.com/RottenTomatoes/Show?ShowId={originShowId}
+GET https://api.origin.fabricdata.com/RottenTomatoes/Season?SeasonId={originSeasonId}
+GET https://api.origin.fabricdata.com/RottenTomatoes/Episode?EpisodeId={originEpisodeId}
+~~~
+
+[Schema RT](https://developer.origin.fabricdata.com/origin/apis-all/rotten-tomatoes-api-docs/rottentomatoes) mô tả FanSummary/CriticSummary, Reviews có Quote/URL/critic/publication và Ratings có Comment/Score. Không suy có toàn bộ review, phân trang, mọi ngôn ngữ hoặc full article body. Không tự nhập external UserId thành user pj-Flim. Trial chung của Origin không chứng minh RT được trial; quota/coverage theo entitlement.
+
+[Fandango API Terms](https://images.fandango.com/doc/FandangoAPILicenseTermsandConditions.pdf) gắn quyền với Order Form và có giới hạn phân phối/derivatives. Quyền dịch, summary, embedding, LLM/Colab chưa được xác nhận cho dự án. Connector RT vẫn trả phí tùy chọn, mặc định tắt.
+
+### 9.3. Nguồn review cộng đồng và báo chí
+
+| Nguồn | Phần có ích | Quyết định của dự án |
+| --- | --- | --- |
+| TMDB | Metadata, external-ID lookup, vote_average/vote_count riêng TMDB; review movie/TV có content/author/date/URL, rating nullable | Ưu tiên PoC adapter; kiểm attribution/license và từng field trước lưu/display, chưa bật LLM text |
+| Trakt | Movie/show ratings/votes/distribution, comments/reviews/spoiler | Bổ sung theo tính năng app, không bulk/mirror; quyền recommendation không tự thành quyền training/chuyển raw review sang LLM |
+| Guardian | Bài critic có byline/date/URL và article fields theo key | Discovery/reference trước; text và AI/derivatives theo tier và Terms phù hợp |
+| Letterboxd | API/RSS/embed trong phạm vi được provider cho phép | Loại khỏi agent mặc định: access policy loại recommendation/data-analysis/LLM/GPT; không dùng RSS/scraper để thay thế |
+
+Nguồn sơ cấp: [TMDB FAQ](https://developer.themoviedb.org/docs/faq), [movie reviews](https://developer.themoviedb.org/reference/movie-reviews), [TV reviews](https://developer.themoviedb.org/reference/tv-series-reviews), [Trakt use policy](https://developer.trakt.tv/docs/api-use-policy), [comments](https://developer.trakt.tv/docs/about-comments), [Guardian access](https://open-platform.theguardian.com/access/), [Letterboxd access policy](https://letterboxd.com/api-beta/).
+
+Thông số tài liệu tại ngày rà soát: Trakt Standard GET 500/5 phút theo bucket được provider định nghĩa; Guardian Developer phi thương mại 1 request/giây và 500/ngày. Đây là giá trị tham khảo lúc onboarding, không hardcode làm cam kết. Origin/TMDB quota cũng phải đọc theo gói/header và xử lý 429/Retry-After. [Trakt rate limits](https://developer.trakt.tv/docs/rate-limiting), [TMDB rate limiting](https://developer.themoviedb.org/docs/rate-limiting)
+
+Guardian Commercial tier liệt kê cả AI training, text/data mining và sentiment analysis. Điều này không chứng minh free Developer key cho phép mọi dạng RAG/tóm tắt; phải kiểm use case cụ thể. TMDB API Terms bị robots chặn trong lượt này, Letterboxd có lượt direct403 dù agent đọc được nội dung policy qua nguồn chính thức được lập chỉ mục; các điểm không đọc được vẫn cần xác nhận trước tích hợp.
+
+### 9.4. Website tiếng Việt: Moveek, Galaxy Cinema, VnExpress
+
+- [Moveek](https://moveek.com/) có khu [Đánh giá phim](https://moveek.com/danh-gia-phim/), bài theo tác giả/ngày và điểm cộng đồng hiển thị trên website. Chưa tìm thấy tài liệu public API hoặc giấy phép tái sử dụng review trong các trang đã kiểm; không kết luận toàn dịch vụ không có API đối tác. Đề xuất tìm link và mapping bằng dữ liệu được phép; nếu muốn nhập đoạn/toàn bài/điểm thì làm rõ feed và quyền với đơn vị sở hữu. Không sao chép nội dung chỉ vì có thể đọc HTML.
+- [Galaxy Cinema](https://www.galaxycine.vn/) giới thiệu Góc điện ảnh với bài viết phim; direct /vi/ gặp redirect loop trong công cụ. Chưa xác minh API/feed/quyền cho pj-Flim, nên chưa chọn làm phụ thuộc importer.
+- [VnExpress RSS](https://vnexpress.net/rss) công bố kênh Giải trí và điều kiện cho cá nhân/tổ chức phi lợi nhuận, yêu cầu thông tin nguồn và có thể yêu cầu dừng. Kênh /rss/giai-tri.rss được liên kết chính thức nhưng công cụ web không parse application/xml trong lượt này; chưa kiểm response/schema/coverage live. RSS có thể giúp phát hiện bài, không phải API điểm phim hoặc quyền tái bản toàn văn/đưa lên LLM.
+
+Không có nguồn nào ở đây được mặc định là “review tiếng Việt không giới hạn, miễn phí”. Đối với website phim khác, dùng API/feed hoặc thỏa thuận đúng nguồn; trước khi có quyền có thể biên tập đường dẫn bằng mô tả do pj-Flim tự viết, không tự copy ảnh/đoạn dẫn. Phim phát được trong pj-Flim và bài review về phim ngoài kho là hai trạng thái khác nhau.
+
+### 9.5. Cách phối hợp adapter và agent
+
+**Adapter xác định** đảm nhiệm auth, fetch, pagination, quota, parse score, validation và đồng bộ. **Agent** đảm nhiệm tìm nguồn/candidate, đối chiếu phim, nhận diện bài phê bình và tạo draft tóm tắt khi được phép. Không để LLM tự đoán số điểm từ văn phong hoặc thay số liệu API.
+
+Luồng dự kiến:
+
+~~~mermaid
+flowchart TD
+  A["Title nội bộ và task đã giới hạn"] --> B["Kiểm source policy và ngân sách"]
+  B --> C["Adapter API/feed đã duyệt"]
+  C --> D["Match ID và scope phim/mùa/tập"]
+  D --> E["Rating chuẩn hóa + review references"]
+  E --> F["Agent đọc evidence được phép"]
+  F --> G["Draft có citations và uncertainty"]
+  G --> H["Kiểm schema, số liệu, quyền và mapping"]
+  H --> I["Publish qua backend có RBAC/audit"]
+~~~
+
+Các tool đề xuất cho EXT06/AG08, chưa code:
+
+| Tool | Đầu vào tối thiểu | Đầu ra và ranh giới |
+| --- | --- | --- |
+| resolve_title_candidates | title ID hoặc name/year/kind whitelist | Các external ID + scope + evidence; trùng tên/remake không tự commit |
+| fetch_source_ratings | mapping ID + provider đã duyệt | Giá trị gốc/scale/type/count/date/transport; thiếu thì null |
+| discover_review_refs | title ID + language + sources + maxResults | URL/title/byline/date được phép; snippet search chưa phải toàn văn đã đọc |
+| read_allowed_review | review reference ID | Chỉ excerpt/fulltext đã duyệt theo field; backend fetch, không arbitrary URL |
+| draft_review_summary | reference IDs + ngôn ngữ + spoiler preference | Claim có evidence, phạm vi mẫu, nhãn AI; unknown rights thì bỏ qua |
+| verify_external_draft | draft ID + policy/mapping generation | Kiểm score/ID/URL/source/hash/freshness; trả lỗi hoặc draft sẵn sàng cho thao tác quản trị riêng |
+
+Model không nhận API key/AWS secret, không shell hoặc quyền publish trực tiếp. Không cần nhiều agent runtime để lấy một con số có cấu trúc; ba agent của lượt này là công cụ nghiên cứu. Kiến trúc Qwen/Ollama/LangChain trong Colab vẫn DESIGN_ONLY.
+
+Với Colab, thêm kiểm riêng **cloud transfer/processor/region**: mặc định chỉ catalog snapshot và metadata/reference được phép; raw review, embeddings hoặc bản tóm tắt dẫn xuất không tự được đưa lên Google runtime vì đã có quyền hiển thị. Nguồn yêu cầu vùng lưu trữ cụ thể phải được xử lý bằng hạ tầng phù hợp; chọn Colab không chứng minh đáp ứng region. [Kế hoạch agent](../plans/movie-ai-agent-plan.md)
+
+### 9.6. Hợp đồng dữ liệu và PoC đề xuất
+
+Giữ originProvider riêng transportProvider: ví dụ IMDb được nhận qua OMDb không đổi thành “điểm OMDb” hoặc thành feed chính thức IMDb. Mỗi record cần title mapping/scope, source URL/ID, rawScore/scale/scoreType/count, language, fetchedAt/sourceUpdatedAt nullable và policyVersion. Review thêm contentKind=REFERENCE_ONLY/EXCERPT/FULL_TEXT/PROVIDER_SUMMARY, author/publisher, sourceReviewId, spoiler UNKNOWN, content hash và source refs.
+
+Policy theo từng field/use case có trạng thái ALLOWED/DENIED/UNKNOWN cho fetch/store/display/translate/summarize/embed/train/cloudTransfer; UNKNOWN không tự biến thành ALLOWED. Số liệu API được kiểm deterministic; summary không trở thành quote gốc. Bản summary của mẫu tối đa15 review hữu ích không đại diện mọi khán giả. Aggregate score không phải ma trận user–item để huấn luyện collaborative filtering.
+
+PoC chưa thực hiện: chọn khoảng20 title đã có quyền metadata, gồm phim trùng tên/remake/phim bộ; kiểm IDs, fields thiếu, ngôn ngữ, freshness và chi phí thật. Tiêu chí chức năng: ID/scope đúng hoặc được đánh dấu mơ hồ; không bịa score/review; mỗi claim có evidence; 429/outage không làm hỏng last-good trong hạn; thu hồi quyền chặn fetch/display/LLM và purge đúng hạn. Kết quả agent là draft, không tự bật nguồn hoặc xuất bản phim.
+
+Thứ tự triển khai đề xuất: **TMDB adapter → API/UI điểm và review reference → Trakt hoặc publisher theo quyền → IMDb/Origin khi có entitlement → agent summary khi text/AI/cloud rights đã rõ**. OMDb là nhánh có điều kiện, Letterboxd không thuộc agent mặc định. Tính năng rating/review do thành viên pj-Flim tự viết cần schema/moderation riêng, không được coi đã có bởi nghiên cứu này.

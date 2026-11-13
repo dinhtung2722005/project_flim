@@ -40,6 +40,13 @@ const uploadIntentSchema = {
     verifiedAt: { type: "string", format: "date-time", nullable: true },
     expectedBytes: { type: "integer" },
     sourceFormat: { type: "string" },
+    encodingPreset: { type: "string", nullable: true },
+    encoding: {
+      type: "object",
+      nullable: true,
+      description:
+        "Bound source-aware H.264/AAC encoding snapshot after verification; target settings, not quality measurements.",
+    },
     upload: {
       type: "object",
       description:
@@ -132,7 +139,7 @@ export class MediaController {
   @ApiHeader({ name: "Idempotency-Key", required: true })
   @ApiOperation({
     summary:
-      "Reserve an episode asset and issue signed direct-upload parameters.",
+      "Reserve an episode asset, select a versioned ABR compression preset and issue signed direct-upload parameters.",
   })
   @ApiCreatedResponse({
     description:

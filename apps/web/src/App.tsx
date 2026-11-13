@@ -1,3 +1,4 @@
+import { ForYou } from "./pages/ForYou";
 import { useEffect, useRef, lazy, Suspense, type ReactNode } from "react";
 import {
   Link,
@@ -146,6 +147,12 @@ export default function App() {
         <div className="header-inner">
           <Brand />
           <nav aria-label="Điều hướng chính">
+            <NavLink
+              to="/for-you"
+              className={({ isActive }) => (isActive ? "selected" : "")}
+            >
+              Dành cho bạn
+            </NavLink>
             <Link
               to="/"
               className={catalogPage && !kind ? "selected" : ""}
@@ -242,6 +249,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Library />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/for-you"
+              element={
+                <RequireAuth>
+                  <ForYou />
                 </RequireAuth>
               }
             />

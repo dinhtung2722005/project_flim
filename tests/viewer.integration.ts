@@ -1,3 +1,4 @@
+import { runRecommendationIntegration } from "./recommendations.integration";
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -989,6 +990,7 @@ export async function runViewerIntegration(c: {
       "RATE_LIMITED",
     );
   }
+  checks += await runRecommendationIntegration({ ...c, fixture });
   console.log(JSON.stringify({ event: "viewer.integration.passed", checks }));
   return checks;
 }

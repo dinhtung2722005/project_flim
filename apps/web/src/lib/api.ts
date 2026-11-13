@@ -22,6 +22,8 @@ export function setSession(value: Session | null) {
   } catch {}
 }
 const messages: Record<string, string> = {
+  RECOMMENDATION_FEED_EXPIRED:
+    "Danh sách gợi ý đã hết hạn hoặc tùy chọn vừa thay đổi. Hãy làm mới gợi ý.",
   CATALOG_NO_PLAYABLE_EPISODE:
     "Phim chưa có tập đã xuất bản và phát được. Hãy chuẩn bị video, chọn video và xuất bản tập trước.",
   CATALOG_EPISODE_NUMBER_CONFLICT: "Số tập đã tồn tại. Vui lòng chọn số khác.",

@@ -28,6 +28,8 @@ Mật khẩu cho ba tài khoản được sinh ngẫu nhiên và lưu cục bộ
 
 Tham số URL `schema=movie` dành cho Prisma. Với pgAdmin/libpq/psql, điền host, port, database, username và password riêng; database đã có search_path `movie, pg_catalog`. Backend NestJS hiện nạp tự động .env.database.local và .env.api.local; xem [hướng dẫn API](../docs/api/README.md).
 
+Bổ sung 13/11/2026: đã áp dụng [migration recommendation](../docs/design/sql/movie-recommendations-v1.sql), thêm preferences/feedback/snapshots; tổng hiện tại **50 bảng**. Baseline SQL/hash 47 bảng được giữ nguyên. Máy mới chạy Initialize-Database trước, sau đó api:configure và db:recommendations theo [runbook](../docs/api/recommendations.md#database-và-triển-khai); không db push. Test-Database nhận baseline 47 hoặc phiên bản 50 đã có đủ ba bảng mới.
+
 ## Kiểm tra database
 
 Chạy từ `E:\pj-Flim`:

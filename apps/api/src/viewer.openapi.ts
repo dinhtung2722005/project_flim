@@ -272,4 +272,77 @@ export function configureViewerOpenApi(doc: OpenAPIObject) {
   response("/me/watch-progress/{id}", "put", 201, ref("WatchProgress"));
   response("/reports", "post", 201, ref("ContentReport"));
   response("/reports/{id}", "get", 200, ref("ContentReport"));
+
+  schemas.RecommendationPreferences = object(
+    { enabled: bool, hideCompleted: bool, version: str, updatedAt: time },
+    ["enabled", "hideCompleted", "version", "updatedAt"],
+  );
+  schemas.RecommendedTitle = {
+    allOf: [
+      ref("PublicTitle"),
+      object(
+        {
+          recommendation: object(
+            {
+              reason: {
+                ...str,
+                enum: ["SIMILAR_CONTENT", "RECENTLY_PUBLISHED"],
+              },
+              text: str,
+            },
+            ["reason", "text"],
+          ),
+        },
+        ["recommendation"],
+      ),
+    ],
+  };
+  schemas.RecommendationFeed = object(
+    {
+      data: { type: "array", items: ref("RecommendedTitle") },
+      page: ref("Pagination"),
+      meta: object(
+        {
+          modelVersion: str,
+          personalized: bool,
+          enabled: bool,
+          candidateTruncated: bool,
+          expiresAt: time,
+        },
+        [
+          "modelVersion",
+          "personalized",
+          "enabled",
+          "candidateTruncated",
+          "expiresAt",
+        ],
+      ),
+    },
+    ["data", "page", "meta"],
+  );
+  response("/me/recommendations", "get", 200, ref("RecommendationFeed"));
+  for (const method of ["get", "patch"]) {
+    response(
+      "/me/recommendation-preferences",
+      method,
+      200,
+      ref("RecommendationPreferences"),
+    );
+    (doc.paths["/api/v1/me/recommendation-preferences"] as any)[
+      method
+    ].responses["200"].headers = {
+      ETag: {
+        description: "Current preference version for If-Match.",
+        schema: str,
+      },
+      "Cache-Control": { schema: str, description: "private, no-store" },
+    };
+  }
+  for (const method of ["put", "delete"]) {
+    (doc.paths["/api/v1/me/recommendation-feedback/{titleId}"] as any)[
+      method
+    ].responses["204"] = {
+      description: "Feedback saved/removed; no response body.",
+    };
+  }
 }

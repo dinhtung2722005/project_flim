@@ -1,3 +1,4 @@
+import { runRecommendationBrowserChecks } from "./recommendations.browser";
 import { runLiveSearchChecks } from "./live-search.browser";
 import { runAdminPagesChecks } from "./admin-pages.browser";
 import assert from "node:assert/strict";
@@ -280,6 +281,14 @@ export async function runFrontendChecks(c: {
         body: JSON.stringify({ asset_id: "browser-test", done: true }),
       });
     });
+    await check(() =>
+      expect(
+        page.getByLabel("Chất lượng và dung lượng video", { exact: true }),
+      ).toHaveValue("balanced-720p-v1"),
+    );
+    await page
+      .getByLabel("Chất lượng và dung lượng video", { exact: true })
+      .selectOption("data-saver-v1");
     await page.getByLabel("Chọn video", { exact: true }).setInputFiles({
       name: "browser-test.mp4",
       mimeType: "video/mp4",
@@ -377,6 +386,14 @@ export async function runFrontendChecks(c: {
       titleId: title.id,
       titleName: name,
       rootId: root.id,
+      seed: c.seed,
+    });
+    checks += await runRecommendationBrowserChecks({
+      browser,
+      origin,
+      fixtures: c.fixtures,
+      titleId: title.id,
+      titleName: name,
       seed: c.seed,
     });
     await goto("/admin/users");

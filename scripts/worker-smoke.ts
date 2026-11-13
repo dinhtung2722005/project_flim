@@ -79,6 +79,8 @@ export async function verifyMediaPipeline(
               height: snapshot.height,
               duration: Number(snapshot.duration_seconds),
             },
+            undefined,
+            snapshot.expected_policy.encoding,
           );
         } catch (error) {
           if (

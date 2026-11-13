@@ -1,6 +1,6 @@
 # DTO của API
 
-Thư mục riêng cho 40 class DTO đầu vào của NestJS. Controller/service import trực tiếp theo nghiệp vụ; index.ts dùng để export tập trung. Các DTO giữ nguyên tên class, decorators class-validator/class-transformer và metadata Swagger.
+Thư mục riêng cho 43 class DTO đầu vào của NestJS. Controller/service import trực tiếp theo nghiệp vụ; index.ts dùng để export tập trung. Các DTO giữ nguyên tên class, decorators class-validator/class-transformer và metadata Swagger.
 
 | File | Phạm vi |
 | --- | --- |
@@ -14,6 +14,7 @@ Thư mục riêng cho 40 class DTO đầu vào của NestJS. Controller/service 
 | [reports.dto.ts](reports.dto.ts) | Báo lỗi của người xem và bộ lọc báo cáo admin |
 | [playback.dto.ts](playback.dto.ts) | Tạo phiên phát, event và batch telemetry |
 | [library.dto.ts](library.dto.ts) | Lưu tiến độ xem |
+| [recommendations.dto.ts](recommendations.dto.ts) | Feed query, hai cờ preference bắt buộc, NOT_INTERESTED feedback |
 | [media.dto.ts](media.dto.ts) | Upload intent, xác minh nguồn và retry processing |
 
 Ví dụ import:

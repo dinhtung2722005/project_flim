@@ -11,11 +11,17 @@ DECLARE
     job1 uuid; changed_rows integer;
 BEGIN
     ASSERT current_database()='pj_flim','Wrong database';
-    ASSERT (SELECT count(*) FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE')=47,'Expected 47 tables';
+    ASSERT (SELECT count(*) FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE')IN(47,50),'Expected baseline 47 or recommendation schema 50 tables';
     ASSERT (SELECT count(*) FROM roles)=5,'Expected 5 roles';
     ASSERT (SELECT count(*) FROM permissions)=18,'Expected 18 permissions';
     ASSERT (SELECT count(*) FROM role_permissions)=44,'Expected 44 role-permission links';
     ASSERT EXISTS(SELECT 1 FROM policy_locks WHERE key='super_admin_roster'),'Missing roster lock';
+    IF (SELECT count(*) FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE')=50 THEN
+      ASSERT (SELECT count(*) FROM information_schema.tables WHERE table_schema='movie' AND table_name IN('recommendation_preferences','recommendation_feedback','recommendation_snapshots'))=3,'Incomplete recommendation migration';
+      ASSERT NOT has_table_privilege('pj_flim_worker','movie.recommendation_snapshots','SELECT'),'Worker reads recommendation feed';
+      ASSERT has_table_privilege('pj_flim_api','movie.recommendation_snapshots','INSERT'),'API cannot store recommendation feed';
+      checks:=checks+3;
+    END IF;
     checks:=checks+6;
     ASSERT NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('pj_flim_owner','pj_flim_api','pj_flim_worker') AND (rolsuper OR rolcreatedb OR rolcreaterole OR rolbypassrls)),'Runtime privileges too broad';
     ASSERT NOT pg_has_role('pj_flim_api','pj_flim_owner','MEMBER'),'API inherits owner';

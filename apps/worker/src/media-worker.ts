@@ -15,6 +15,11 @@ import {
 } from "../../../packages/media/src/hls-verifier";
 import { workerConfiguration } from "./config";
 import { WorkerStore, row, rows, systemAudit } from "./store";
+import {
+  assertEncodingSnapshot,
+  processingConfigHash,
+} from "../../../packages/media/src/encoding-profiles";
+
 type Lease = {
   id: string;
   token: string;
@@ -117,6 +122,25 @@ export class MediaWorker {
       [attempt.owner_user_id, permission],
     );
     if (!actor) throw new ApiError("AUTH_FORBIDDEN");
+    const policy = intent.expected_policy as UploadPolicy;
+    if (policy.encodingPreset) {
+      if (
+        !policy.encoding ||
+        policy.encodingPreset !== policy.encoding.presetId
+      )
+        throw new ApiError("MEDIA_PROVIDER_BAD_RESPONSE");
+      assertEncodingSnapshot(policy.encoding, {
+        width: asset.width,
+        height: asset.height,
+      });
+      if (
+        policy.streamingProfile !== policy.encoding.profileName ||
+        policy.profileVersion !== policy.encoding.profileVersion ||
+        attempt.profile_version !== policy.profileVersion ||
+        attempt.config_hash !== processingConfigHash(policy)
+      )
+        throw new ApiError("MEDIA_PROVIDER_BAD_RESPONSE");
+    }
     return {
       asset,
       attempt,
@@ -344,7 +368,10 @@ export class MediaWorker {
         duration: Number(ctx.asset.duration_seconds),
       },
       lease.signal,
+      ctx.policy.encoding,
     );
+    if (ctx.policy.encoding)
+      await this.provider.assertStreamingProfile(ctx.policy.encoding);
     await this.verifySource(ctx);
     await this.store.tx(async (tx) => {
       await this.guard(tx, lease, ctx);
@@ -355,6 +382,12 @@ export class MediaWorker {
         version: ctx.asset.provider_version,
         deliveryType: ctx.asset.delivery_type,
         streamingProfile: ctx.policy.streamingProfile,
+        ...(ctx.policy.encoding
+          ? {
+              encodingPreset: ctx.policy.encoding.presetId,
+              encodingDefinitionHash: ctx.policy.encoding.definitionHash,
+            }
+          : {}),
         format: "m3u8",
       });
       await rows(

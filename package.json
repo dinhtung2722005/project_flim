@@ -27,7 +27,16 @@
     "build:all": "npm run build && npm run web:build",
     "test:web": "node scripts/test-web.mjs",
     "streaming:smoke": "ts-node --project apps/api/tsconfig.json scripts/live-streaming-smoke.ts",
-    "rabbitmq:smoke": "ts-node --project apps/worker/tsconfig.json scripts/rabbitmq-smoke.ts"
+    "rabbitmq:smoke": "ts-node --project apps/worker/tsconfig.json scripts/rabbitmq-smoke.ts",
+    "test:encoding": "ts-node --project apps/api/tsconfig.json scripts/encoding-test.ts",
+    "encoding:smoke": "ts-node --project apps/api/tsconfig.json scripts/encoding-smoke.ts",
+    "encoding:player-smoke": "ts-node --project apps/api/tsconfig.json scripts/encoding-player-smoke.ts",
+    "encoding:fixture": "ts-node --project apps/api/tsconfig.json scripts/encoding-source-fixture.ts",
+    "test:recommendations": "ts-node --project apps/api/tsconfig.json scripts/recommendations-test.ts",
+    "db:recommendations": "ts-node --project apps/api/tsconfig.json scripts/recommendations-migrate.ts",
+    "agent:notebook": "node scripts/build-agent-notebook.mjs",
+    "agent:export-catalog": "node scripts/export-agent-catalog.mjs",
+    "test:agent:export": "node --test tests/agent-export.test.mjs"
   },
   "engines": {
     "node": ">=22.12"

@@ -27,6 +27,12 @@ import {
 } from "../common";
 import { CreateUploadIntentDto, VerifyUploadDto } from "../dto/media.dto";
 
+import {
+  createEncodingSnapshot,
+  encodingPreset,
+  processingConfigHash,
+} from "../../../../packages/media/src/encoding-profiles";
+
 @Injectable()
 export class MediaService {
   constructor(
@@ -146,6 +152,8 @@ export class MediaService {
         : null,
       expectedBytes: p.expectedBytes,
       sourceFormat: p.sourceFormat,
+      encodingPreset: p.encodingPreset ?? null,
+      encoding: p.encoding ?? null,
       ...(pending ? { upload: this.provider.signedUpload(p) } : {}),
     };
   }
@@ -168,6 +176,7 @@ export class MediaService {
         episodeId,
         expectedBytes: body.expectedBytes,
         sourceFormat: body.sourceFormat,
+        ...(body.encodingPreset ? { encodingPreset: body.encodingPreset } : {}),
       }),
     );
     // No provider request while holding a database transaction open.
@@ -232,6 +241,7 @@ export class MediaService {
           sourceFormat: body.sourceFormat,
           maxBytes: c.maxBytes,
           maxDurationSeconds: c.maxDurationSeconds,
+          encodingPreset: encodingPreset(body.encodingPreset),
           streamingProfile: c.profile,
           profileVersion: "hls-" + c.profile + "-v1",
           signatureTimestamp: timestamp,
@@ -373,7 +383,7 @@ export class MediaService {
         await this.episode(tx, body.episodeId);
         const intent = await this.intent(tx, actor, id, true);
         this.live(intent);
-        const p = intent.expected_policy as UploadPolicy;
+        let p = intent.expected_policy as UploadPolicy;
         const asset = await one(
           tx,
           "SELECT * FROM movie.video_assets WHERE id=$1::uuid AND episode_id=$2::uuid FOR UPDATE",
@@ -452,16 +462,18 @@ export class MediaService {
           return denied;
         }
         if (!video) fail("MEDIA_PROVIDER_BAD_RESPONSE");
+        if (p.encodingPreset) {
+          const encoding = createEncodingSnapshot(p.encodingPreset, video);
+          p = {
+            ...p,
+            encoding,
+            streamingProfile: encoding.profileName,
+            profileVersion: encoding.profileVersion,
+          };
+        }
         const operationId = randomUUID(),
           attemptId = randomUUID();
-        const configHash = hash(
-          JSON.stringify({
-            profile: p.streamingProfile,
-            profileVersion: p.profileVersion,
-            deliveryType: p.deliveryType,
-            format: "m3u8",
-          }),
-        );
+        const configHash = processingConfigHash(p);
         await query(
           tx,
           "INSERT INTO movie.operations(id,owner_user_id,principal_scope,type,resource_type,resource_id) VALUES ($1::uuid,$2::uuid,$3,'MEDIA_PROCESSING','video_asset',$4::uuid) RETURNING id",
@@ -501,8 +513,8 @@ export class MediaService {
         );
         await query(
           tx,
-          "UPDATE movie.upload_intents SET status='VERIFIED',verified_asset_id=$2::uuid,verified_at=now() WHERE id=$1::uuid RETURNING id",
-          [id, asset.id],
+          "UPDATE movie.upload_intents SET status='VERIFIED',verified_asset_id=$2::uuid,verified_at=now(),expected_policy=$3::jsonb WHERE id=$1::uuid RETURNING id",
+          [id, asset.id, JSON.stringify(p)],
         );
         await audit(
           tx,
@@ -517,6 +529,8 @@ export class MediaService {
             attemptId,
             bytes: video.bytes,
             durationSeconds: video.duration,
+            encodingPreset: p.encodingPreset ?? null,
+            encodingDefinitionHash: p.encoding?.definitionHash ?? null,
           },
         );
         await query(
@@ -618,14 +632,7 @@ export class MediaService {
         "SELECT coalesce(max(attempt_no),0)+1 AS n FROM movie.media_attempts WHERE asset_id=$1::uuid",
         [id],
       );
-      const configHash = hash(
-        JSON.stringify({
-          profile: p.streamingProfile,
-          profileVersion: p.profileVersion,
-          deliveryType: p.deliveryType,
-          format: "m3u8",
-        }),
-      );
+      const configHash = processingConfigHash(p);
       await query(
         tx,
         "INSERT INTO movie.operations(id,owner_user_id,principal_scope,type,resource_type,resource_id) VALUES ($1::uuid,$2::uuid,$3,'MEDIA_PROCESSING','video_asset',$4::uuid) RETURNING id",

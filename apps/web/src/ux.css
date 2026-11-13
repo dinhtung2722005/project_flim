@@ -1351,3 +1351,79 @@ tbody tr:hover {
     padding-inline: 12px;
   }
 }
+
+.recommendation-settings {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border: 1px solid var(--border, #303746);
+  border-radius: 16px;
+  margin: 1.5rem 0;
+  background: var(--surface, #141a24);
+}
+.recommendation-settings h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.6rem;
+}
+.recommendation-settings p {
+  max-width: 650px;
+  line-height: 1.65;
+  color: var(--muted, #b5bfd1);
+  margin: 0;
+}
+.recommendation-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 260px;
+}
+.recommendation-controls label {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.recommendation-controls input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: #80b9ff;
+}
+.recommendation-reason {
+  font-size: 0.85rem;
+  color: var(--muted, #b5bfd1);
+  line-height: 1.5;
+  min-height: 2.6em;
+}
+.recommendation-card {
+  min-width: 0;
+}
+.recommendation-card .movie-card {
+  display: block;
+}
+.recommendation-undo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.for-you-page {
+  max-width: 1440px;
+  margin: auto;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+}
+@media (max-width: 800px) {
+  .recommendation-settings {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .recommendation-controls {
+    min-width: 0;
+  }
+  .site-header nav {
+    overflow-x: auto;
+  }
+}

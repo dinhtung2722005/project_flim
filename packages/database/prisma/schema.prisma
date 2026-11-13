@@ -802,36 +802,37 @@ model title_genres {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model titles {
-  id                             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   kind                           String
-  slug                           String              @unique @db.VarChar(200)
-  localized_title                String              @db.VarChar(300)
-  original_title                 String?             @db.VarChar(300)
+  slug                           String                    @unique @db.VarChar(200)
+  localized_title                String                    @db.VarChar(300)
+  original_title                 String?                   @db.VarChar(300)
   normalized_title               String
-  synopsis                       String              @default("")
-  release_year                   Int?                @db.SmallInt
-  country_codes                  String[]            @default([])
-  original_language              String?             @db.VarChar(35)
-  age_rating                     String?             @db.VarChar(20)
-  publication_status             String              @default("DRAFT")
+  synopsis                       String                    @default("")
+  release_year                   Int?                      @db.SmallInt
+  country_codes                  String[]                  @default([])
+  original_language              String?                   @db.VarChar(35)
+  age_rating                     String?                   @db.VarChar(20)
+  publication_status             String                    @default("DRAFT")
   poster_asset_ref               String?
   backdrop_asset_ref             String?
   trailer_asset_ref              String?
-  published_at                   DateTime?           @db.Timestamptz(6)
-  version                        BigInt              @default(1)
-  created_by                     String              @db.Uuid
-  updated_by                     String              @db.Uuid
-  created_at                     DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at                     DateTime            @default(now()) @db.Timestamptz(6)
+  published_at                   DateTime?                 @db.Timestamptz(6)
+  version                        BigInt                    @default(1)
+  created_by                     String                    @db.Uuid
+  updated_by                     String                    @db.Uuid
+  created_at                     DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime                  @default(now()) @db.Timestamptz(6)
   content_reports                content_reports[]
   credits                        credits[]
   homepage_banners               homepage_banners[]
+  recommendation_feedback        recommendation_feedback[]
   seasons                        seasons?
   title_aliases                  title_aliases[]
   title_daily_stats              title_daily_stats[]
   title_genres                   title_genres[]
-  users_titles_created_byTousers users               @relation("titles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
-  users_titles_updated_byTousers users               @relation("titles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  users_titles_created_byTousers users                     @relation("titles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_titles_updated_byTousers users                     @relation("titles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
   watchlist                      watchlist[]
 
   @@index([country_codes], map: "titles_country_idx", type: Gin)
@@ -906,6 +907,9 @@ model users {
   outbox_events                                           outbox_events[]
   password_reset_tokens                                   password_reset_tokens[]
   playback_sessions                                       playback_sessions[]
+  recommendation_feedback                                 recommendation_feedback[]
+  recommendation_preferences                              recommendation_preferences?
+  recommendation_snapshots                                recommendation_snapshots[]
   resume_heads                                            resume_heads[]
   security_events                                         security_events[]
   system_settings                                         system_settings[]
@@ -1021,5 +1025,50 @@ model watchlist {
   @@id([user_id, title_id])
   @@index([user_id, created_at(sort: Desc), title_id], map: "watchlist_recent_idx")
   @@index([title_id], map: "watchlist_title_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recommendation_feedback {
+  user_id    String   @db.Uuid
+  title_id   String   @db.Uuid
+  kind       String   @default("NOT_INTERESTED")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  titles     titles   @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@id([user_id, title_id])
+  @@index([title_id], map: "recommendation_feedback_title_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recommendation_preferences {
+  user_id        String   @id @db.Uuid
+  enabled        Boolean  @default(false)
+  hide_completed Boolean  @default(true)
+  version        BigInt   @default(1)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+  users          users    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recommendation_snapshots {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id             String   @db.Uuid
+  preference_version  BigInt
+  model_version       String
+  surface             String
+  personalized        Boolean
+  candidate_truncated Boolean
+  items               Json
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  expires_at          DateTime @default(dbgenerated("(now() + '00:10:00'::interval)")) @db.Timestamptz(6)
+  users               users    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([expires_at], map: "recommendation_snapshots_expiry_idx")
+  @@index([user_id, created_at(sort: Desc), id], map: "recommendation_snapshots_owner_idx")
   @@schema("movie")
 }

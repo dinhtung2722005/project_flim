@@ -9,3 +9,5 @@ export * from "./reports.dto";
 export * from "./playback.dto";
 export * from "./library.dto";
 export * from "./media.dto";
+
+export * from "./recommendations.dto";

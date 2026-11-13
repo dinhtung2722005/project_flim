@@ -42,11 +42,16 @@ Giao diện cập nhật 13/11/2026: chữ và nút lớn hơn, tìm kiếm/lọ
 | Xử lý nền          | RabbitMQ, outbox/inbox, HLS bất đồng bộ, webhook có chữ ký, retry/backoff, DLQ và đối soát                             |
 | Backup             | Sao lưu nguồn dạng stream, SHA-256, manifest và đọc lại để xác minh trước VERIFIED                                     |
 | Playback           | Phiên khách/tài khoản, tạo/đọc/gia hạn/đóng, giới hạn đồng thời, idempotency và pin phiên bản asset                    |
+| Gợi ý              | Trang Dành cho bạn: TF-IDF/multi-hot/cosine + MMR, opt-in, feedback/hoàn tác và snapshot cursor riêng tư |
 | Cá nhân            | Yêu thích, lịch sử, xem tiếp, progress chống ghi đè và báo lỗi có kiểm ownership                                       |
 | Telemetry          | Nhận batch sự kiện, chống trùng và ghi outbox bền; chưa có consumer tổng hợp analytics                                 |
-| Hợp đồng API       | DTO validation toàn cục, Swagger/OpenAPI, global exception handler, requestId và 73 mã lỗi                             |
+| Hợp đồng API       | DTO validation toàn cục, Swagger/OpenAPI, global exception handler, requestId và 74 mã lỗi                             |
 
-Quy mô hợp đồng hiện tại: **87 operation trên 67 path OpenAPI**, gồm **49 operation admin**. Số liệu mô tả API hiện có, không có nghĩa toàn bộ kế hoạch sản phẩm đã hoàn tất.
+Quy mô hợp đồng hiện tại: **92 operation trên 70 path OpenAPI**, gồm **49 operation admin**. Số liệu mô tả API hiện có, không có nghĩa toàn bộ kế hoạch sản phẩm đã hoàn tất.
+
+Đã có [mã hóa/nén đa độ phân giải H.264/AAC](docs/api/encoding.md): admin chọn Tiết kiệm dữ liệu, Cân bằng 720p hoặc Full HD 1080p khi upload. Các mức được giới hạn theo nguồn và kiểm trước READY; video cũ giữ nguyên. [Kiểm thử mới](docs/testing/encoding-2026-11-13.md) gồm Cloudinary/Chrome thật tới 1080p; chưa có VMAF/per-title/HDR/đa codec.
+
+Xem [gợi ý cá nhân hóa](docs/api/recommendations.md) tại http://localhost:3000/for-you. Mặc định tắt; bật rồi lưu/xem phim để tạo sở thích. Bản đầu không dùng AI agent, Colab hoặc dữ liệu tài khoản khác.
 
 ## Công nghệ
 
@@ -157,6 +162,9 @@ Nếu PostgreSQL ở vị trí khác, truyền `-PostgresBin`; có thể cấu h
 
 ```powershell
 npm.cmd run api:configure
+$env:PJ_FLIM_APPLY_RECOMMENDATIONS='true'
+npm.cmd run db:recommendations
+Remove-Item Env:PJ_FLIM_APPLY_RECOMMENDATIONS
 npm.cmd run db:generate
 npm.cmd run worker:configure
 ```
@@ -275,7 +283,7 @@ Swagger local **không yêu cầu đăng nhập**. GET `/api/docs-login` cũ ch�
 | Thành phần      | Mặc định                              |
 | --------------- | ------------------------------------- |
 | Database/schema | `pj_flim` / `movie`                   |
-| Số bảng         | 47                                    |
+| Số bảng         | 50                                    |
 | Owner           | `pj_flim_owner`                       |
 | API runtime     | `pj_flim_api`, nhóm `movie_api`       |
 | Worker runtime  | `pj_flim_worker`, nhóm `movie_worker` |
@@ -335,7 +343,7 @@ Ví dụ lỗi:
 }
 ```
 
-Registry có 73 mã lỗi; xem [exception handling](docs/api/exception-handling.md) và [OpenAPI](docs/api/openapi.json). `retryable` không đồng nghĩa được retry POST tùy ý.
+Registry có 74 mã lỗi; xem [exception handling](docs/api/exception-handling.md) và [OpenAPI](docs/api/openapi.json). `retryable` không đồng nghĩa được retry POST tùy ý.
 
 ## Kiểm thử
 
@@ -370,6 +378,8 @@ Muốn bao gồm worker, RabbitMQ phải hoạt động và cấu hình worker �
 Bộ integration tạo `pj_flim_test_<random>` riêng và topology broker thử riêng, không dùng `pj_flim` hoặc phim thật làm fixture. Database tạm do test tạo được dọn sau khi chạy. Báo cáo nằm tại `.local/api/integration-result.json`.
 
 Kết quả gần nhất ngày 11/11/2026: **1.198 assertion/kiểm tra đạt**, có RabbitMQ và 53 browser checks Chrome; gồm 509 exception, 194 viewer, 42 MFA/local và 40 Swagger. Các nhóm này nằm trong tổng số, không phải toàn bộ danh sách test. Chrome headless cũng đã render 87 operation Swagger không có form login. Đây là bằng chứng local, chưa thay cho kiểm thử player/thiết bị/tải production.
+
+Kết quả bổ sung 13/11/2026: [gợi ý content-v1](docs/testing/recommendations-2026-11-13.md) qua 2.309 checks backend/worker (141 recommendation, trong đó 23 thuật toán), frontend-only 227 (24 recommendation), DB tạm riêng. Đây là kiểm tra chức năng, chưa đo uplift hoặc độ chính xác trên người dùng thật.
 
 ## Lệnh thường dùng
 
@@ -422,7 +432,7 @@ Thanh tìm phim đã có [live search](docs/testing/live-search-2026-11-13.md): 
 
 Đã bổ sung [nghiên cứu mã hóa, nén và đa độ phân giải](docs/plans/movie-streaming-platform-plan.md#67-nghiên-cứu-mã-hóa-nén-và-tạo-nhiều-độ-phân-giải): H.264/HLS trước, rate control và per-title ladder, GOP/segment, VMAF/review, chi phí và ENC01–ENC09. Hiện chỉ có bằng chứng các mức 180–720p; 1080p/HDR/HEVC/AV1 và thuật toán tối ưu mới chưa nghiệm thu. Lượt nghiên cứu không thay profile hoặc chuyển mã lại video.
 
-Đã có [nghiên cứu gợi ý và cá nhân hóa trong plan](docs/plans/movie-streaming-platform-plan.md#92-thuật-toán-gợi-ý-phim-và-cá-nhân-hóa): content-based → hybrid/item-to-item → model học khi đủ dữ liệu, kèm API/data/analytics/privacy và REC01–REC09. Đây là thiết kế sau MVP, chưa có recommender cá nhân chạy thật; route phim liên quan hiện vẫn dựa vào cùng thể loại.
+Đã có [nghiên cứu gợi ý và cá nhân hóa trong plan](docs/plans/movie-streaming-platform-plan.md#92-thuật-toán-gợi-ý-phim-và-cá-nhân-hóa): content-based → hybrid/item-to-item → model học khi đủ dữ liệu, kèm API/data/analytics/privacy và REC01–REC09. Đã triển khai [bản content-v1](docs/api/recommendations.md) tại /for-you, dùng watchlist/coverage hợp lệ của tài khoản opt-in, snapshot 10 phút, Không quan tâm/hoàn tác và tắt cá nhân hóa. [Thuật toán](docs/design/recommendation-algorithms.md) có công thức và giới hạn. REC01/03/04/05 còn một phần; analytics/CF/reset/benchmark/A-B chưa làm. Route phim liên quan public vẫn giữ cùng thể loại.
 
 
 | Ticket | Việc còn mở                                                                        |
@@ -436,7 +446,7 @@ Thanh tìm phim đã có [live search](docs/testing/live-search-2026-11-13.md): 
 
 Production worker yêu cầu S3 backup, webhook HTTPS cố định và AMQPS. Local filesystem backup/tunnel tạm chỉ phục vụ phát triển. S3/restore và SMTP chưa nghiệm thu với tài khoản thật. Admin preview, subtitle delivery, audit export và quy trình migration/CI đầy đủ còn thiếu.
 
-Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website và đọc/lọc báo lỗi, bên cạnh phim/user/role/audit. Email/reset/MFA enrollment, admin preview, phụ đề/audio, gán credits và đổi trạng thái xử lý report còn thiếu. Trang người xem chưa đọc cấu hình banner/site settings để thay thương hiệu/header. Thanh toán/VIP/DRM và gợi ý hành vi còn ngoài bản hiện tại.
+Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website và đọc/lọc báo lỗi, bên cạnh phim/user/role/audit. Email/reset/MFA enrollment, admin preview, phụ đề/audio, gán credits và đổi trạng thái xử lý report còn thiếu. Trang người xem chưa đọc cấu hình banner/site settings để thay thương hiệu/header. Thanh toán/VIP/DRM và học cộng tác còn ngoài bản hiện tại; gợi ý nội dung opt-in đã có.
 
 ## Tài liệu chi tiết
 
@@ -447,6 +457,7 @@ Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website 
 | [API runbook](docs/api/README.md)                                                               | Khởi động, cấu hình và hợp đồng API                     |
 | [API người xem](docs/api/viewer-api.md)                                                         | Catalog, accounts, playback và thư viện                 |
 | [Endpoint](docs/api/endpoints.md) / [OpenAPI](docs/api/openapi.json)                            | Route và schema hiện hành                               |
+| [Encoding đa độ phân giải](docs/api/encoding.md) | Preset/version/hash, nén HLS, worker gate và số đo kiểm thử |
 | [Cloudinary upload](docs/api/cloudinary-upload.md)                                              | Upload intent, xác minh nguồn và nghiệm thu             |
 | [Admin mở rộng](docs/testing/admin-ui-2026-11-13.md) | 4 màn hình, 148 kiểm tra frontend và sửa timestamp pagination |
 | [Kiểm tra xác thực/phân quyền](docs/testing/auth-authorization-2026-11-13.md) | 49 operation/5 role; 840 kiểm tra mới, hồi quy API 1.934 |
@@ -454,9 +465,11 @@ Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website 
 | [Media worker](docs/api/media-worker.md)                                                        | RabbitMQ, webhook, HLS, backup và vận hành              |
 | [Exception handling](docs/api/exception-handling.md)                                            | Problem Details, log và registry lỗi                    |
 | [Database runbook](database/README.md)                                                          | Bootstrap, kết nối, grants và kiểm SQL                  |
-| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 bảng, ERD, ràng buộc                                 |
+| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 bảng baseline + 3 bảng gợi ý, ERD, ràng buộc                                 |
 | [Thuật toán stream chi tiết](docs/design/streaming-algorithms.md)                               | HLS/CDN, worker, phiên phát, ABR/buffer/tua và progress |
 | [Thiết kế backend](docs/design/movie-backend-design.md)                                         | Kiến trúc và thuật toán mục tiêu                        |
+| [Kế hoạch AI agent](docs/plans/movie-ai-agent-plan.md) | Plan1.6: PoC Colab/OMDb có code, lộ trình chatbot web; AG01–AG16 có trạng thái, chờ model thật |
+| [Các bước build chatbot website](docs/plans/website-chatbot-implementation-plan.md) | 12 bước đọc catalog/FAQ, gateway/tool, API/UI, memory và nghiệm thu; kế hoạch |
 | [Plan hiện hành](docs/plans/movie-streaming-platform-plan.md)                                   | Tính năng, công đoạn và backlog                         |
 | [DTO](apps/api/src/dto/README.md)                                                               | Tổ chức và validation                                   |
 | [Controllers](apps/api/src/controllers/README.md) / [Services](apps/api/src/services/README.md) | Phân lớp HTTP và nghiệp vụ                              |
@@ -469,3 +482,14 @@ File kế hoạch trùng tên ở gốc là bản cũ; dùng bản trong `docs/p
 Chỉ commit source, SQL, cấu hình mẫu và tài liệu. Các file `.env*.local`, `.local/`, `.tmp/`, `node_modules/`, `dist/`, log, backup và video local không thuộc source được đẩy lên GitHub. Credential được sinh trên từng máy, không dùng lại mật khẩu đã trao đổi trong chat.
 
 Repository không chứa dữ liệu phim, backup, hộp thư local hoặc tài khoản Cloudinary/PostgreSQL đang sử dụng. Muốn chạy trên máy khác, thực hiện bootstrap và cấu hình lại bằng thông tin của môi trường đó.
+
+Rà soát nguồn điểm/review ngày 13/11/2026 bằng ba agent: [báo cáo1.1](docs/design/external-ratings-reviews-research.md#9-kết-quả-rà-soát-bổ-sung-phiên-bản-11) có IMDb/OMDb, Metacritic và RT qua Origin, TMDB/Trakt/publisher, nguồn Việt Nam và quyền xử lý trên Colab. [Plan2.29](docs/plans/movie-streaming-platform-plan.md) và [agent plan1.6](docs/plans/movie-ai-agent-plan.md) đã đồng bộ; chưa có importer hoặc external API/UI.
+
+
+## Agent phim trên Google Colab
+
+Đã có [notebook độc lập](notebooks/movie-agent-colab.ipynb) và [hướng dẫn chạy](apps/agent/README.md): Qwen2.5:7b/Ollama, LangChain, multilingual E5/FAISS, tìm phim tiếng Việt với evidence/tool limits. Upload notebook vào Colab, chọn GPU, chạy lần lượt; mặc định4phim giả, không cần key.
+
+Dùng catalog thật: khi API local chạy, dùng `npm.cmd run agent:export-catalog`, đặt `USE_DEMO=False`, upload `.local/agent/catalog.snapshot.json` ở cell6. Chỉ metadata được phép cloud/embedding. OMDb lấy IMDb/Metascore khi có OMDB_API_KEY trong Colab Secrets và mapping verified; TMDB/DDGS link-only vẫn tùy chọn, mặc định tắt.
+
+[Bằng chứng lượt OMDb14/11](docs/testing/omdb-2026-11-14.md):74Python contracts với fixtures và static notebook đã đạt; chưa Qwen/E5/GPU Colab hoặc chatbot website/benchmark model thật. [Kế hoạch tích hợp web](docs/plans/website-chatbot-implementation-plan.md) có12bước; chưa triển khai trong lượt lập kế hoạch.

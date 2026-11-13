@@ -30,6 +30,10 @@ Backup local hiện nằm dưới `.local/backups/assets/{assetId}/{providerVers
 
 Nghiệm thu mới qua giao diện và player: [live streaming](../testing/live-streaming.md). Video thử cũ trong phần lịch sử vẫn DRAFT; phim thử riêng của lượt nghiệm thu UI được xuất bản theo yêu cầu. Phản hồi CDN byproduct trong lúc eager async được chờ có giới hạn; lỗi profile không hợp lệ vẫn dừng xử lý.
 
+## Encoding có phiên bản
+
+Từ 13/11/2026, intent mới pin encodingPreset/snapshot/profileVersion/definitionHash theo nguồn. Worker kiểm snapshot và attempt config hash, chỉ tạo Cloudinary profile hash khi thiếu, từ chối drift, verify đủ rung/kích thước/codec rồi mới ghi HLS READY. Backup/publication gate giữ nguyên; intent legacy vẫn chạy với policy cũ. [Runbook encoding](encoding.md), [kiểm thử mới](../testing/encoding-2026-11-13.md).
+
 ## Khởi động local
 
 Đã có Docker Desktop và PostgreSQL local. Các biến Cloudinary ở `.env.api.local`, DB runtime/worker ở `.env.database.local`.

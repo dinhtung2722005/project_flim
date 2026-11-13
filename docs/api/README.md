@@ -1,6 +1,6 @@
 # API người xem, admin và Swagger
 
-Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **87 operation trên 67 path OpenAPI**, chạy NestJS + Prisma 7 với PostgreSQL bằng login pj_flim_api.
+Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **92 operation trên 70 path OpenAPI**, chạy NestJS + Prisma 7 với PostgreSQL bằng login pj_flim_api.
 
 [Hướng dẫn cấu hình Cloudinary và API upload](cloudinary-upload.md): 3 endpoint mới, direct/chunked upload, xác minh owner/episode/file, audit và outbox HLS.
 
@@ -11,6 +11,8 @@ Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **8
 [Thuật toán stream chi tiết](../design/streaming-algorithms.md): đường media HLS/CDN, worker/backup, session/idempotency, renewal/progress/telemetry và player cơ bản hiện có cùng các phần cần nghiệm thu tiếp.
 
 Giao diện người xem/admin đã nối API: [hướng dẫn frontend](../frontend.md). Build cả web/API rồi mở / hoặc /admin trên cổng 3000; Swagger vẫn mở trực tiếp.
+
+[Gợi ý cá nhân hóa content-v1](recommendations.md): 5 operation private mới, mặc định opt-out, TF-IDF/cosine/MMR, preferences ETag, feedback/hoàn tác và snapshot cursor. [Thuật toán](../design/recommendation-algorithms.md).
 
 ## Mở Swagger
 
@@ -39,7 +41,7 @@ AUTH_MFA_REQUIRED=false hiện áp dụng cho đăng nhập API local, chỉ c�
 | Audit           | Ghi cùng transaction mutation; đọc/lọc/phân trang; không có API sửa/xóa log                   |
 | Reports/metrics | Đọc báo lỗi theo scope, redaction AUDITOR, thống kê tổng quan                                 |
 | Media           | Đọc metadata asset/attempt/operation; signed upload intent và xác minh nguồn Cloudinary       |
-| Hợp đồng        | DTO validation, Problem Details, registry 73 code, ETag/If-Match, cursor HMAC, request ID     |
+| Hợp đồng        | DTO validation, Problem Details, registry 74 code, ETag/If-Match, cursor HMAC, request ID     |
 
 Khi policy yêu cầu MFA, thay role cần target staff đã có MFA verified. ADMIN chỉ khóa/mở tài khoản thuần MEMBER; SUPER_ADMIN tác động staff sau step-up khi policy MFA được bật và không được làm mất SUPER_ADMIN usable cuối cùng. Role/status mutation tăng authVersion và thu hồi session trong transaction có roster lock.
 

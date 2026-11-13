@@ -85,7 +85,7 @@ Invoke-ProjectPsql -DatabaseName 'pj_flim' -DatabaseUser $configuration.ownerUse
 $tableCount=Invoke-ProjectPsql -DatabaseName 'pj_flim' -DatabaseUser $configuration.ownerUser -DatabasePassword $configuration.ownerPassword -SqlCommand "SELECT count(*) FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE';"
 if ([int]$tableCount -eq 0) {
     Invoke-ProjectPsql -DatabaseName 'pj_flim' -DatabaseUser $configuration.ownerUser -DatabasePassword $configuration.ownerPassword -SqlFile $schemaPath
-} elseif ([int]$tableCount -ne 47) { throw 'Unexpected schema. Bootstrap will not drop or replace it.' }
+} elseif ([int]$tableCount -notin @(47,50)) { throw 'Unexpected schema. Bootstrap will not drop or replace it.' }
 $registryCount=Invoke-ProjectPsql -DatabaseName 'pj_flim' -DatabaseUser $configuration.ownerUser -DatabasePassword $configuration.ownerPassword -SqlCommand "SELECT (SELECT count(*) FROM movie.roles)+(SELECT count(*) FROM movie.permissions);"
 if ([int]$registryCount -eq 0) {
     Invoke-ProjectPsql -DatabaseName 'pj_flim' -DatabaseUser $configuration.ownerUser -DatabasePassword $configuration.ownerPassword -SqlFile $seedPath
