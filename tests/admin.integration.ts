@@ -50,6 +50,8 @@ async function main() {
     );
   // Test the default MFA policy independently of the developer local override.
   process.env.AUTH_MFA_REQUIRED = "true";
+  process.env.ASSISTANT_ENABLED = "false";
+  process.env.ASSISTANT_DISPATCH_ENABLED = "false";
   checks += await runBrowserUploadChecks();
   const encodingChecks = await runEncodingChecks();
   checks += encodingChecks;
@@ -94,6 +96,13 @@ async function main() {
       "movie-database-rbac-seed.sql",
       "movie-database-grants.sql",
       "movie-recommendations-v1.sql",
+      "movie-assistant-v1.sql",
+      "movie-assistant-feedback-v1.sql",
+      "movie-reviews-v1.sql",
+      "movie-viewer-reviews-v1.sql",
+      "movie-view-stats-v1.sql",
+      "movie-admin-advanced-v1.sql",
+      "movie-catalog-batches-v1.sql",
     ])
       await fixtures.query(await readFile("docs/design/sql/" + file, "utf8"));
     process.env.DATABASE_URL = apiUrl.toString();
@@ -343,7 +352,7 @@ async function main() {
       await api("get", "/api/v1/admin/permissions", rootToken),
       200,
     );
-    assert.equal(permissions.body.length, 18);
+    assert.equal(permissions.body.length, 19);
     checks++;
     problem(
       await api("get", "/api/v1/admin/titles/not-a-uuid", rootToken),
@@ -966,7 +975,7 @@ async function main() {
     const liveTables = await fixtures.query(
       "SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema='movie' AND table_type='BASE TABLE'",
     );
-    assert.equal(liveTables.rows[0].count, 50);
+    assert.equal(liveTables.rows[0].count, 59);
     checks++;
     await mkdir(".local/api", { recursive: true });
     await writeFile(

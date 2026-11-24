@@ -93,25 +93,28 @@ model auth_replay_receipts {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model auth_sessions {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id              String                 @db.Uuid
-  state                String
-  auth_version         BigInt
-  mfa_verified_at      DateTime?              @db.Timestamptz(6)
-  step_up_at           DateTime?              @db.Timestamptz(6)
-  device_label         String?                @db.VarChar(200)
-  ip_hash              String?
-  user_agent_hash      String?
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  last_seen_at         DateTime               @default(now()) @db.Timestamptz(6)
-  idle_expires_at      DateTime               @db.Timestamptz(6)
-  absolute_expires_at  DateTime               @db.Timestamptz(6)
-  revoked_at           DateTime?              @db.Timestamptz(6)
-  revoke_reason        String?                @db.VarChar(80)
-  auth_replay_receipts auth_replay_receipts[]
-  users                users                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
-  mfa_challenges       mfa_challenges[]
-  refresh_tokens       refresh_tokens[]
+  id                                                                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                                              String                 @db.Uuid
+  state                                                                String
+  auth_version                                                         BigInt
+  mfa_verified_at                                                      DateTime?              @db.Timestamptz(6)
+  step_up_at                                                           DateTime?              @db.Timestamptz(6)
+  device_label                                                         String?                @db.VarChar(200)
+  ip_hash                                                              String?
+  user_agent_hash                                                      String?
+  created_at                                                           DateTime               @default(now()) @db.Timestamptz(6)
+  last_seen_at                                                         DateTime               @default(now()) @db.Timestamptz(6)
+  idle_expires_at                                                      DateTime               @db.Timestamptz(6)
+  absolute_expires_at                                                  DateTime               @db.Timestamptz(6)
+  revoked_at                                                           DateTime?              @db.Timestamptz(6)
+  revoke_reason                                                        String?                @db.VarChar(80)
+  assistant_runs_assistant_runs_auth_session_idToauth_sessions         assistant_runs[]       @relation("assistant_runs_auth_session_idToauth_sessions")
+  assistant_runs_assistant_runs_auth_session_id_user_idToauth_sessions assistant_runs[]       @relation("assistant_runs_auth_session_id_user_idToauth_sessions")
+  auth_replay_receipts                                                 auth_replay_receipts[]
+  users                                                                users                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  catalog_batches                                                      catalog_batches[]
+  mfa_challenges                                                       mfa_challenges[]
+  refresh_tokens                                                       refresh_tokens[]
 
   @@unique([id, user_id])
   @@index([absolute_expires_at], map: "auth_sessions_expiry_idx", where: raw("(state = ANY (ARRAY['ACTIVE'::text, 'PENDING_MFA'::text]))"))
@@ -563,6 +566,7 @@ model playback_sessions {
   episodes               episodes                 @relation(fields: [episode_id], references: [id], onUpdate: NoAction)
   users                  users?                   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   resume_heads           resume_heads[]
+  view_session_facts     view_session_facts?
   watch_events           watch_events[]
   watch_progress         watch_progress[]
 
@@ -823,16 +827,20 @@ model titles {
   updated_by                     String                    @db.Uuid
   created_at                     DateTime                  @default(now()) @db.Timestamptz(6)
   updated_at                     DateTime                  @default(now()) @db.Timestamptz(6)
+  assistant_runs                 assistant_runs[]
   content_reports                content_reports[]
   credits                        credits[]
   homepage_banners               homepage_banners[]
   recommendation_feedback        recommendation_feedback[]
+  review_sources                 review_sources?
   seasons                        seasons?
   title_aliases                  title_aliases[]
   title_daily_stats              title_daily_stats[]
   title_genres                   title_genres[]
   users_titles_created_byTousers users                     @relation("titles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
   users_titles_updated_byTousers users                     @relation("titles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  view_daily_viewers             view_daily_viewers[]
+  viewer_reviews                 viewer_reviews[]
   watchlist                      watchlist[]
 
   @@index([country_codes], map: "titles_country_idx", type: Gin)
@@ -893,10 +901,12 @@ model users {
   created_at                                              DateTime                    @default(now()) @db.Timestamptz(6)
   updated_at                                              DateTime                    @default(now()) @db.Timestamptz(6)
   deleted_at                                              DateTime?                   @db.Timestamptz(6)
+  assistant_runs                                          assistant_runs[]
   audit_exports                                           audit_exports[]
   audit_logs_audit_logs_actor_user_idTousers              audit_logs[]                @relation("audit_logs_actor_user_idTousers")
   audit_logs_audit_logs_initiator_user_idTousers          audit_logs[]                @relation("audit_logs_initiator_user_idTousers")
   auth_sessions                                           auth_sessions[]
+  catalog_batches                                         catalog_batches[]
   content_reports_content_reports_handled_byTousers       content_reports[]           @relation("content_reports_handled_byTousers")
   content_reports_content_reports_reporter_user_idTousers content_reports[]           @relation("content_reports_reporter_user_idTousers")
   email_verification_tokens                               email_verification_tokens[]
@@ -911,6 +921,7 @@ model users {
   recommendation_preferences                              recommendation_preferences?
   recommendation_snapshots                                recommendation_snapshots[]
   resume_heads                                            resume_heads[]
+  review_sources                                          review_sources[]
   security_events                                         security_events[]
   system_settings                                         system_settings[]
   titles_titles_created_byTousers                         titles[]                    @relation("titles_created_byTousers")
@@ -918,6 +929,8 @@ model users {
   upload_intents                                          upload_intents[]
   user_roles_user_roles_granted_byTousers                 user_roles[]                @relation("user_roles_granted_byTousers")
   user_roles_user_roles_user_idTousers                    user_roles[]                @relation("user_roles_user_idTousers")
+  viewer_reviews_viewer_reviews_moderated_byTousers       viewer_reviews[]            @relation("viewer_reviews_moderated_byTousers")
+  viewer_reviews                                          viewer_reviews[]
   watch_progress                                          watch_progress[]
   watchlist                                               watchlist[]
 
@@ -986,6 +999,7 @@ model watch_events {
   @@unique([session_id, client_event_id])
   @@index([received_at], map: "watch_events_retention_idx")
   @@index([session_id, elapsed_ms, id], map: "watch_events_session_time_idx")
+  @@index([session_id, sequence, id], map: "watch_events_session_sequence_idx")
   @@schema("movie")
 }
 
@@ -1070,5 +1084,196 @@ model recommendation_snapshots {
 
   @@index([expires_at], map: "recommendation_snapshots_expiry_idx")
   @@index([user_id, created_at(sort: Desc), id], map: "recommendation_snapshots_owner_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model assistant_run_steps {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  run_id         String         @db.Uuid
+  generation     BigInt
+  call_id        String         @db.VarChar(80)
+  tool           String
+  args_hash      String
+  evidence       Json
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  assistant_runs assistant_runs @relation(fields: [run_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([run_id, generation, call_id])
+  @@index([run_id, generation, created_at], map: "assistant_run_steps_run_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model assistant_runs {
+  id                                                                        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                                                   String                @db.Uuid
+  auth_session_id                                                           String                @db.Uuid
+  auth_version                                                              BigInt
+  status                                                                    String                @default("QUEUED")
+  message                                                                   String
+  options                                                                   Json                  @default("{}")
+  context_title_id                                                          String?               @db.Uuid
+  parent_run_id                                                             String?               @db.Uuid
+  context_depth                                                             Int                   @default(0) @db.SmallInt
+  idempotency_key                                                           String                @db.VarChar(128)
+  request_hash                                                              String
+  generation                                                                BigInt                @default(0)
+  lease_id                                                                  String?               @db.Uuid
+  lease_until                                                               DateTime?             @db.Timestamptz(6)
+  started_at                                                                DateTime?             @db.Timestamptz(6)
+  deadline_at                                                               DateTime              @default(dbgenerated("(now() + '00:05:00'::interval)")) @db.Timestamptz(6)
+  attempt_count                                                             Int                   @default(0) @db.SmallInt
+  selection                                                                 Json?
+  engine                                                                    String?
+  error_code                                                                String?               @db.VarChar(80)
+  created_at                                                                DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at                                                                DateTime              @default(now()) @db.Timestamptz(6)
+  expires_at                                                                DateTime              @default(dbgenerated("(now() + '7 days'::interval)")) @db.Timestamptz(6)
+  assistant_run_steps                                                       assistant_run_steps[]
+  auth_sessions_assistant_runs_auth_session_idToauth_sessions               auth_sessions         @relation("assistant_runs_auth_session_idToauth_sessions", fields: [auth_session_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  auth_sessions_assistant_runs_auth_session_id_user_idToauth_sessions       auth_sessions         @relation("assistant_runs_auth_session_id_user_idToauth_sessions", fields: [auth_session_id, user_id], references: [id, user_id], onDelete: NoAction, onUpdate: NoAction)
+  titles                                                                    titles?               @relation(fields: [context_title_id], references: [id], onUpdate: NoAction)
+  assistant_runs_assistant_runs_parent_run_idToassistant_runs               assistant_runs?       @relation("assistant_runs_parent_run_idToassistant_runs", fields: [parent_run_id], references: [id], onUpdate: NoAction)
+  other_assistant_runs_assistant_runs_parent_run_idToassistant_runs         assistant_runs[]      @relation("assistant_runs_parent_run_idToassistant_runs")
+  assistant_runs_assistant_runs_parent_run_id_user_idToassistant_runs       assistant_runs?       @relation("assistant_runs_parent_run_id_user_idToassistant_runs", fields: [parent_run_id, user_id], references: [id, user_id], onDelete: NoAction, onUpdate: NoAction)
+  other_assistant_runs_assistant_runs_parent_run_id_user_idToassistant_runs assistant_runs[]      @relation("assistant_runs_parent_run_id_user_idToassistant_runs")
+  users                                                                     users                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id, user_id])
+  @@unique([user_id, idempotency_key])
+  @@index([expires_at], map: "assistant_runs_expiry_idx")
+  @@index([user_id, created_at(sort: Desc), id], map: "assistant_runs_owner_idx")
+  @@index([deadline_at], map: "assistant_runs_pending_idx", where: raw("(status = ANY (ARRAY['QUEUED'::text, 'RUNNING'::text]))"))
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model external_reviews {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id          String         @db.Uuid
+  external_id       String
+  author            String         @db.VarChar(200)
+  content           String
+  rating            Decimal?       @db.Decimal(3, 1)
+  language          String         @db.VarChar(10)
+  source_url        String
+  source_created_at DateTime?      @db.Timestamptz(6)
+  source_updated_at DateTime?      @db.Timestamptz(6)
+  fetched_at        DateTime       @default(now()) @db.Timestamptz(6)
+  review_sources    review_sources @relation(fields: [title_id], references: [title_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([title_id, external_id])
+  @@index([title_id, fetched_at(sort: Desc), id(sort: Desc)], map: "external_reviews_title_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model review_sources {
+  title_id         String             @id @db.Uuid
+  provider         String             @default("TMDB")
+  external_kind    String
+  external_id      BigInt
+  source_url       String
+  title_version    BigInt
+  generation       String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version          BigInt             @default(1)
+  verified_by      String             @db.Uuid
+  verified_at      DateTime           @default(now()) @db.Timestamptz(6)
+  refreshed_at     DateTime?          @db.Timestamptz(6)
+  expires_at       DateTime?          @db.Timestamptz(6)
+  last_attempt_at  DateTime?          @db.Timestamptz(6)
+  lease_id         String?            @db.Uuid
+  lease_until      DateTime?          @db.Timestamptz(6)
+  last_error       String?
+  external_reviews external_reviews[]
+  titles           titles             @relation(fields: [title_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users            users              @relation(fields: [verified_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([title_id, provider])
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model viewer_reviews {
+  id                                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title_id                                 String    @db.Uuid
+  user_id                                  String    @db.Uuid
+  rating                                   Int       @db.SmallInt
+  content                                  String    @default("")
+  contains_spoilers                        Boolean   @default(false)
+  version                                  BigInt    @default(1)
+  created_at                               DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                               DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  moderation_status                        String    @default("VISIBLE")
+  moderation_reason                        String?
+  moderated_at                             DateTime? @db.Timestamptz(6)
+  moderated_by                             String?   @db.Uuid
+  users_viewer_reviews_moderated_byTousers users?    @relation("viewer_reviews_moderated_byTousers", fields: [moderated_by], references: [id], onUpdate: NoAction)
+  titles                                   titles    @relation(fields: [title_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                                    users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, title_id])
+  @@index([title_id, created_at(sort: Desc), id(sort: Desc)], map: "viewer_reviews_title_created_idx")
+  @@index([created_at(sort: Desc), id(sort: Desc)], map: "viewer_reviews_admin_created_idx")
+  @@index([moderation_status, created_at(sort: Desc), id(sort: Desc)], map: "viewer_reviews_moderation_created_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model view_daily_viewers {
+  title_id           String   @db.Uuid
+  day                DateTime @db.Date
+  viewer_key         String
+  definition_version Int      @default(2) @db.SmallInt
+  titles             titles   @relation(fields: [title_id], references: [id], onUpdate: NoAction)
+
+  @@id([title_id, day, viewer_key, definition_version])
+  @@index([day], map: "view_daily_viewers_retention_idx")
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model view_session_facts {
+  session_id         String            @id @db.Uuid
+  started            Boolean           @default(false)
+  qualified          Boolean           @default(false)
+  definition_version Int               @default(2) @db.SmallInt
+  observed_events    Int               @default(0)
+  updated_at         DateTime          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  playback_sessions  playback_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model view_stats_policy {
+  definition_version     Int      @id @db.SmallInt
+  measurement_started_at DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  hash_key_id            String?
+
+  @@schema("movie")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model catalog_batches {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_user_id    String         @db.Uuid
+  owner_session_id String?        @db.Uuid
+  action           String
+  reason           String
+  genre_ids        String[]       @default([]) @db.Uuid
+  state            String         @default("PREVIEW")
+  items            Json
+  version          BigInt         @default(1)
+  created_at       DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at       DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  expires_at       DateTime       @default(dbgenerated("(clock_timestamp() + '00:05:00'::interval)")) @db.Timestamptz(6)
+  started_at       DateTime?      @db.Timestamptz(6)
+  finished_at      DateTime?      @db.Timestamptz(6)
+  auth_sessions    auth_sessions? @relation(fields: [owner_session_id], references: [id], onUpdate: NoAction)
+  users            users          @relation(fields: [owner_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([owner_user_id, created_at(sort: Desc), id(sort: Desc)], map: "catalog_batches_owner_created_idx")
   @@schema("movie")
 }

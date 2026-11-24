@@ -124,6 +124,10 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
   private async deliver(id: string, job: EmailJob) {
     const from = process.env.MAIL_FROM ?? "no-reply@pj-flim.local";
+    const origin=process.env.PUBLIC_WEB_ORIGIN??(this.mode()==="local"?"http://localhost:3000":null);
+    let proofLink="";
+    if(origin){const u=new URL(origin);if(u.username||u.password||u.search||u.hash||u.pathname!=="/"||!(u.protocol==="https:"||(u.protocol==="http:"&&["localhost","127.0.0.1","[::1]"].includes(u.hostname))))throw new Error("Invalid PUBLIC_WEB_ORIGIN");
+      proofLink=u.origin+(job.kind==="verify-email"?"/verify-email":"/reset-password")+"#token="+encodeURIComponent(job.token);}
     const mail = {
       from,
       to: job.to,
@@ -139,7 +143,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         job.token +
         "\nExpires: " +
         job.expiresAt +
-        "\nUse this one-time token with the matching API endpoint. Ignore this email if you did not request it.",
+        "\n"+(proofLink?"Open: "+proofLink:"Open the matching website form and paste this one-time token.")+"\nIgnore this email if you did not request it.",
     };
     if (this.mode() === "local") {
       const root = path.resolve(process.env.MAIL_LOCAL_ROOT ?? ".local/mail");

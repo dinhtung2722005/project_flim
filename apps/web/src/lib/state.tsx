@@ -138,6 +138,7 @@ export function useData<T = Row>(path: string | null) {
   return { data, error, loading, reload: () => setRevision((v) => v + 1) };
 }
 export function usePages(path: string | null) {
+  const [summary,setSummary]=useState<Row|null>(null);
   const [rows, setRows] = useState<Row[]>([]),
     [cursor, setCursor] = useState<string | null>(null),
     [loading, setLoading] = useState(false),
@@ -149,7 +150,7 @@ export function usePages(path: string | null) {
     const controller = new AbortController();
     active.current = controller;
     flight.current = false;
-    setRows([]);
+    setRows([]);setSummary(null);
     setCursor(null);
     setError(null);
     setLoading(!!path);
@@ -157,7 +158,7 @@ export function usePages(path: string | null) {
       api<Page>(path, { signal: controller.signal })
         .then((r) => {
           if (!controller.signal.aborted) {
-            setRows(r.data.data);
+            setRows(r.data.data);setSummary(r.data.summary??null);
             setCursor(r.data.page.nextCursor);
           }
         })
@@ -210,7 +211,7 @@ export function usePages(path: string | null) {
     }
   }
   return {
-    rows,
+    rows,summary,
     cursor,
     loading,
     error,

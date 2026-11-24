@@ -6,7 +6,7 @@ const sourceFiles = [
   "requirements-colab.txt",
   "model-versions.json",
 ];
-for (const folder of ["pjflim_agent", "tests"])
+for (const folder of ["pjflim_agent", "tests", "colab_cells"])
   for (const file of (await readdir(root + folder)).sort()) {
     if (file.endsWith(".py") && !file.startsWith("run_isolated"))
       sourceFiles.push(folder + "/" + file);
@@ -20,6 +20,7 @@ const raw = JSON.stringify(files),
 const bootstrap = `# 1. Cấu hình + bộ source đi kèm: không cần clone/push GitHub.
 USE_DEMO = True
 REQUIRE_GPU = True
+SHOW_CHAT_PANEL = True  # Ô nhập và nút hỏi ở cell 8; không cài thêm package vào kernel.
 CONTEXT_TOKENS = 8192  # Nếu OOM: thử 4096, đo lại smoke và chất lượng.
 ENABLE_OMDB = True  # Đọc OMDB_API_KEY từ Colab Secrets khi dùng catalog thật.
 OMDB_MAPPINGS = {}  # UUID: {"imdb_id":"tt1375666","verified":True}; chỉ sau đối chiếu đúng tên/năm/loại.
@@ -63,7 +64,7 @@ const explanations = [
   ],
   [
     "3. Cài dependency",
-    "Cài các phiên bản trực tiếp đã pin, không nâng toàn bộ môi trường. Khi có yêu cầu restart kernel, restart session rồi chạy lại. Không có telemetry/tracing ứng dụng chủ động bật; tắt LangSmith tracing.",
+    "Cài trong venv riêng, không thay thư viện của kernel Colab. Agent chạy trong subprocess giữ trạng thái qua pipe, không mở cổng. E5 dùng Torch CPU; Qwen dùng GPU qua Ollama. Không cần restart vì NumPy của kernel khác phiên bản. Không có telemetry/tracing ứng dụng chủ động bật; tắt LangSmith tracing.",
   ],
   [
     "4. Ollama + Qwen",
@@ -71,7 +72,7 @@ const explanations = [
   ],
   [
     "5. Smoke model thật",
-    "Kiểm tiếng Việt, tool calling và JSON schema bằng model thực; nếu lỗi hãy dừng tại đây. Nhãn kiểm thử trong tài liệu repo chưa thay bằng chứng Colab. Không lưu chain-of-thought.",
+    "Kiểm tiếng Việt, tool calling, JSON schema và digest/GPU offload của model sau inference bằng /api/ps; nếu lỗi hãy dừng tại đây. Nhãn kiểm thử trong tài liệu repo chưa thay bằng chứng Colab. Không lưu chain-of-thought.",
   ],
   [
     "6. Nạp catalog",
@@ -83,11 +84,11 @@ const explanations = [
   ],
   [
     "8. Hỏi agent",
-    "Đổi QUESTION và chạy lại cell. CATALOG không gọi nguồn ngoài. HYBRID ưu tiên OMDb: thêm OMDB_API_KEY vào Colab Secrets và xác minh OMDB_MAPPINGS để lấy IMDb rating/Metascore. Tìm candidate bằng search_omdb_metadata; không tự duyệt mapping. TMDB vẫn tùy chọn với ENABLE_TMDB=True/TMDB_API_READ_TOKEN. ENABLE_WEB_DISCOVERY chỉ tìm URL theo tên phim; không đọc snippet/toàn văn. Có adapter OMDb lookup theo mapping; chưa bulk importer, Metacritic User Score, RT hoặc review summary. Demo chặn lookup ngoài.",
+    "Dùng ô nhập/nút Hỏi agent ở cuối cell8 hoặc đổi QUESTION rồi chạy lại cell8 nếu runtime không có ipywidgets. Mỗi câu hỏi độc lập; không ghi hội thoại vào checkpoint. Kết quả dễ đọc bằng tiếng Việt; mỗi câu hỏi là một lượt độc lập. CATALOG không gọi nguồn ngoài. HYBRID ưu tiên OMDb: thêm OMDB_API_KEY vào Colab Secrets và xác minh OMDB_MAPPINGS để lấy IMDb rating/Metascore. Tìm candidate bằng search_omdb_metadata; không tự duyệt mapping. TMDB vẫn tùy chọn với ENABLE_TMDB=True/TMDB_API_READ_TOKEN. ENABLE_WEB_DISCOVERY chỉ tìm URL theo tên phim; không đọc snippet/toàn văn. Có adapter OMDb lookup theo mapping; chưa bulk importer, Metacritic User Score, RT hoặc review summary. Demo chặn lookup ngoài.",
   ],
   [
     "9. Nghiệm thu",
-    "Chạy contract tests bằng FAISS và ChatOllama thật với HTTP/model fixtures, rồi xuất báo cáo inference/retrieval của phiên này. Các nhóm live OMDb/TMDB/web chưa được đánh dấu đạt tự động. Dữ liệu nguồn chỉ là data; tool allowlist, schema, evidence registry và budget kiểm ngoài model.",
+    "Chạy contract tests bằng FAISS và ChatOllama thật với HTTP/model fixtures; RUN_AGENT_EVALUATION=True thử thêm3câu demo bằng model/encoder hiện tại (có thể mất vài phút). Kết quả NEEDS_REVIEW không được ghi thành chất lượng đã đạt. Báo cáo chỉ lưu IDs/metrics/mã lỗi, không câu hỏi/hội thoại. Các nhóm live OMDb/TMDB/web chưa được đánh dấu đạt tự động. Dữ liệu nguồn chỉ là data; tool allowlist, schema, evidence registry và budget kiểm ngoài model.",
   ],
   [
     "10. Checkpoint và kết thúc",
@@ -111,7 +112,7 @@ const code = (id, s) => ({
 const cells = [
   md(
     "intro",
-    "# pj-Flim movie agent — Colab PoC v0.1\n\nQwen2.5:7b/Ollama + LangChain + multilingual E5/FAISS. Chạy từ trên xuống trong notebook. Đây là agent tìm phim và dẫn nguồn có giới hạn, chưa tích hợp website hoặc huấn luyện model.\n\nNotebook độc lập, không cần push GitHub. GPU/model trên Colab chưa được người tạo notebook chạy nghiệm thu thay bạn. Chọn dữ liệu/nguồn ở cell 1 trước khi Run all.\n\nNguồn: [Colab FAQ](https://research.google.com/colaboratory/faq.html), [Ollama Linux](https://docs.ollama.com/linux), [ChatOllama](https://docs.langchain.com/oss/python/integrations/chat/ollama), [E5](https://huggingface.co/intfloat/multilingual-e5-small).\n",
+    "# pj-Flim movie agent — Colab agent v0.4\n\nQwen2.5:7b/Ollama + LangChain + multilingual E5/FAISS. Chạy từ trên xuống trong notebook. Đây là agent tìm phim và dẫn nguồn có giới hạn, website đã có tra cứu catalog/FAQ; notebook này thử Qwen độc lập, chưa huấn luyện model.\n\nNotebook độc lập, không cần push GitHub. GPU/model trên Colab chưa được người tạo notebook chạy nghiệm thu thay bạn. Chọn dữ liệu/nguồn ở cell 1 trước khi Run all.\n\nNguồn: [Colab FAQ](https://research.google.com/colaboratory/faq.html), [Ollama Linux](https://docs.ollama.com/linux), [ChatOllama](https://docs.langchain.com/oss/python/integrations/chat/ollama), [E5](https://huggingface.co/intfloat/multilingual-e5-small).\n",
   ),
 ];
 for (let i = 1; i <= 10; i++) {
@@ -123,14 +124,78 @@ for (let i = 1; i <= 10; i++) {
       : (await readdir(root + "colab_cells")).find((f) =>
           f.startsWith(String(i).padStart(2, "0") + "_"),
         );
-  cells.push(
-    code(
-      "step-" + i,
-      i === 1
-        ? bootstrap
-        : await readFile(root + "colab_cells/" + file, "utf8"),
-    ),
-  );
+  let content = i === 1 ? bootstrap : await readFile(root + "colab_cells/" + file, "utf8");
+  if ([4, 5, 7, 9].includes(i)) content = "session.execute(" + JSON.stringify(content) + ")\n";
+  if (i === 6) content = [
+    'INPUT_NAME = ""',
+    'if not USE_DEMO:',
+    '    from google.colab import files',
+    '    uploaded = files.upload()',
+    '    if len(uploaded) != 1:',
+    '        raise RuntimeError("SELECT_ONE_SNAPSHOT_OR_CHECKPOINT")',
+    '    INPUT_NAME, input_content = next(iter(uploaded.items()))',
+    '    if len(input_content) > 8_000_000:',
+    '        raise RuntimeError("UPLOAD_TOO_LARGE")',
+    '    (WORKSPACE / "input-upload").write_bytes(input_content)',
+    '    del input_content, uploaded',
+    'session.execute(' + JSON.stringify(content) + ', {"INPUT_NAME": INPUT_NAME, "USE_DEMO": USE_DEMO})',
+  ].join("\n") + "\n";
+  if (i === 8) content = [
+    '# Nhập câu hỏi bên dưới hoặc dùng ô chat; mỗi câu hỏi độc lập.',
+    'QUESTION = "Tìm phim khoa học viễn tưởng nhẹ nhàng, tránh spoiler."',
+    'MODE = "CATALOG" if USE_DEMO else "HYBRID"',
+    'def ask_notebook(question, mode="CATALOG", quiet=True):',
+    '    secrets = {}',
+    '    if not USE_DEMO and (ENABLE_OMDB or ENABLE_TMDB):',
+    '        from google.colab import userdata',
+    '        for enabled, key in [(ENABLE_OMDB, "OMDB_API_KEY"), (ENABLE_TMDB, "TMDB_API_READ_TOKEN")]:',
+    '            if enabled:',
+    '                try:',
+    '                    secrets[key] = userdata.get(key) or ""',
+    '                except Exception:',
+    '                    if not quiet: print(key + "_NOT_CONFIGURED: thêm key vào Colab Secrets, cấp quyền notebook.")',
+    '    previous_output = session.output',
+    '    try:',
+    '        if quiet: session.output = lambda event: None',
+    '        return session.execute(' + JSON.stringify(content) + ', {"QUESTION": question, "MODE": mode, "NOTEBOOK_SECRETS": secrets,',
+    '            "OMDB_MAPPINGS": OMDB_MAPPINGS, "TMDB_MAPPINGS": TMDB_MAPPINGS, "ENABLE_WEB_DISCOVERY": ENABLE_WEB_DISCOVERY})',
+    '    finally:',
+    '        session.output = previous_output',
+    '        secrets.clear()',
+    'if "CHAT_PANEL" in globals() and CHAT_PANEL is not None:',
+    '    CHAT_PANEL.close()',
+    'CHAT_PANEL = None',
+    '# Không giữ thành công cũ nếu lượt hỏi lại thất bại.',
+    'globals().pop("result", None)',
+    'result = ask_notebook(QUESTION, MODE, quiet=False)',
+    'if SHOW_CHAT_PANEL:',
+    '    from pjflim_agent.notebook_ui import build_chat_panel',
+    '    CHAT_PANEL = build_chat_panel(ask_notebook, MODE)',
+    '    if CHAT_PANEL is not None:',
+    '        display(CHAT_PANEL)',
+    '    else:',
+    '        print("Runtime chưa có ipywidgets. Sửa QUESTION rồi chạy lại cell8 để hỏi tiếp.")',
+  ].join("\n") + "\n";
+  if (i === 9) content = [
+    'RUN_AGENT_EVALUATION = True  # 3 câu demo qua model hiện tại; False để chỉ chạy contract tests.',
+    'session.execute(' + JSON.stringify(await readFile(root + "colab_cells/" + file, "utf8")) + ', {"RUN_AGENT_EVALUATION": RUN_AGENT_EVALUATION})',
+  ].join("\n") + "\n";
+  if (i === 10) content = [
+    'DOWNLOAD_CHECKPOINT = False',
+    'DOWNLOAD_REPORT = False',
+    'STOP_OLLAMA = False',
+    'session.execute(' + JSON.stringify(content) + ', {"STOP_OLLAMA": STOP_OLLAMA})',
+    'if DOWNLOAD_CHECKPOINT:',
+    '    from google.colab import files',
+    '    files.download(str(WORKSPACE / "pj-flim-agent-checkpoint.zip"))',
+    'if DOWNLOAD_REPORT:',
+    '    from google.colab import files',
+    '    files.download(str(WORKSPACE / "runtime-report.json"))',
+    'if STOP_OLLAMA:',
+    '    session.close()',
+    '    if globals().get("CHAT_PANEL") is not None: CHAT_PANEL.close()',
+  ].join("\n") + "\n";
+  cells.push(code("step-" + i, content));
 }
 const notebook = {
   nbformat: 4,
@@ -144,7 +209,7 @@ const notebook = {
     language_info: { name: "python" },
     colab: { provenance: [] },
     pj_flim: {
-      version: "0.2.0",
+      version: "0.4.0",
       bundle_sha256: sha,
       model: "qwen2.5:7b",
       requires_runtime_validation: true,

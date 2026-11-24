@@ -47,7 +47,12 @@ export class CatalogService {
     actor: Principal,
     permission: string,
     action: (tx: Tx) => Promise<T>,
+    existing?: Tx,
   ) {
+    if (existing) {
+      await checkMutation(existing, actor, permission);
+      return action(existing);
+    }
     return this.db.$transaction(
       async (tx) => {
         await checkMutation(tx, actor, permission);
@@ -224,76 +229,84 @@ export class CatalogService {
     id: string,
     body: UpdateTitleDto,
     match: string | undefined,
+    existing?: Tx,
   ) {
     this.refs(body);
     return this.unique("CATALOG_SLUG_CONFLICT", () =>
-      this.mutate(actor, "catalog.write", async (tx) => {
-        const current = await one(
-          tx,
-          "SELECT * FROM movie.titles WHERE id=$1::uuid FOR UPDATE",
-          [id],
-        );
-        if (!current) fail("RESOURCE_NOT_FOUND");
-        requireMatch(match, "title", id, current.version);
-        if (body.kind !== undefined && body.kind !== current.kind)
-          fail(
-            "CATALOG_INVALID_PUBLICATION_TRANSITION",
-            "A title kind cannot change after creation.",
+      this.mutate(
+        actor,
+        "catalog.write",
+        async (tx) => {
+          const current = await one(
+            tx,
+            "SELECT * FROM movie.titles WHERE id=$1::uuid FOR UPDATE",
+            [id],
           );
-        if (
-          body.localizedTitle !== undefined &&
-          !normalize(body.localizedTitle)
-        )
-          fail("VALIDATION_FAILED");
-        const row = await one(
-          tx,
-          "UPDATE movie.titles SET slug=$2,localized_title=$3,original_title=$4,normalized_title=$5,synopsis=$6,release_year=$7,country_codes=$8::text[],original_language=$9,age_rating=$10,poster_asset_ref=$11,backdrop_asset_ref=$12,trailer_asset_ref=$13,updated_by=$14::uuid,version=version+1,updated_at=now() WHERE id=$1::uuid RETURNING *",
-          [
-            id,
-            body.slug ?? current.slug,
-            body.localizedTitle ?? current.localized_title,
-            body.originalTitle === undefined
-              ? current.original_title
-              : body.originalTitle,
-            normalize(body.localizedTitle ?? current.localized_title),
-            body.synopsis ?? current.synopsis,
-            body.releaseYear === undefined
-              ? current.release_year
-              : body.releaseYear,
-            body.countryCodes ?? current.country_codes,
-            body.originalLanguage === undefined
-              ? current.original_language
-              : body.originalLanguage,
-            body.ageRating === undefined ? current.age_rating : body.ageRating,
-            body.posterAssetRef === undefined
-              ? current.poster_asset_ref
-              : body.posterAssetRef,
-            body.backdropAssetRef === undefined
-              ? current.backdrop_asset_ref
-              : body.backdropAssetRef,
-            body.trailerAssetRef === undefined
-              ? current.trailer_asset_ref
-              : body.trailerAssetRef,
-            actor.id,
-          ],
-        );
-        await this.relations(tx, id, body);
-        await audit(tx, actor, "catalog.title.updated", "title", id, {
-          changedFields: changedFields(body),
-          before: {
-            slug: current.slug,
-            title: current.localized_title,
-            version: current.version,
-          },
-          after: {
-            slug: row!.slug,
-            title: row!.localized_title,
-            version: row!.version,
-          },
-        });
-        await outbox(tx, actor, "title", id, row!.version);
-        return this.title(id, tx);
-      }),
+          if (!current) fail("RESOURCE_NOT_FOUND");
+          requireMatch(match, "title", id, current.version);
+          if (body.kind !== undefined && body.kind !== current.kind)
+            fail(
+              "CATALOG_INVALID_PUBLICATION_TRANSITION",
+              "A title kind cannot change after creation.",
+            );
+          if (
+            body.localizedTitle !== undefined &&
+            !normalize(body.localizedTitle)
+          )
+            fail("VALIDATION_FAILED");
+          const row = await one(
+            tx,
+            "UPDATE movie.titles SET slug=$2,localized_title=$3,original_title=$4,normalized_title=$5,synopsis=$6,release_year=$7,country_codes=$8::text[],original_language=$9,age_rating=$10,poster_asset_ref=$11,backdrop_asset_ref=$12,trailer_asset_ref=$13,updated_by=$14::uuid,version=version+1,updated_at=now() WHERE id=$1::uuid RETURNING *",
+            [
+              id,
+              body.slug ?? current.slug,
+              body.localizedTitle ?? current.localized_title,
+              body.originalTitle === undefined
+                ? current.original_title
+                : body.originalTitle,
+              normalize(body.localizedTitle ?? current.localized_title),
+              body.synopsis ?? current.synopsis,
+              body.releaseYear === undefined
+                ? current.release_year
+                : body.releaseYear,
+              body.countryCodes ?? current.country_codes,
+              body.originalLanguage === undefined
+                ? current.original_language
+                : body.originalLanguage,
+              body.ageRating === undefined
+                ? current.age_rating
+                : body.ageRating,
+              body.posterAssetRef === undefined
+                ? current.poster_asset_ref
+                : body.posterAssetRef,
+              body.backdropAssetRef === undefined
+                ? current.backdrop_asset_ref
+                : body.backdropAssetRef,
+              body.trailerAssetRef === undefined
+                ? current.trailer_asset_ref
+                : body.trailerAssetRef,
+              actor.id,
+            ],
+          );
+          await this.relations(tx, id, body);
+          await audit(tx, actor, "catalog.title.updated", "title", id, {
+            changedFields: changedFields(body),
+            before: {
+              slug: current.slug,
+              title: current.localized_title,
+              version: current.version,
+            },
+            after: {
+              slug: row!.slug,
+              title: row!.localized_title,
+              version: row!.version,
+            },
+          });
+          await outbox(tx, actor, "title", id, row!.version);
+          return this.title(id, tx);
+        },
+        existing,
+      ),
     );
   }
   async seasons(titleId: string, dto: PageDto) {
@@ -601,74 +614,80 @@ export class CatalogService {
     body: PublicationDto,
     match: string | undefined,
     type: "title" | "episode",
+    existing?: Tx,
   ) {
     const parent = type === "episode" ? await this.episode(id) : null;
-    return this.mutate(actor, "catalog.publish", async (tx) => {
-      const titleId = parent?.title_id ?? id;
-      await query(
-        tx,
-        "SELECT id FROM movie.titles WHERE id=$1::uuid FOR UPDATE",
-        [titleId],
-      );
-      const current = await one(
-        tx,
-        type === "title"
-          ? "SELECT * FROM movie.titles WHERE id=$1::uuid FOR UPDATE"
-          : "SELECT * FROM movie.episodes WHERE id=$1::uuid FOR UPDATE",
-        [id],
-      );
-      if (!current) fail("RESOURCE_NOT_FOUND");
-      requireMatch(match, type, id, current.version);
-      if (current.publication_status === "ARCHIVED")
-        fail("CATALOG_INVALID_PUBLICATION_TRANSITION");
-      if (body.status === current.publication_status) return current;
-      if (body.status === "PUBLISHED") {
-        if (type === "episode")
-          await this.readiness(tx, current.active_asset_id, id);
-        else {
-          const episodes = await query(
-            tx,
-            "SELECT id,active_asset_id FROM movie.episodes WHERE title_id=$1::uuid AND publication_status='PUBLISHED' ORDER BY id FOR UPDATE",
-            [id],
-          );
-          let playable = false;
-          for (const episode of episodes) {
-            try {
-              await this.readiness(tx, episode.active_asset_id, episode.id);
-              playable = true;
-              break;
-            } catch (error) {
-              if (
-                !(error instanceof ApiError) ||
-                !["MEDIA_NOT_READY", "MEDIA_BACKUP_NOT_VERIFIED"].includes(
-                  error.code,
+    return this.mutate(
+      actor,
+      "catalog.publish",
+      async (tx) => {
+        const titleId = parent?.title_id ?? id;
+        await query(
+          tx,
+          "SELECT id FROM movie.titles WHERE id=$1::uuid FOR UPDATE",
+          [titleId],
+        );
+        const current = await one(
+          tx,
+          type === "title"
+            ? "SELECT * FROM movie.titles WHERE id=$1::uuid FOR UPDATE"
+            : "SELECT * FROM movie.episodes WHERE id=$1::uuid FOR UPDATE",
+          [id],
+        );
+        if (!current) fail("RESOURCE_NOT_FOUND");
+        requireMatch(match, type, id, current.version);
+        if (current.publication_status === "ARCHIVED")
+          fail("CATALOG_INVALID_PUBLICATION_TRANSITION");
+        if (body.status === current.publication_status) return current;
+        if (body.status === "PUBLISHED") {
+          if (type === "episode")
+            await this.readiness(tx, current.active_asset_id, id);
+          else {
+            const episodes = await query(
+              tx,
+              "SELECT id,active_asset_id FROM movie.episodes WHERE title_id=$1::uuid AND publication_status='PUBLISHED' ORDER BY id FOR UPDATE",
+              [id],
+            );
+            let playable = false;
+            for (const episode of episodes) {
+              try {
+                await this.readiness(tx, episode.active_asset_id, episode.id);
+                playable = true;
+                break;
+              } catch (error) {
+                if (
+                  !(error instanceof ApiError) ||
+                  !["MEDIA_NOT_READY", "MEDIA_BACKUP_NOT_VERIFIED"].includes(
+                    error.code,
+                  )
                 )
-              )
-                throw error;
+                  throw error;
+              }
             }
+            if (!playable) fail("CATALOG_NO_PLAYABLE_EPISODE");
           }
-          if (!playable) fail("CATALOG_NO_PLAYABLE_EPISODE");
         }
-      }
-      const table = type === "title" ? "movie.titles" : "movie.episodes";
-      const row = await one(
-        tx,
-        "UPDATE " +
-          table +
-          " SET publication_status=$2,published_at=CASE WHEN $2='PUBLISHED' THEN now() ELSE published_at END,version=version+1,updated_at=now() WHERE id=$1::uuid RETURNING *",
-        [id, body.status],
-      );
-      await audit(
-        tx,
-        actor,
-        "catalog.publication.changed",
-        type,
-        id,
-        { before: current.publication_status, after: body.status },
-        body.reason,
-      );
-      await outbox(tx, actor, type, id, row!.version);
-      return row!;
-    });
+        const table = type === "title" ? "movie.titles" : "movie.episodes";
+        const row = await one(
+          tx,
+          "UPDATE " +
+            table +
+            " SET publication_status=$2,published_at=CASE WHEN $2='PUBLISHED' THEN now() ELSE published_at END,version=version+1,updated_at=now() WHERE id=$1::uuid RETURNING *",
+          [id, body.status],
+        );
+        await audit(
+          tx,
+          actor,
+          "catalog.publication.changed",
+          type,
+          id,
+          { before: current.publication_status, after: body.status },
+          body.reason,
+        );
+        await outbox(tx, actor, type, id, row!.version);
+        return row!;
+      },
+      existing,
+    );
   }
 }

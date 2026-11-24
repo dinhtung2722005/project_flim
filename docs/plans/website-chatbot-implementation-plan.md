@@ -1,8 +1,8 @@
 # Các bước xây chatbot đọc dữ liệu pj-Flim
 
-Ngày: 14/11/2026 — Asia/Saigon. Phiên bản: 1.0. Trạng thái: **KẾ HOẠCH TÍCH HỢP WEBSITE — chưa code trong lượt này**.
+Ngày: 14/11/2026 — Asia/Saigon. Phiên bản: 1.1. Trạng thái: **CATALOG_BASELINE_RUNNING — Qwen/semantic live và nguồn ngoài chờ nghiệm thu**.
 
-Liên quan: [plan agent](movie-ai-agent-plan.md), [plan chính](movie-streaming-platform-plan.md), [PoC Colab/OMDb](../../apps/agent/README.md). Đây là các bước triển khai tiếp từ PoC, không xác nhận chatbot đã hoạt động trên website.
+Liên quan: [plan agent](movie-ai-agent-plan.md), [plan chính](movie-streaming-platform-plan.md), [PoC Colab/OMDb](../../apps/agent/README.md). Các bước dưới vẫn là lộ trình đầy đủ; phần CATALOG baseline đã triển khai và chạy local, theo cập nhật hiện hành bên dưới.
 
 ## 1. Kết quả cần đạt và hiện trạng
 
@@ -12,13 +12,13 @@ Ví dụ: “Có phim khoa học viễn tưởng nào?”, “Phim này có nh�
 
 | Thành phần | Hiện đã có | Cần làm tiếp |
 | --- | --- | --- |
-| Website | React/Vite, catalog/detail/player/help | Giao diện chat, trạng thái run, nguồn, follow-up |
-| Backend | NestJS, auth/RBAC, public catalog, thư viện cá nhân, content-v1 | DTO/controller/service assistant, ownership/quota/run state và gateway tool |
-| Python | Bounded tool loop, snapshot, E5/FAISS, evidence, OMDb adapter | Adapter đọc backend live, internal service/consumer và lifecycle |
+| Website | /assistant chat/poll/cancel/source/context;9FAQ/help | Qwen live, chất lượng/UX benchmark |
+| Backend | Assistant DTO/controller/service,run owner/session,quota,evidence,gateway | Production/load/HA,model live |
+| Python | PoC snapshot và website gateway/server,Node MQ consumer,CATALOG/OLLAMA adapter | E5/model live,index sync |
 | Model | Thiết kế Qwen2.5:7b/Ollama, notebook bootstrap/smoke | Chưa nghiệm thu model/embedding thật và host phục vụ website |
 | Dữ liệu ngoài | OMDb lookup PoC qua mapping verified | Key/coverage live, policy, mapping/cache/quota dùng chung phía server |
-| Hàng đợi | RabbitMQ cho media đã có | Queue/consumer/indexing AI riêng; chưa được nối |
-| Kiểm thử | 74 Python contracts với fixtures, static notebook đã kiểm ở lượt trước | Backend/UI/model thật, nguồn live, lỗi/quyền/load và vận hành |
+| Hàng đợi | Quorum inference AI/DLQ/outbox/consumer tách media | Indexing worker/HA/load |
+| Kiểm thử |103Python/160assistant gồm25CATALOG E2E,dependency import thật | Qwen/E5/GPU Colab,nguồn live,load/HA |
 
 Không dùng số kiểm tra PoC làm bằng chứng E2E website. Redis hiện chưa tích hợp; không thiết kế MVP phụ thuộc Redis sẵn có.
 
@@ -210,3 +210,15 @@ Khi được yêu cầu bắt đầu code, ưu tiên data contract/gateway và r
 - [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents): vòng lặp model/tool và harness.
 - [ChatOllama](https://docs.langchain.com/oss/python/integrations/chat/ollama), [FastAPI deployment](https://fastapi.tiangolo.com/deployment/): thành phần để thử và đóng gói, không chứng minh model/service đã chạy.
 - [Colab FAQ](https://research.google.com/colaboratory/faq.html), [SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events): giới hạn vận hành và transport khi thêm streaming.
+
+
+## 13. Trạng thái triển khai — 14/11/2026
+
+Baseline catalog/FAQ đã code/chạy local theo [runbook](../api/assistant.md) và [bằng chứng](../testing/assistant-2026-11-14.md). Bước1/3/5/6/7/8/9 có phần triển khai, không coi toàn bộ12bước hoàn tất. Chưa endpointOllama; website engineCATALOG, lookup keyword/catalog/FAQ, không giả Qwen hoặc semantic index.
+
+Người dùng ưu tiên [notebook Colab](../../apps/agent/README.md) để thử Qwen/E5. Dependency venv/pipe,smoke,checkpoint/report đã bổ sung; gate inference/Colab vẫn chưa đạt. Không dùng Colab free làm dịch vụ website thường trực. OMDb website và tool đọc điểm/cache review đã có; live-source verification, private personalization, review AI processing, indexsync, SSE và model rollout vẫn mở.
+
+
+## Chatbot điểm/review — 24/11/2026
+
+Đã nối get_title_feedback với OMDb ratings và cache TMDB, TITLE+FEEDBACK evidence cùng titleIds, đọc lại version/generation/expiry khi render. UI có nút Điểm và review, nguồn/thang điểm/trạng thái; review mặc định metadata, opt-in đoạn trích600ký tự phía server. Body không gửi LLM/Colab hoặc lưu vào run evidence. Website giữ CATALOG; provider/model live chưa nghiệm thu. Xem [runbook](../api/assistant-feedback.md) và [kiểm thử](../testing/assistant-feedback-2026-11-24.md). AG05/08/09/11 và EXT vẫn IN_PROGRESS theo phạm vi đầy đủ.

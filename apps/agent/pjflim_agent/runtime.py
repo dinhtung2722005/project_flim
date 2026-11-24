@@ -205,3 +205,24 @@ def make_model(context_tokens=8192):
         os.environ[name] = "false"
     return ChatOllama(model=MODEL, base_url=BASE_URL, temperature=0, num_ctx=context_tokens, num_predict=600,
                       keep_alive="5m", client_kwargs={"timeout": 90, "trust_env": False})
+
+
+
+def model_runtime(expected_digest, require_gpu=False):
+    """Check the loaded model after inference, not just nvidia-smi availability."""
+    data = _request("/api/ps")
+    models = data.get("models") if isinstance(data, dict) else None
+    if not isinstance(models, list):
+        raise AgentError("MODEL_RUNTIME_UNAVAILABLE")
+    model = next((m for m in models if isinstance(m, dict) and m.get("name") == MODEL), None)
+    if model is None:
+        raise AgentError("MODEL_NOT_LOADED")
+    if model.get("digest") != expected_digest:
+        raise AgentError("MODEL_DIGEST_CHANGED")
+    size_vram = model.get("size_vram")
+    if type(size_vram) is not int or size_vram < 0:
+        raise AgentError("MODEL_RUNTIME_UNAVAILABLE")
+    if require_gpu and size_vram == 0:
+        raise AgentError("MODEL_GPU_NOT_USED")
+    return {"model": MODEL, "digest": expected_digest, "gpu_offload": size_vram > 0,
+            "size_vram_bytes": size_vram}

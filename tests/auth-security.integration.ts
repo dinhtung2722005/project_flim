@@ -21,6 +21,7 @@ type Route = { method: string; path: string; permissions: string[] };
 const roles = ["MEMBER", "EDITOR", "ADMIN", "SUPER_ADMIN", "AUDITOR"] as const;
 // Product policy, deliberately independent of controller metadata and database grants.
 const policy: Record<string, readonly string[]> = {
+  "reviews.moderate": ["ADMIN", "SUPER_ADMIN"],
   "catalog.read_drafts": ["EDITOR", "ADMIN", "SUPER_ADMIN"],
   "media.preview": ["EDITOR", "ADMIN", "SUPER_ADMIN"],
   "catalog.write": ["EDITOR", "ADMIN", "SUPER_ADMIN"],
@@ -43,7 +44,19 @@ const policy: Record<string, readonly string[]> = {
 
 // Endpoint security contract: changing a decorator cannot silently weaken this oracle.
 const endpointPolicy: Record<string, string[]> = {
+  "reviews.moderate": [
+    "get viewer-reviews",
+    "get viewer-reviews/:id",
+    "patch viewer-reviews/:id/moderation",
+  ],
   "catalog.read_drafts": [
+    "get catalog-batches",
+    "get catalog-batches/:id",
+    "post catalog-batches/previews",
+    "post catalog-batches/:id/execution",
+    "get catalog-health",
+    "get titles/:id/review-source",
+    "get titles/:id/reviews",
     "get titles",
     "get titles/:id",
     "get titles/:id/publication",
@@ -60,6 +73,10 @@ const endpointPolicy: Record<string, string[]> = {
     "get banners/:id",
   ],
   "catalog.write": [
+    "get titles/:id/review-candidates",
+    "put titles/:id/review-source",
+    "post titles/:id/review-sync",
+    "delete titles/:id/review-source",
     "post titles",
     "patch titles/:id",
     "post titles/:id/seasons",
@@ -82,7 +99,11 @@ const endpointPolicy: Record<string, string[]> = {
   "rbac.read": ["get roles", "get permissions", "get users/:id/roles"],
   "rbac.assign": ["put users/:id/roles"],
   "settings.write": ["get settings/site", "put settings/site"],
-  "metrics.read": ["get metrics/summary"],
+  "metrics.read": [
+    "get metrics/summary",
+    "get metrics/views",
+    "get metrics/views/export",
+  ],
   "reports.read": ["get reports"],
   "audit.read": ["get audit-logs", "get audit-logs/:id"],
   "media.preview": [
@@ -191,7 +212,9 @@ export async function runAuthSecurityChecks(c: Context) {
           const verb = Reflect.getMetadata(METHOD_METADATA, handler);
           if (verb === undefined) continue;
           const child = Reflect.getMetadata(PATH_METADATA, handler) ?? "";
-          const path = "/api/v1/" + [base, child].filter(Boolean).join("/");
+          const path = (
+            "/api/v1/" + [base, child].filter(Boolean).join("/")
+          ).replace(/\/+$/, "");
           if (!path.startsWith("/api/v1/admin/")) continue;
           equal(
             reflector.getAllAndOverride("public", [handler, controller]) ??
@@ -211,7 +234,9 @@ export async function runAuthSecurityChecks(c: Context) {
           const endpoint = method + " " + path.slice("/api/v1/admin/".length);
           equal(
             permissions,
-            [expectedPermissions.get(endpoint)],
+            endpoint === "patch reports/:id"
+              ? ["reports.read", "catalog.write"]
+              : [expectedPermissions.get(endpoint)],
             "endpoint requires its independently specified permission",
           );
           if (["put users/:id/roles", "put settings/site"].includes(endpoint))
@@ -228,7 +253,7 @@ export async function runAuthSecurityChecks(c: Context) {
         }
       }
     }
-    equal(routes.length, 49, "all current admin operations enumerated");
+    equal(routes.length, 66, "all current admin operations enumerated");
     groups.push("admin route metadata coverage");
 
     const dummyId = randomUUID();

@@ -1,7 +1,10 @@
 import time
 from pydantic import BaseModel, ConfigDict
 from langchain_core.tools import StructuredTool
-from pjflim_agent.runtime import make_model
+from pjflim_agent.runtime import make_model, model_runtime
+# A failed rerun must not leave the previous success flag behind.
+globals().pop("MODEL_SMOKE", None)
+globals().pop("MODEL_RUNTIME", None)
 llm = make_model(context_tokens=CONTEXT_TOKENS)
 started = time.monotonic()
 hello = llm.invoke("Trả lời tiếng Việt một câu ngắn: Bạn là trợ lý tìm phim.")
@@ -27,6 +30,7 @@ class SmokeJson(BaseModel):
 typed = llm.with_structured_output(SmokeJson, method="json_schema").invoke("Trả JSON với ok=true.")
 if not isinstance(typed, SmokeJson) or typed.ok is not True:
     raise RuntimeError("MODEL_JSON_SMOKE_FAILED")
+MODEL_RUNTIME = model_runtime(MODEL_MANIFEST["digest"], require_gpu=REQUIRE_GPU)
 MODEL_SMOKE = {"nonempty_text": True, "language_needs_human_review": True, "tool_call": True, "json_schema": True,
-               "duration_seconds": round(time.monotonic()-started, 2)}
+               "duration_seconds": round(time.monotonic()-started, 2), "runtime": MODEL_RUNTIME}
 display(MODEL_SMOKE)

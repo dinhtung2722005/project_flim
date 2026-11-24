@@ -130,6 +130,7 @@ class MovieAgent:
                 evidence.append(fact)
             cards.append({"title_id": title.id, "name": title.name, "kind": title.kind, "year": title.year,
                           "genres": title.genres, "synopsis": title.synopsis, "evidence": evidence,
+                          "review_refs": [f["value"] for f in self.facts.values() if f["title_id"] == title.id and f["field"] == "review_link"],
                           "external_ratings": [f for f in self.facts.values() if f["title_id"] == title.id
                                                and f["field"] in ("imdb_rating", "metacritic_metascore", "tmdb_rating")],
                           "catalog_path": None if self.catalog.snapshot.demo else "/titles/" + title.id,

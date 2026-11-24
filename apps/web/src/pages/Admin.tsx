@@ -1,3 +1,5 @@
+import { ViewMetrics } from "../features/admin/ViewMetrics";
+import { countLabel } from "../lib/counts";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
@@ -36,7 +38,25 @@ import {
 import { AdminActions, useAdminAction } from "../features/admin/actions";
 export { AdminCatalog, TitleEditor } from "../features/admin/Catalog";
 const menu = [
+  {
+    to: "/admin/catalog-batches",
+    label: "Lịch sử xử lý hàng loạt",
+    icon: ScrollText,
+    permission: "catalog.read_drafts",
+  },
   { to: "/admin", label: "Tổng quan", icon: LayoutDashboard, permission: "" },
+  {
+    to: "/admin/viewer-reviews",
+    label: "Kiểm duyệt đánh giá",
+    icon: ShieldCheck,
+    permission: "reviews.moderate",
+  },
+  {
+    to: "/admin/catalog-health",
+    label: "Chất lượng nội dung",
+    icon: Check,
+    permission: "catalog.read_drafts",
+  },
   {
     to: "/admin/titles",
     label: "Phim & tập phim",
@@ -182,19 +202,19 @@ export function AdminHome() {
             ["publishedTitles", "Đã xuất bản", Check],
             ["episodes", "Tập phim", LayoutDashboard],
             ["activeUsers", "Người dùng hoạt động", Users],
+            ["viewsLastSevenDays", "Lượt xem 7 ngày UTC", Film],
           ].map(([key, label, Icon]: any) => (
             <article className="stat-card" key={key}>
               <span>
                 <Icon size={19} />
               </span>
               <p>{label}</p>
-              <strong>
-                {Number(stats.data?.[key] || 0).toLocaleString("vi-VN")}
-              </strong>
+              <strong>{countLabel(stats.data?.[key])}</strong>
             </article>
           ))}
         </div>
       )}
+      {auth.can("metrics.read") && <ViewMetrics key={auth.user?.id} />}
       <section className="admin-shortcuts" aria-label="Thao tác quản trị nhanh">
         {[
           {

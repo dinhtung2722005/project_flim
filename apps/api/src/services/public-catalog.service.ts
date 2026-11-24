@@ -207,4 +207,12 @@ export class PublicCatalogService {
       "published_at",
     );
   }
+
+ async site() {
+  const row=await one(this.db,"SELECT value FROM movie.system_settings WHERE key='site'");
+  const value=row?.value??{};
+  const settings={name:typeof value.name==="string"?value.name.slice(0,100):"pj-Flim",description:typeof value.description==="string"?value.description.slice(0,500):"Phim hay, thật gần.",supportEmail:typeof value.supportEmail==="string"?value.supportEmail.slice(0,254):null};
+  const banners=await query(this.db,"SELECT b.id,b.title_id,b.image_asset_ref,b.headline,t.localized_title FROM movie.homepage_banners b JOIN movie.titles t ON t.id=b.title_id WHERE b.enabled AND (b.starts_at IS NULL OR b.starts_at<=clock_timestamp()) AND (b.ends_at IS NULL OR b.ends_at>clock_timestamp()) AND "+publicTitle()+" ORDER BY b.sort_order,b.id LIMIT 10");
+  return json({settings,banners});
+ }
 }

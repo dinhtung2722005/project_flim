@@ -2,7 +2,7 @@
 
 Phiên bản: 1.1. Ngày: 10/11/2026, Asia/Saigon. PostgreSQL 18; Node.js/NestJS và Prisma theo [thiết kế backend](movie-backend-design.md) và [plan sản phẩm](../plans/movie-streaming-platform-plan.md).
 
-Thiết kế gồm **47 bảng**, chia thành 7 nhóm. Database lưu metadata, tài khoản, quyền, lịch sử và trạng thái công việc. File video, poster, phụ đề và backup nằm ở Cloudinary/kho object riêng tư; PostgreSQL chỉ lưu định danh ổn định. Redis và RabbitMQ không thay thế dữ liệu chính trong PostgreSQL.
+SQL baseline gồm **47 bảng**; sau các migration additive, database hiện có **59 bảng**, chia thành 7 nhóm. Database lưu metadata, tài khoản, quyền, lịch sử và trạng thái công việc. File video, poster, phụ đề và backup nằm ở Cloudinary/kho object riêng tư; PostgreSQL chỉ lưu định danh ổn định. Redis và RabbitMQ không thay thế dữ liệu chính trong PostgreSQL.
 
 Các file đi kèm:
 
@@ -405,3 +405,31 @@ Ngày 10/11/2026 đã bootstrap database thật trên PostgreSQL 17.11 và chạ
 | Seed/migration/restore và EXPLAIN dữ liệu lớn        | FK/index/grants còn nguyên, pool không cạn, restore đạt RPO/RTO được đo |
 
 Script kiểm tra conditional SQL thể hiện điều kiện cần dùng, không chứng minh service tương lai đã triển khai đúng transaction/lock. Đã có database local, Prisma client và API admin NestJS trong E:\pj-Flim. Đã chạy 1.070 kiểm tra HTTP/client/worker trên PostgreSQL tạm riêng, gồm concurrency MFA/refresh/ETag, API người xem và media worker. Playback/telemetry/progress dùng các bảng hiện có, không thay schema trong bước này. Chưa có Prisma Migrate hoặc frontend/player; phạm vi hiện hành ở docs/api/README.md.
+
+
+## Cập nhật hiện hành — 14/11/2026
+
+Thiết kế47bảng ở trên là baseline. Runtime local PostgreSQL17.11 hiện **52 bảng**: thêm3bảng [recommendation](sql/movie-recommendations-v1.sql) và2bảng [assistant](sql/movie-assistant-v1.sql). Assistant run thuộc user và auth session, parent cùng owner, có idempotency/lease/generation/deadline/retention; steps lưu evidence theo run/generation/call ID. Không cấp bảng private cho media worker/auditor. [API/runbook](../api/assistant.md), [database runbook](../../database/README.md).
+
+
+## Bổ sung review — 23/11/2026
+
+Runtime hiện54bảng, thêm [review_sources/external_reviews](sql/movie-reviews-v1.sql). Một mapping TMDB đã xác minh cho mỗi title; generation UUID tránh ETag cũ hợp lệ sau xóa/tạo lại. title_version invalidates cache khi metadata đổi; lease_id/lease_until bảo vệ sync; refreshed_at/expires_at quyết định TTL. Review cache tối đa20bài/lần sync, plaintext12.000ký tự, rating numeric(3,1) nullable0..10, language vi-VN/en-US, URL canonical. Không chứa key, review article HTML hoặc signed video URL. [Hợp đồng/API/grants](../api/reviews.md).
+
+
+## Đánh giá nội bộ — 25/11/2026
+
+Bổ sung viewer_reviews, hiện55bảng; thuộc user và title với UNIQUE(user_id,title_id), rating1–10, content<=2000, contains_spoilers, version và timestamps. created_at giữ nguyên khi sửa, cursor nguyên microsecond; UUID/version bảo vệ delete/recreate ETag. Public aggregate loại user không ACTIVE; không lưu điểm OMDb vào bảng này. [SQL](sql/movie-viewer-reviews-v1.sql), [API](../api/viewer-reviews.md).
+
+## Migration thống kê lượt xem — 25/11/2026
+
+SQL [movie-view-stats-v1.sql](sql/movie-view-stats-v1.sql) thêm3bảng, tổng58bảng đang chạy (baseline47 ở thiết kế gốc giữ nguyên): policy(version2/start/hash-key fingerprint), fact theo session, daily HMAC viewer key theo title/ngày/version. Session FK cascade; title FK restrict; daily retention index và watch_events(session_id,sequence,id) bounded scan. Giữ API read-only title_daily_stats; chỉ worker ghi aggregate/facts, auditor không đọc2bảng private. Prisma introspect58models, không dùng db push. Xem [hợp đồng/ngưỡng/retention](../api/view-statistics.md).
+
+## Kiểm duyệt admin — 25/11/2026
+
+Migration [movie-admin-advanced-v1.sql](sql/movie-admin-advanced-v1.sql) thêm moderation_status/reason/at/by vào viewer_reviews, index theo trạng thái/ngày tạo và tổng ngày tạo, CHECK trạng thái/lý do/thời điểm; FK moderator ON DELETE SET NULL, audit độc lập giữ lịch sử quyết định. Không tăng số bảng58. Permission reviews.moderate mặc định ADMIN/SUPER_ADMIN;19permission/46liên kết. Public chỉ VISIBLE+ACTIVE; tác giả không ghi các cột kiểm duyệt qua DTO. [Runbook](../api/admin-advanced.md).
+
+
+## Quản lý phim hàng loạt — 25/11/2026
+
+[movie-catalog-batches-v1.sql](sql/movie-catalog-batches-v1.sql) thêm catalog_batches →59bảng/59Prisma models. 14cột, owner_user/session FKs, action/reason/genre_ids/items JSONB/state/version/timestamps và deadline; owner-created-id index, CHECK số phim1–20/thể loại<=30/lý do/state-time. API CRUD, worker/auditor bị thu hồi toàn bộ. Bản xem trước và biên nhận bất biến theo expectedVersion; mỗi item được ghi cùng transaction của phim/audit/outbox. [API và lifecycle](../api/catalog-batches.md). Không thay baseline47bảng hoặc dùng Prisma db push.

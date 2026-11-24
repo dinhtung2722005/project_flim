@@ -1,8 +1,37 @@
 # Kế hoạch hoàn chỉnh: Web xem phim với Node.js và Cloudinary
 
-Ngày lập: 08/11/2026. Cập nhật: 14/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.29.
+Ngày lập: 08/11/2026. Cập nhật: 25/11/2026, múi giờ Asia/Saigon. Phiên bản: 2.43.
+
+
+Phiên bản 2.43 (25/11/2026): quản lý phim hàng loạt tối đa20phim, ADD/REPLACE genres và PUBLISH/UNPUBLISH, preview bất biến/ETag/quyền hiện hành, biên nhận nguyên tử theo phim và lịch sử riêng/tiếp tục sau lỗi. Thêm catalog_batches →59bảng,125ops/97paths/66admin,19permission/46liên kết và90codes. [Runbook](../api/catalog-batches.md), [kiểm thử](../testing/catalog-batches-2026-11-25.md).
+
+Phiên bản 2.42 (25/11/2026): thêm kiểm duyệt review có quyền reviews.moderate/ETag/audit, kiểm tra chất lượng kho phim và CSV lượt xem.58bảng,19permission/46liên kết,121ops/93paths/62admin,90codes. [Runbook](../api/admin-advanced.md), [kiểm thử](../testing/admin-advanced-2026-11-25.md). Không hoàn tất các hạng mục production/Colab còn mở.
+
+Phiên bản 2.41 (25/11/2026): thống kê qualified views definition2 từ telemetry qua RabbitMQ analytics riêng,3bảng→58,116ops/88paths/57admin/90codes. UI card/detail/watch vàadmin7/30/90 ngày; khửtrùngHMAC theo phim/địnhdanh/ngàyUTC. ST04/REC02IN_PROGRESS vìQoE/rawretention/reset/trending/backfill đầyđủ cònmở. [Runbook](../api/view-statistics.md), [test](../testing/view-statistics-2026-11-25.md).
+
+Phiên bản 2.40 (25/11/2026): thêm đánh giá người xem pj-Flim, private ownership/ETag/quota và public aggregate/list; UI detail/watch/spoiler. Migration viewer_reviews →55bảng;114ops/86paths/56admin,90codes. [Runbook](../api/viewer-reviews.md). Không thay điểm OMDb, review TMDB hoặc nghiệm thu agent/Colab.
+
+Phiên bản 2.39 (25/11/2026): chuẩn bị nghiệm thu Colab bằng kiểm notebook và CLI agent:acceptance; chưa có kết nối runtime hoặc report GPU thật. [Biên bản/hướng dẫn](../testing/colab-acceptance-2026-11-25.md). AG02/04/05/11/15/16 vẫn IN_PROGRESS, không dùng fixture thay live evidence.
+
+Phiên bản 2.38 (24/11/2026): chatbot đọc điểm OMDb và cache review TMDB qua tool read-only, bằng chứng nguồn/version/thang điểm; UI spoiler-safe và cache-only re-render. SQL additive mở allowlist tool, giữ54bảng/110ops. Xem [runbook](../api/assistant-feedback.md); provider/Qwen live vẫn chờ, AG/EXT chưa DONE.
+
+Phiên bản 2.37 (24/11/2026): triển khai UI email/reset/MFA, gán đoàn phim/ngôn ngữ/quốc gia, banner/settings public và xử lý báo lỗi. Thêm5operation →110/84paths/56admin, giữ54bảng/90codes. Evaluator gợi ý, kiểm toán23metadata/4casePROPOSED và18phép đo FFmpeg/VMAF/SSIM/PSNR đã chạy; không tự đổi thuật toán/preset production. Hồi quy2624 gồm275frontend đạt. REC06 chuyển IN_PROGRESS, ENC03 tiếp tục IN_PROGRESS; ST/AG/EXT không đổi. [UI/API](../api/account-ui-and-site.md), [đo chất lượng](../testing/quality-baseline-2026-11-24.md).
+
+Phiên bản 2.36 (24/11/2026): rà soát plan/source/bằng chứng hiện hành, cập nhật trạng thái EXT từng phần và mục19 về việc tiếp theo. Ưu tiên local: nghiệm thu Colab thật → điểm/review nguồn thật → tools chatbot. Trước công khai phải xử lý ST01–ST03/ST05/ST06 và CI; ST04 analytics/retention cần trước nghiệm thu vận hành. Đây là cập nhật tài liệu, không code hoặc nghiệm thu thêm.
+
+Phiên bản 2.35 (24/11/2026): notebook agent v0.4 thêm panel chat/fallback, xác minh digest/GPU offload sau smoke và3case nghiệm thu demo với report chất lượng riêng.127Python tests và flow10cell bằng fixtures đạt; Colab/Qwen/E5 thật chưa nghiệm thu. Website CATALOG/backend/schema/AG/EXT giữ nguyên. [Runbook](../../apps/agent/README.md), [báo cáo](../testing/colab-agent-2026-11-24.md).
+
+Phiên bản 2.34 (24/11/2026): mở rộng điểm IMDb/Metacritic sang thẻ phim trang chủ/catalog/gợi ý/thư viện và hai ô đầy đủ trước player ở trang xem. Nhãn vẫn hiện khi thiếu dữ liệu; lazy badge fetch và hàng đợi tuần tự phía client. Build, ratings79 và frontend227 đạt; local vẫn NOT_CONFIGURED do chưa có OMDb key. Không đổi backend/schema hoặc đánh dấu EXT/AG hoàn tất.
+
+Phiên bản 2.33 (23/11/2026): giao diện trang phim hiển thị IMDb thang10 và Metacritic Metascore thang100 qua endpoint OMDb mới, nullable/source/date, cache có giới hạn và đối chiếu đúng phim. Không migration;105OpenAPIops/79paths/55admin. Đã kiểm bằng HTTP fixtures; điểm thật còn chờ OMDB_API_KEY. [Runbook](../api/ratings.md). Không chuyển EXT/AG DONE.
+
+Phiên bản 2.32 (23/11/2026): triển khai luồng review TMDB từ admin → API → PostgreSQL → trang phim; 7 REST operation, mapping được xác minh, cache TTL24h, ETag/generation/lease/audit và UI có nguồn. Notebook hiển thị link discovery, không tự nhận đã đọc bài. Đã kiểm thử provider giả lập; gọi TMDB thật còn cần token do TMDB cấp. [API/runbook](../api/reviews.md), [kiểm thử](../testing/reviews-2026-11-23.md). EXT và AG chưa chuyển DONE chỉ nhờ phần này.
 
 Tài liệu giải thích triển khai: [Thuật toán stream video](../design/streaming-algorithms.md). Đã có UI/player cơ bản tại apps/web; phân biệt cấu hình hiện tại với các thuật toán minh họa và ma trận nghiệm thu còn thiếu. Tài liệu không hoàn tất ST01–ST06.
+
+Phiên bản 2.31 (14/11/2026): nhập metadata20 tựa/20 poster/227 tập/14 thể loại từ KKPhim qua admin API và Cloudinary image, giữ DRAFT, khôngvideo hoặc migration. Có fetch/prepare/apply, whitelist/giới hạn/chốngtrùng/resume/audit và kiểm browser/DB/replay. [Báo cáo](../testing/catalog-metadata-2026-11-14.md). EXT/REC/ENC/AG không đổi; đây là nhập catalog local, không ratings/review importer.
+
+Phiên bản 2.30 (14/11/2026): đã triển khai chatbot catalog/FAQ CATALOG với run API/ownership,2bảng (tổng52),outbox/RabbitMQ/Python gateway,React UI/nguồn và81errorcodes; OpenAPI97operation/73path. Người dùng ưu tiên notebook Colab; giữ website tra cứu khi chưa endpoint model. Notebook venv/pipe,dependency probe và flow fixtures; chưa Qwen/E5/Colab thật. [Agentplan1.7](movie-ai-agent-plan.md), [runbook](../api/assistant.md), [kiểm thử](../testing/assistant-2026-11-14.md). AG03/06/09 chuyển IN_PROGRESS; chưa AG DONE, EXT/REC/ENC/ST không đổi.
 
 Phiên bản 2.29 (14/11/2026): bổ sung [12 bước build chatbot website](website-chatbot-implementation-plan.md): catalog/FAQ read-only gateway, model baseline, index/live revalidation, run/outbox/RabbitMQ, REST/Swagger, React chat/memory, OMDb/cá nhân hóa và nghiệm thu. [Agentplan1.6](movie-ai-agent-plan.md) liên kết lộ trình; đây là thay đổi tài liệu, chưa code chatbot hoặc đổi API/schema/UI. AG/EXT/REC/ENC/ST không đổi trạng thái.
 
@@ -532,7 +561,7 @@ Các phép kiểm nặng chạy theo lớp: contract/unit không gọi provider;
 - Cookie dùng HttpOnly/Secure, SameSite và chống CSRF phù hợp; xác định allowlist CORS cụ thể. Không để API secret, khóa ký token hoặc URL có token trong log client.
 - Kiểm tra role và quyền trên tài nguyên ở backend, gồm admin preview, sửa tập, xóa media và đọc lịch sử.
 - Rate limit theo loại endpoint và tài khoản/IP; trả `429` rõ ràng. Không rate limit request segment bằng cơ chế API làm cản phát.
-- Nội dung bình luận nếu bổ sung phải sanitize, có report/moderation. MVP dùng báo lỗi; đánh giá/bình luận là phạm vi sau MVP.
+- Đánh giá người xem đã bổ sung25/11: rating1–10/nhận xét plaintext, ownership/ETag/quota và cờ spoiler. Moderation/report review chuyên biệt còn mở; không render HTML của người dùng.
 - Log và analytics dùng định danh tối thiểu, có thời hạn lưu; hỗ trợ xóa tài khoản/lịch sử theo chính sách sản phẩm.
 
 ### 7.3. Cơ chế xác thực, session và MFA
@@ -1091,8 +1120,10 @@ Các path sau có tiền tố `/api/v1`. Status là hành vi của API ứng d�
 | GET /me/watchlist                                      | 200      | Danh sách yêu thích                                                                                          |
 | PUT /me/watchlist/{titleId}                            | 201/204  | Thêm mới/trạng thái đã có; không tạo bản ghi lặp                                                             |
 | DELETE /me/watchlist/{titleId}                         | 204      | Xóa mục thuộc tài khoản hiện tại; gọi lại vẫn 204                                                            |
-| PUT /me/ratings/{titleId}                              | 201/200  | Sau MVP: tạo/cập nhật một đánh giá trên mỗi tài khoản                                                        |
-| GET /me/ratings/{titleId}                              | 200      | Sau MVP: đọc đánh giá của chính tài khoản                                                                    |
+| PUT /me/title-reviews/{titleId} |200| Đã có: tạo/sửa một đánh giá của phiên; If-Match bắt buộc |
+| GET /me/title-reviews/{titleId} |200| Đọc đánh giá của chính tài khoản hoặc null, trả ETag |
+| DELETE /me/title-reviews/{titleId} |204| Xóa đánh giá của chính tài khoản với If-Match |
+| GET /titles/{titleId}/viewer-reviews |200| Danh sách/average/count của ACTIVE accounts pj-Flim |
 | POST /reports                                          | 201      | Báo lỗi theo tài khoản/phiên khách, Location `/reports/{reportId}`                                           |
 | GET /reports/{reportId}                                | 200      | Chủ báo cáo hoặc admin; không đọc được báo cáo người khác                                                    |
 | GET /admin/titles; POST /admin/titles                  | 200; 201 | Admin đọc danh mục có draft/tạo phim                                                                         |
@@ -1424,7 +1455,7 @@ Các đầu việc dưới đây ghi nhận trạng thái thực tế sau C08 co
 | ST01 | P0: chốt chính sách trước công khai; quyền có hạn phải đạt trước phát hành | URL Cloudinary hiện là signed URL tĩnh, delivery.expiresAt=null; đóng/hết hạn phiên API không thu hồi URL CDN đã cấp                                                    | Giữ production guard; xác minh khả năng token/cookie tại tài khoản CDN, bảo vệ manifest và từng segment. Nếu MVP miễn phí chấp nhận chia sẻ link, ghi rõ quyết định và giới hạn; bật cờ cho phép không được coi là đã có URL hết hạn                                                    | Khi yêu cầu quyền có hạn: URL/segment bị từ chối sau TTL, thử tối thiểu 3 vòng gia hạn, pause qua hạn và thu hồi trên player JS/native; không cấp lại quyền đã thu hồi. Không hứa xóa byte đã buffer. Liên quan F06/F07                                            |
 | ST02 | P0 trước thử nghiệm công khai                                              | Tạo phiên đang dùng quota 60 request/10 phút theo req.ip cho cả tài khoản/guest; chưa cấu hình proxy tin cậy nên nhiều người qua một reverse proxy có thể bị chặn chung | Sửa quota theo endpoint + user/guest và lớp chống lạm dụng IP; cấu hình trust proxy theo topology/allowlist cụ thể, không tin mọi X-Forwarded-For. Dùng store chung khi có nhiều API instance                                                                                           | Nhiều tài khoản sau cùng proxy không bị chặn nhầm bởi quota phiên của nhau; một actor vượt ngưỡng nhận RATE_LIMITED/429; giả header IP không né được quota; kiểm tra direct/proxy và nhiều instance. Liên quan F17/F27                                             |
 | ST03 | P0 trước thử nghiệm công khai                                              | Events ghi quota theo token trước khi xác minh token/session; đổi token giả liên tục có thể tạo nhiều security_events và gây tải DB                                     | Chặn theo IP/toàn cục trước truy vấn tốn tài nguyên; kiểm token/session rồi mới tính quota theo phiên. Không tạo khóa/bản ghi quota bền cho từng token giả; log từ chối phải có lấy mẫu/tổng hợp, giới hạn và retention                                                                 | Gửi token giả thay đổi liên tục bị chặn, không ghi watch_events/outbox hoặc tăng DB theo từng token giả; token hợp lệ vẫn có quota riêng, response lỗi giữ đúng hợp đồng, không lộ token trong log. Đo DB write rate và latency khi bị spam. Liên quan F17/F18/F23 |
-| ST04 | P1 trước nghiệm thu vận hành MVP                                           | Telemetry đã ghi receipt/events/outbox nhưng chưa có consumer tổng hợp và cleanup; dữ liệu có thể tích lũy                                                              | Thêm consumer analytics qua queue riêng, dedup/checkpoint, tổng hợp QoE/lượt xem và cảnh báo lag/dung lượng. Viết retention có batch cho raw event 30 ngày, aggregate 90 ngày; xử lý receipt/outbox theo TTL và trạng thái, không xóa event chưa tổng hợp hoặc audit theo job telemetry | Redelivery không tăng view; kết quả tổng hợp đối chiếu dữ liệu mẫu; cleanup chạy lặp an toàn, không xóa dữ liệu đang xử lý; analytics hỏng không chặn phát/resume hoặc làm nghẽn media queue. Liên quan F19/F23                                                    |
+| ST04 | P1 trước nghiệm thu vận hành MVP                                           | IN_PROGRESS: đã có consumer/aggregate qualified views; QoE, cảnh báo và raw/facts/outbox cleanup còn thiếu                                                              | Thêm consumer analytics qua queue riêng, dedup/checkpoint, tổng hợp QoE/lượt xem và cảnh báo lag/dung lượng. Viết retention có batch cho raw event 30 ngày, aggregate 90 ngày; xử lý receipt/outbox theo TTL và trạng thái, không xóa event chưa tổng hợp hoặc audit theo job telemetry | Redelivery không tăng view; kết quả tổng hợp đối chiếu dữ liệu mẫu; cleanup chạy lặp an toàn, không xóa dữ liệu đang xử lý; analytics hỏng không chặn phát/resume hoặc làm nghẽn media queue. Liên quan F19/F23                                                    |
 | ST05 | P0 cho ma trận phát và ngưỡng tải trước mở công khai                       | Đã nghiệm thu Chrome Windows với video thật 720p, chuyển mức/tua/mất mạng/đổi tập/resume; còn thiết bị thật Android/Safari, mạng yếu, QoE, gia hạn dài và tải           | Làm C09/C10, nối session/renewal/events/progress. Kiểm Chrome/Android và Safari/iPhone, hls.js/native theo capability; chạy ma trận mạng và tải ở mục 12.1, ghi giới hạn lưu lượng dựa trên số đo                                                                                       | Báo cáo khung hình đầu, rebuffer, seek, HD, API p95/error rate/DB pool; thử mất mạng, pause quá hạn, đổi tập và teardown. Có bằng chứng không phát chồng, retry vô hạn hoặc tăng bộ nhớ liên tục. Liên quan F05/F07/F08/F11/F25                                    |
 | ST06 | P0 trước production                                                        | Backup đang cùng máy, webhook dùng tunnel HTTPS tạm theo cấu hình local đã chọn; chưa diễn tập kho backup độc lập/restore thật                                          | Giữ cấu hình local cho phát triển; trước production dùng kho backup độc lập với versioning/private access, webhook HTTPS cố định và runbook backup/restore. Kiểm tra khả năng phục hồi khi máy hoặc tunnel local mất                                                                    | Phục hồi một phim thử từ backup độc lập, tạo lại HLS, kiểm checksum/timeline và pointer; ghi thời gian/usage. Restart webhook/broker và callback lặp không mất việc hoặc tạo trùng. Liên quan F03/F04/F20/F26                                                      |
 
@@ -1432,7 +1463,7 @@ Phạm vi code dự kiến:
 
 - ST01: [Cloudinary delivery adapter](../../packages/media/src/cloudinary.provider.ts), [playback service](../../apps/api/src/services/playback.service.ts), schema Swagger và player/hook C08–C10. Không đưa API secret hoặc khóa CDN vào frontend.
 - ST02–ST03: [playback service](../../apps/api/src/services/playback.service.ts), [quota/kiểm quyền người xem](../../apps/api/src/viewer-common.ts), [middleware/log HTTP](../../apps/api/src/application.ts), cấu hình reverse proxy và test HTTP qua proxy. Rà lại middleware ghi http.request.failed để chống spam không chuyển thành spam log/DB.
-- ST04: consumer analytics và retention trong apps/worker, routing riêng cho playback.events.accepted, watch_events/playback_event_batches/title_daily_stats và outbox. Worker media hiện chỉ nhận event media, chưa tiêu thụ telemetry.
+- ST04 IN_PROGRESS: apps/analytics-worker riêng đã xử lý playback.events.accepted thành definition2 qualified views; API/UI và dailyHMAC dedup/prune đã có. Media worker vẫn chỉ xử lý media. QoE/raw/facts/outbox retention/alerting đầy đủ còn mở; xem runbook view-statistics.
 - ST05: apps/web, player adapters, API hooks, Playwright/thử thiết bị thật và công cụ load test; tải video tiếp tục đi thẳng Cloudinary CDN.
 - ST06: backup adapter, cấu hình hạ tầng và script/runbook restore; không thử xóa hoặc thay phim thật để nghiệm thu. Mọi diễn tập dùng asset/dataset thử riêng.
 
@@ -1714,7 +1745,7 @@ ST05 ở mục 11.1 là đầu việc nghiệm thu bắt buộc của bước n�
 
 #### C12. Code hoàn thiện vận hành và kiểm thử tích hợp
 
-Bổ sung ST04 và ST06 theo mục 11.1: analytics/retention chưa có consumer chạy thật, backup độc lập/restore và webhook cố định chưa nghiệm thu production. Chạy bộ kiểm thử API hiện có không tự hoàn tất các mục này.
+Bổ sung ST04 và ST06 theo mục 11.1: consumer lượt xem đã chạy thật, còn QoE/raw-retention/alerting, backup độc lập/restore và webhook cố định chưa nghiệm thu production. Chạy bộ kiểm thử API hiện có không tự hoàn tất các mục này.
 
 - Viết metrics/tracing, retention/cleanup jobs, budget alerts và dashboard; hoàn thiện restore scripts/reconciler từ C07 và che secret trong log.
 - Hoàn thiện unit/integration/contract/Postman CLI/Playwright tests, bài xem dài và fault injection F01–F34 theo phạm vi, gồm auth/RBAC/audit/Swagger; sửa code gây lỗi. Test từng module được viết cùng module, không chờ C12 mới bắt đầu.
@@ -1727,12 +1758,12 @@ Bổ sung ST04 và ST06 theo mục 11.1: analytics/retention chưa có consumer 
 - Mỗi bước chia ticket theo lát cắt chạy được: schema/migration → service/repository → controller/DTO/OpenAPI → UI/hook → integration test. Ghi file/module, endpoint, error codes, acceptance và phụ thuộc.
 - Không cần code toàn bộ backend rồi mới frontend: admin nối sau catalog API, upload nối sau intent API, player nối sau playback session. Việc độc lập làm cùng lúc khi hợp đồng đã chốt.
 - Mỗi ticket chạy typecheck/lint, test có ý nghĩa, Postman CLI/UI khi phù hợp; cập nhật OpenAPI/error registry và bằng chứng liên quan. Không gọi file rỗng/mock UI là tính năng đã hoàn tất.
-- Trạng thái NOT_STARTED → IN_PROGRESS → IN_REVIEW → VERIFIED áp dụng cho từng ticket có phạm vi rõ. Hiện C01/C03/C04/C05/C06/C07/C08/C11 đã có các phần backend theo hướng dẫn API; C02 có SQL baseline và Prisma client. Frontend C09/C10 đã có MVP tại apps/web và 51 browser checks; C12 mới có một phần kiểm thử. Không coi công đoạn đầy đủ là VERIFIED khi UI, migration, production hoặc nghiệm thu tương ứng còn thiếu. ST05 IN_PROGRESS; ST01–ST04/ST06 còn OPEN. Chưa ticket streaming nào được coi VERIFIED toàn bộ.
+- Trạng thái NOT_STARTED → IN_PROGRESS → IN_REVIEW → VERIFIED áp dụng cho từng ticket có phạm vi rõ. Hiện C01/C03/C04/C05/C06/C07/C08/C11 đã có các phần backend theo hướng dẫn API; C02 có SQL baseline và Prisma client. Frontend C09/C10 đã có MVP tại apps/web; lượt hồi quy mới24/11 đạt275 kiểm tra frontend trong suite2624 trên Chrome/DB tạm (không thay nghiệm thu thiết bị/provider thật); C12 mới có một phần kiểm thử. Không coi công đoạn đầy đủ là VERIFIED khi UI, migration, production hoặc nghiệm thu tương ứng còn thiếu. ST04/ST05 IN_PROGRESS; ST01–ST03/ST06 còn OPEN. Chưa ticket streaming nào được coi VERIFIED toàn bộ.
 - Lịch G0–G3 là khung điều phối; C01–C12 là thứ tự lập trình. Chốt lại effort theo code/test thực tế và kết quả G0; không tự đưa rating/VIP/gợi ý nâng cao vào MVP.
 
 ### 14.5. Công đoạn triển khai gợi ý và cá nhân hóa REC01–REC09
 
-Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu bổ sung ngày 13/11/2026. **REC01/03/04/05 IN_PROGRESS; REC02/06–09 NOT_STARTED**. Đã có bản content-v1 dùng snapshot thư viện hiện tại, chưa hoàn tất toàn bộ yêu cầu từng ticket. Chốt effort sau kiểm kê chất lượng/quy mô dữ liệu, không tự hứa lịch huấn luyện hoặc mức tăng tương tác.
+Theo nghiên cứu mục 9.2, đây là backlog sau MVP đã được yêu cầu bổ sung ngày 13/11/2026. **REC01/02/03/04/05/06 IN_PROGRESS; REC07–09 NOT_STARTED**. Đã có bản content-v1 dùng snapshot thư viện hiện tại, chưa hoàn tất toàn bộ yêu cầu từng ticket. Chốt effort sau kiểm kê chất lượng/quy mô dữ liệu, không tự hứa lịch huấn luyện hoặc mức tăng tương tác.
 
 | Ticket | Công đoạn code và đầu ra | Phụ thuộc | Tiêu chí nghiệm thu |
 | --- | --- | --- | --- |
@@ -1751,11 +1782,11 @@ Phạm vi đã làm và còn lại (content-v1):
 | Ticket | Trạng thái | Bằng chứng / phần còn lại |
 | --- | --- | --- |
 | REC01 | IN_PROGRESS | Migration 3 bảng, grants/ownership, opt-in/out, snapshot expiry/cleanup đã có; reset watermark và event/proof contract đầy đủ còn thiếu |
-| REC02 | NOT_STARTED | Chưa queue/publisher/projector analytics, aggregate/trending hoặc event backfill |
+| REC02 | IN_PROGRESS | Đã queue/publisher/worker và aggregate qualified views definition2/daily HMAC dedup; chưa nối trending recommender/time decay, opt-out/reset epochs, backfill và raw retention đầy đủ |
 | REC03 | IN_PROGRESS | TF-IDF/multi-hot/cosine + MMR Node trong request có giới hạn, zero vector/fallback kiểm được; chưa worker/index/neighbors/artifact offline |
 | REC04 | IN_PROGRESS | 5 operation, DTO/controller/service, ETag/owner/snapshot HMAC/eligibility; chưa reset/event ingestion |
 | REC05 | IN_PROGRESS | Trang riêng /for-you, lý do, toggle, dismiss/undo, mobile và logout race; chưa nhiều hàng trang chủ, reset hoặc impression/click proof |
-| REC06 | NOT_STARTED | Fixture công thức/HTTP không thay benchmark timeline/full-catalog hoặc đánh giá người dùng |
+| REC06 | IN_PROGRESS | Có evaluator P/R/nDCG/HitRate/coverage/diversity/timing, audit23metadata và4case nhãn đề xuất; chưa nhãn độc lập, benchmark timeline/public catalog hoặc đánh giá người dùng. Xem báo cáo24/11 |
 | REC07 | NOT_STARTED | Chưa collaborative model/hybrid artifact |
 | REC08 | NOT_STARTED | Chưa shadow/canary/A-B hoặc số đo uplift |
 | REC09 | NOT_STARTED | Chưa two-tower/ANN/sequence/artwork personalization |
@@ -1786,7 +1817,7 @@ Theo nghiên cứu mục 6.7 và [triển khai encoding](../api/encoding.md), c�
 | --- | --- | --- |
 | ENC01 | IN_PROGRESS | Có clip thật 720p, fixture 1080p và số byte; chưa corpus đại diện/usage/color/FPS toàn kho |
 | ENC02 | DONE cho baseline H.264/HLS | Preset allowlist, snapshot/version/hash, profile drift guard, DTO/audit/Swagger; chưa đa codec |
-| ENC03 | IN_PROGRESS | Có đo byte-range/Chrome decode/manifest; chưa quality metrics/VMAF/probe GOP toàn bitstream |
+| ENC03 | IN_PROGRESS | Có byte-range/Chrome decode/manifest và18phép đo FFmpeg/VMAF/SSIM/PSNR trên3đoạn6giây của1nguồn720p,2CRF×3rung; chưa corpus đại diện, Cloudinary-quality benchmark hoặc probe GOP toàn bitstream |
 | ENC04 | IN_PROGRESS | Eager async immutable profile, attempt/backup/retry gate và verifier; chưa GOP/IDR/full-device gate |
 | ENC05 | NOT_STARTED | Chọn rung theo kích thước nguồn đã có; chưa per-title trial/RD optimization |
 | ENC06 | IN_PROGRESS | Admin chọn preset/xem levels, Chrome chuyển mức 16 trường hợp; chưa device/codec matrix và quality report sâu |
@@ -1824,7 +1855,7 @@ Công cụ FFmpeg/libvmaf, gọi Cloudinary, video mẫu và quota chỉ đượ
 
 ### 14.7. Công đoạn tích hợp nguồn điểm và review EXT01–EXT08
 
-Thực hiện theo mục 9.6 và [báo cáo nghiên cứu](../design/external-ratings-reviews-research.md). **Cả tám ticket hiện NOT_STARTED**; hoàn thành nghiên cứu không đồng nghĩa có quyền dữ liệu hoặc importer đã chạy.
+Thực hiện theo mục 9.6 và [báo cáo nghiên cứu](../design/external-ratings-reviews-research.md). **Rà soát24/11: EXT02/03/05/07/08 IN_PROGRESS; EXT01/04/06 NOT_STARTED trong phạm vi đầy đủ của ticket**. Đã có TMDB review sync/API/UI, hai bảng cache và OMDb read lookup; chưa có source-policy registry tổng quát, external queue/worker riêng hoặc nghiệm thu nguồn thật. Hoàn thành code/fixture không đồng nghĩa có quyền dữ liệu hoặc hoàn tất ticket.
 
 | Ticket | Công đoạn và đầu ra | Phụ thuộc | Nghiệm thu |
 | --- | --- | --- | --- |
@@ -1837,13 +1868,28 @@ Thực hiện theo mục 9.6 và [báo cáo nghiên cứu](../design/external-ra
 | EXT07 | DTO/controller/service external read/admin, UI source badges/review cards, attribution/spoiler/AI labels và freshness | EXT02–EXT03; nguồn thêm qua EXT04–EXT06 nếu dùng | Publication/RBAC/audit/ETag/idempotency/cursor đúng; keys không ra frontend, scale/count/scope không gộp sai; cập nhật Swagger/error registry |
 | EXT08 | Contract/fixture/live sandbox có quyền, dashboard quota/stale/error, policy expiry/takedown/purge/restore suppression và runbook | EXT03–EXT07, feed quyền phù hợp | Replay/crash/schema drift/quyền rút giữa run, last-good trong hạn, gỡ text/derivatives đúng và nguồn lỗi không chặn xem; có báo cáo coverage/freshness/usage thật |
 
+Trạng thái cập nhật theo phạm vi triển khai:
+
+| Ticket | Trạng thái24/11 | Đã có / việc còn thiếu |
+| --- | --- | --- |
+| EXT01 | NOT_STARTED | Có nghiên cứu điều kiện nguồn; chưa source-policy registry/gate thực thi cho toàn bộ use cases |
+| EXT02 | IN_PROGRESS | review_sources/external_reviews và mapping TMDB đã có; chưa model source-policy/rating snapshot/ingestion tổng quát |
+| EXT03 | IN_PROGRESS | TMDB adapter/sync có lease/fencing/TTL đã có; chưa external queue/worker/publisher riêng hoặc live token |
+| EXT04 | NOT_STARTED | Chưa importer IMDb TSV/licensed dataset |
+| EXT05 | IN_PROGRESS | OMDb lookup điểm đã có ở server/notebook; chưa key live, Origin/RT hoặc adapter có entitlement khác |
+| EXT06 | NOT_STARTED | PoC notebook có mapping/discovery URL; workflow admin research/summary với field-policy/approval chưa triển khai |
+| EXT07 | IN_PROGRESS | API/UI TMDB review và điểm IMDb/Metascore đã có; chưa toàn bộ source-policy/spoiler/AI/freshness workflow |
+| EXT08 | IN_PROGRESS | Có tests fixture và runbook; chưa live-source coverage, dashboard quota, policy expiry/takedown/purge/restore suppression đầy đủ |
+
+Không ticket nào ở trên được chuyển DONE/VERIFIED trong lượt rà soát này. Các mục17–18 và runbook là phạm vi triển khai cụ thể.
+
 Trình tự: EXT01 → EXT02 → EXT03 → EXT07/EXT08; EXT04/EXT05 là các adapter có điều kiện; EXT06 chỉ thêm khi có ích và nguồn cho phép. Không cần chờ gói IMDb/Metacritic để thử TMDB được cấp quyền, cũng không biến external reviews thành điều kiện bàn giao MVP. Bài review do user pj-Flim tự viết/ratings/moderation là scope riêng sau MVP, không được coi đã hoàn thành bởi importer.
 
 ### 14.8. Công đoạn AI agent AG01–AG16
 
 Lộ trình triển khai web cụ thể: [12 bước chatbot đọc dữ liệu website](website-chatbot-implementation-plan.md). Đây là phần phân rã công việc, không bổ sung ticket đã DONE hoặc endpoint đã tồn tại.
 
-Chi tiết phụ thuộc, đầu ra, API/database/thuật toán và nghiệm thu nằm trong [kế hoạch AI agent, mục 11–12](movie-ai-agent-plan.md). **IN_PROGRESS:** AG01/02/04/05/08/11/12/13/15/16. **NOT_STARTED:** AG03/06/07/09/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Xem mục16 plan agent để phân biệt code PoC với gate còn thiếu.
+Chi tiết phụ thuộc, đầu ra, API/database/thuật toán và nghiệm thu nằm trong [kế hoạch AI agent, mục 11–12](movie-ai-agent-plan.md). **IN_PROGRESS:** AG01/02/03/04/05/06/08/09/11/12/13/15/16. **NOT_STARTED:** AG07/10/14. Chưa có AG DONE; website CATALOG đã tích hợp, model/Colab vẫn chưa nghiệm thu. Xem mục16 plan agent để phân biệt code PoC với gate còn thiếu.
 
 | Ticket | Công đoạn | Điều kiện chính |
 | --- | --- | --- |
@@ -1894,3 +1940,87 @@ Các mặc định sản phẩm đã được đặt để tiếp tục thiết 
 - Có OpenAPI máy đọc được và Postman collection khớp API thực tế, registry mã lỗi dùng chung frontend/backend, contract tests đạt và ví dụ Problem Details đã được kiểm chứng. HTTP status/ETag/idempotency tuân mục 10, không giữ endpoint động từ cũ làm nguồn hợp đồng thứ hai.
 - Có ma trận permission áp dụng trong guard/service/UI, JWT/refresh/MFA/step-up đã kiểm, quản trị user/role không tự nâng quyền hoặc khóa quản trị cuối; audit admin append-only/redaction/atomic và export có kiểm soát. Swagger UI/raw spec đúng policy và không có credential thật trong tài liệu.
 - Ghi rõ các giới hạn còn lại: codec/thiết bị, độ trễ thu hồi, phụ thuộc provider, ngưỡng tải đã đo. Tài liệu thiết kế không được dùng thay báo cáo kiểm thử thực tế.
+
+
+## 17. Luồng review đã triển khai — 23/11/2026
+
+Chọn TMDB User Reviews cho nội dung bài viết; OMDb vẫn cho điểm IMDb/Metascore trong notebook. Database54bảng sau migration reviews-v1; public đọc cache cho phim đã xuất bản và có media hợp lệ. EDITOR/ADMIN/SUPER_ADMIN liên kết/tải bằng catalog.write; AUDITOR/MEMBER không đọc quản trị catalog. Nguồn vi-VN trước, en-US khi thật sự rỗng, giới hạn20bài/12.000ký tự/bài. Lỗi không xóa cache còn hạn, đổi metadata làm cache STALE. Thay mapping purge dữ liệu cũ và fence lượt đang tải; audit thất bại rollback.
+
+Nghiệm thu còn lại: token TMDB thật, xác nhận mapping và một lượt import nguồn thật; review tiếng Việt phụ thuộc nguồn. Refresh theo lịch, công cụ chatbot đọc cache và tổng hợp có trích dẫn/spoiler guard là phần mở rộng, chưa triển khai. Không scrape IMDb/Metacritic hay đọc tùy ý URL review.
+
+
+## 18. Điểm ngoài trên trang phim — 23/11/2026
+
+Đã nối MovieRatings → GET public ratings → RatingsService → OMDb. Chỉ phim public có media hợp lệ, đối chiếu tên/năm/loại trước trả điểm; không nhầm age_rating hoặc TMDB vote_average thành IMDb/Metascore. Có cache24h/LRU500/request dedup/2lookup đồng thời/budget200 ngày UTC mỗi tiến trình; lỗi không chặn playback. Database giữ54bảng, không lưu mapping/điểm bền. Nghiệm thu còn lại: OMDb key và kiểm một phim thật, quota đa replica/bền vững nếu mở rộng, công cụ chatbot đọc điểm và UI admin nếu cần. Cập nhật24/11: catalog/shared MovieCard và watch đã hiển thị nhãn/hai ô điểm; backend và giới hạn quota giữ nguyên.
+
+## 19. Rà soát việc tiếp theo — 24/11/2026
+
+Đối chiếu code hiện có với plan2.35, agentplan1.9, memory và báo cáo kiểm thử. Không coi C01–C12 là các module chưa viết: API/admin/viewer/catalog/upload/HLS/backup local/auth/RBAC/Swagger/search/library/recommendations baseline đã có code. Còn nhiều tiêu chí mở rộng/nghiệm thu vận hành trong từng công đoạn.
+
+Bằng chứng đã có trước lượt rà soát: frontend227 kiểm tra, build/typecheck đạt (24/11 20:51), ratings79/reviews233 kiểm tra nguồn giả lập; agent127Python tests và generated10cell flow với model/encoder fixtures. Không chạy lại các bộ này trong lượt review plan.
+
+### 19.1. Thứ tự làm tiếp khi phát triển local
+
+| Thứ tự | Việc cụ thể | Đầu ra đủ để đánh giá | Phụ thuộc/trạng thái |
+| --- | --- | --- | --- |
+| 1 | Chạy notebook v0.4 trên GPU Colab thật: Qwen tool/JSON/digest/offload, E5 retrieval, hỏi có nguồn và reset/checkpoint | runtime-report của phiên thật, xem riêng chất lượng3case demo; bổ sung bộ câu hỏi tiếng Việt có nhãn trên catalog thực | AG02/04/05/11/15/16 vẫn IN_PROGRESS; không dùng fixture để kết luận đạt |
+| 2 | Cấu hình OMDB_API_KEY và TMDB_API_READ_TOKEN ở server, xác minh đúng mapping phim và thử đọc nguồn thật | Ít nhất một phim đúng tên/năm/loại có điểm nguồn thật và review TMDB có tác giả/link; null/không có review vẫn hợp lệ khi nguồn thiếu | Kiểm cấu hình24/11: cả hai biến còn trống; không dùng key TMDB thay OMDb hoặc tự tạo credential |
+| 3 | Bổ sung tools read-only cho chatbot website đọc ratings và cache reviews qua service hiện có | DTO/allowlist/evidence nguồn-thang điểm-thời gian, live eligibility, thiếu nguồn và spoiler-safe; tests gateway/UI/ownership/injection | Đã có get_title_feedback cùng4tool trước; website giữ CATALOG, còn nghiệm thu nguồn/model thật |
+| 4 | Đã code/kiểm local UI email/reset/MFA, credits/ngôn ngữ/quốc gia, banner/settings public và xử lý report | API mới owner-scoped MFA/site/report; report yêu cầu reports.read+catalog.write, ETag/audit. SMTP thật và quản lý disable/reset factor chưa nghiệm thu | C09/C11 đã có phần bổ sung; preview nháp/subtitle/audio và device/SMTP production vẫn còn theo scope riêng |
+| 5 | Đã có CLI/evaluator và số đo baseline local; tiếp theo cần mở rộng dữ liệu/nhãn độc lập | Audit23metadata,4casePROPOSED và18đo encoding thật đã có; chưa đủ chứng minh chất lượng gợi ý hay chọn preset cho toàn kho | REC06/ENC01/ENC03 IN_PROGRESS; giữ content-v1/H.264-HLS, chưa CF/A-B/per-title/codec mới |
+
+Bước3 có thể phát triển/test bằng fixture trong khi chờ key; không nghiệm thu live khi chưa có nguồn. Colab tiếp tục môi trường thử tương tác; chọn host inference website sau khi có số đo, không dùng Colab free làm API/queue worker thường trực.
+
+### 19.2. Điều kiện cần xử lý trước mở công khai/production
+
+| Ưu tiên | Công việc | Đầu ra |
+| --- | --- | --- |
+| P0 trước công khai | ST02: quota tạo/renew phiên theo actor/guest + lớp IP; trust proxy theo topology; store chung khi nhiều instance | Không chặn chung các user sau proxy, giả X-Forwarded-For không né quota, có bài test nhiều actor |
+| P0 trước công khai | ST03: kiểm credential/session trước quota theo phiên; lớp chặn spam trước DB và logging/retention hữu hạn | Token giả đổi liên tục không tạo một security_events row cho mỗi token; đo write rate và latency |
+| P0 chốt policy trước công khai | ST01: xác minh quyền CDN/manifest/segment và thời hạn URL | Hiện delivery.expiresAt=null; chỉ chọn phạm vi miễn phí chấp nhận chia sẻ URL khi có quyết định rõ. Nội dung có quyền hết hạn/VIP cần giải pháp TTL/revocation được kiểm thật |
+| P0 trước công khai | ST05: Android/Safari/iPhone, mạng yếu, xem lâu/gia hạn, đổi tập và tải | Startup/rebuffer/seek/HD/API p95/error/DB pool theo số đo; không suy từ227 browser assertions |
+| P0 trước production | ST06 + C12: webhook HTTPS cố định, backup độc lập và diễn tập restore cả DB/media; CI build/test/staging/rollback | Bản phim phục hồi có checksum/timeline/HLS và bằng chứng DB restore; hiện backup cùng máy/tunnel local, chưa thấy .github workflow trong repo |
+| P1 trước nghiệm thu vận hành | ST04: analytics publisher/consumer riêng, dedup/checkpoint/aggregate và retention batch | Replay không tăng view, cleanup không xóa dữ liệu chưa xử lý, analytics hỏng không chặn xem |
+
+Đối chiếu source: PlaybackService.create còn budget theo req.ip; events gọi budget theo hash token trước khi kiểm token/session trong transaction. Media OutboxPublisher chỉ xử lý media.processing.requested/media.webhook.received; chưa consumer tổng hợp playback analytics. Không đánh dấu ST01–ST06 VERIFIED.
+
+Redis chưa có tích hợp trong source. Không cần thêm chỉ để khớp sơ đồ; đánh giá store chia sẻ khi xử lý quota đa instance và có bài tải chứng minh nhu cầu. RabbitMQ media/assistant và analytics lượt xem đã có queue/consumer riêng; ST04 còn QoE/raw retention/alerting.
+
+Không mở rộng sang VIP/thanh toán, collaborative recommendation, admin AI summary hay đổi codec hàng loạt trong lượt rà soát này. Giữ các backlog đó cùng tiêu chí/quyền và phụ thuộc ban đầu.
+
+## 20. Hoàn thiện UI và baseline chất lượng — 24/11/2026
+
+Theo yêu cầu làm mục4/5: đã code các trang /account,/forgot-password,/reset-password,/verify-email, TOTP enrollment+recovery, gán đoàn phim bằng PATCH title hiện có, nhập ngôn ngữ/quốc gia, banner/settings public và triage báo lỗi. Không đổi policy MFA local trước đây. Chỉ thêm5RESToperations, không schema/grants/migration mới; role/report mutation có permission hiện hành/ETag/audit. [Runbook](../api/account-ui-and-site.md).
+
+Đã đo dữ liệu/file thật local: audit23metadata (22draft/1public), tất cả thiếu credits/language; evaluator với4case metadata nhãn PROPOSED, acceptedQuality=false;18phép đo FFmpeg9.1 trên3đoạn6giây của1video720p,2CRF×3rung, VMAF/SSIM/PSNR. Chỉ là local H.264 experiment, không phải cấu hình Cloudinary hoặc corpus đại diện. Không tự đổi thuật toán/trọng số/preset/asset production. [Số đo và lệnh](../testing/quality-baseline-2026-11-24.md).
+
+Hồi quy2624kiểm tra gồm275frontend,941security,56admin-operation matrix đạt trên DB tạm; evaluator11 và an toàn kích thước4 đạt. Build/typecheck và OpenAPI export đạt. Provider integration vẫn là fixture, không chạy lại SMTP/live Cloudinary/Colab/Android/Safari trong lượt này. API local restart và các route mới trả200, GET MFA anonymous401 đúng guard. Không commit/push.
+
+Còn cần làm: nhãn độc lập/corpus metadata thật có đủ credits/language và đủ nội dung public; đánh giá theo timeline/user, corpus video đại diện/GOP/QoE/device, SMTP và các release gates ST01–ST06. REC06 bắt đầu có công cụ/số đo nhưng chưa VERIFIED; ENC03 vẫn IN_PROGRESS.
+
+
+## Chatbot điểm/review — 24/11/2026
+
+Đã nối get_title_feedback với OMDb ratings và cache TMDB, TITLE+FEEDBACK evidence cùng titleIds, đọc lại version/generation/expiry khi render. UI có nút Điểm và review, nguồn/thang điểm/trạng thái; review mặc định metadata, opt-in đoạn trích600ký tự phía server. Body không gửi LLM/Colab hoặc lưu vào run evidence. Website giữ CATALOG; provider/model live chưa nghiệm thu. Xem [runbook](../api/assistant-feedback.md) và [kiểm thử](../testing/assistant-feedback-2026-11-24.md). AG05/08/09/11 và EXT vẫn IN_PROGRESS theo phạm vi đầy đủ.
+
+
+## Đánh giá người xem pj-Flim — 25/11/2026
+
+Đã triển khai rating1–10 và nhận xét tùy chọn một/user/title, sửa/xóa ownership/current session, trung bình/số lượng ACTIVE accounts, spoiler flag và UI detail/watch. Dùng DB unique+CHECK/advisory lock/ETag và cursor microsecond. Không tự trộn điểm cộng đồng với IMDb/Metascore/TMDB hoặc chuyển nội dung sang LLM. Moderation/hữu ích/reply/chabot local review là scope mở rộng riêng. [Hợp đồng/API](../api/viewer-reviews.md).
+
+## Thống kê lượt xem đã triển khai — 25/11/2026
+
+Definition2: min120giây/50%video ngắn, playback có tiến triển hợp lệ, dedup một địnhdanh/phim/ngàyUTC; không đếm pageview. Một địnhdanhkhách không tươngđương một người. Mốc measurementStartedAt loại phiên trước policy; không tự backfill từ progress. Analytics riêng apps/analytics-worker, outboxconfirm/lease/quorum/receipts, dailyHMAC và APIreadonly. UI thẻ/detail/watchpoll30s, admin metrics.read theo7/30/90ngàyUTC/daily/top10/lag. Đã kiểm150feature (11Chrome+RabbitMQ/PG thật côlập),32kiểm tra thuật toán và2640hồiquy chung. Local58bảng/116ops/88paths/57admin/90codes. Phầntrendingrecommender/decay và privacy/reset/retention đầyđủ chưa được coiDONE. [Chi tiết](../api/view-statistics.md).
+
+## Admin nâng cao đã triển khai — 25/11/2026
+
+Kiểm duyệt thủ công tại /admin/viewer-reviews: ADMIN/SUPER_ADMIN, reason bắt buộc, ETag/lock chung với tác giả, audit nguyên tử; HIDDEN loại khỏi public average/list, tác giả không tự bỏ ẩn. /admin/catalog-health chỉ đọc metadata/video readiness, lọc/tìm/cursor/summary và cảnh báo phim xuất bản chưa phát được; không tự sửa/xuất bản. CSV lượt xem7/30/90ngày tại trang tổng quan, metrics.read/audit,10cột TOTAL/DAILY/TOP_TITLE, UTF-8 BOM và chống spreadsheet formula.
+
+Backlog tiếp: report/kháng nghị review, kiểm duyệt AI, lịch xuất bản và thông báo; chưa coi các mục này là chức năng đã có. Kết quả2724hồi quy,144feature (15Chrome) và161viewer-review kiểm tra đạt; không thay nghiệm thu Colab/ST/REC/ENC.
+
+
+## Quản lý phim hàng loạt đã triển khai — 25/11/2026
+
+/admin/titles cho chọn tối đa20phim, gắn/thay thể loại hoặc xuất bản/ẩn theo quyền. Preview5phút giữ nguyên expectedVersion và trước/sau; xác nhận cùng tài khoản/auth session, execution15phút. Mỗi phim commit thay đổi/audit/outbox/receipt cùng transaction; lỗi412 hoặc mất readiness chỉ thất bại phim đó, lỗi audit/hạ tầng giữ phần chưa commit để tiếp tục. /admin/catalog-batches có cursor/filter/lịch sử riêng; gửi lại không áp dụng trùng. Không tự xuất bản tập hoặc ghi đè phiên bản mới.
+
+Thêm1bảng private catalog_batches, Prisma59models, API125operations/97paths/66admin; không thêm permission/errorcode. [Hợp đồng và giới hạn](../api/catalog-batches.md). Scheduling, retention lịch sử, hủy server-side, worker bulk lớn và review bulk vẫn là backlog. ST/AG/EXT/REC/ENC không chuyển DONE bởi thay đổi admin này.

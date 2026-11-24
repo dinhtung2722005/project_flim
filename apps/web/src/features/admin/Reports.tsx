@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Flag, RefreshCw, ShieldCheck } from "lucide-react";
-import { dateLabel, query, statusLabel } from "../../lib/api";
+import { api, dateLabel, query, statusLabel } from "../../lib/api";
 import { useAuth, usePages } from "../../lib/state";
-import { Empty, ErrorBox, PageHeading, Spinner } from "../../components/ui";
+import { Empty, ErrorBox, PageHeading, Spinner, Field, asError } from "../../components/ui";
 import { ResourceMore } from "./resource-ui";
 
 const categories: Record<string, string> = {
@@ -95,6 +95,7 @@ export function AdminReports() {
                 </span>
               )}
             </div>
+            {auth.can("catalog.write")&&auth.can("reports.read")&&<ReportTriage row={row} onSaved={data.reload}/>}
             {row.resolutionNote && (
               <p className="report-resolution">
                 <strong>Ghi chú:</strong> {row.resolutionNote}
@@ -131,4 +132,10 @@ export function AdminReports() {
       )}
     </>
   );
+}
+
+function ReportTriage({row,onSaved}:{row:any;onSaved:()=>void}){
+ const [status,setStatus]=useState(row.status),[note,setNote]=useState(row.resolutionNote||""),[busy,setBusy]=useState(false),[error,setError]=useState<Error|null>(null);
+ async function save(e:FormEvent){e.preventDefault();setBusy(true);setError(null);try{await api("/admin/reports/"+row.id,{method:"PATCH",headers:{"If-Match":'"report:'+row.id+':'+row.version+'"'},body:{status,resolutionNote:note}});onSaved();}catch(e){setError(asError(e));}finally{setBusy(false);}}
+ return <form onSubmit={save} className="report-triage"><ErrorBox error={error}/><Field label="Xử lý báo lỗi"><select value={status} onChange={e=>setStatus(e.target.value)}>{Object.entries(states).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></Field><Field label="Ghi chú xử lý"><textarea maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></Field><button className="button small" disabled={busy}>Lưu xử lý</button></form>;
 }

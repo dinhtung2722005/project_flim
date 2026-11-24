@@ -1,7 +1,9 @@
-param([Parameter(Mandatory=$true)][ValidateSet('api','worker','relay')][string]$Service)
+param([Parameter(Mandatory=$true)][ValidateSet('api','worker','relay','assistant','analytics')][string]$Service)
 $ErrorActionPreference='Stop'
 $root='E:\pj-Flim'
 $paths=@{
+ analytics=@{Entry='dist\apps\analytics-worker\src\main.js';Folder='.local\analytics';Record='worker-process.json';Log='worker';Port=0}
+ assistant=@{Entry='dist\apps\assistant-worker\src\main.js';Folder='.local\assistant';Record='worker-process.json';Log='worker';Port=0}
  api=@{Entry='dist\apps\api\src\main.js';Folder='.local\api';Record='server-process.json';Log='server';Port=3000}
  worker=@{Entry='dist\apps\worker\src\main.js';Folder='.local\worker';Record='process.json';Log='worker';Port=0}
  relay=@{Entry='dist\apps\worker\src\webhook-relay.js';Folder='.local\worker';Record='relay-process.json';Log='relay';Port=3001}

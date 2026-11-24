@@ -1,3 +1,5 @@
+import {countLabel} from "../lib/counts";
+import {MovieRatingBadges} from "./MovieRatingBadges";
 import {
   useId,
   useState,
@@ -6,6 +8,7 @@ import {
   cloneElement,
   type ReactNode,
 } from "react";
+import {useSite} from "../lib/site";
 import { Link } from "react-router-dom";
 import {
   Clapperboard,
@@ -19,13 +22,14 @@ import {
 } from "lucide-react";
 import { ApiError, poster, statusLabel, type Row } from "../lib/api";
 export function Brand() {
+  const site=useSite();
   return (
-    <Link className="brand" to="/" aria-label="pj-Flim — Trang chủ">
+    <Link className="brand" to="/" aria-label={site.name+" — Trang chủ"}>
       <span className="brand-icon">
         <Play size={18} fill="currentColor" />
       </span>
       <span>
-        pj-Flim<span className="brand-dot">.</span>
+        {site.name}<span className="brand-dot">.</span>
       </span>
     </Link>
   );
@@ -168,7 +172,9 @@ export function MovieCard({ movie }: { movie: Row }) {
           <Play size={25} fill="currentColor" />
         </span>
       </div>
+      <small className="view-count card-views">{countLabel(movie.viewCount)} lượt xem</small>
       <h3 title={movie.localizedTitle}>{movie.localizedTitle}</h3>
+      <MovieRatingBadges key={movie.titleId||movie.id} titleId={movie.titleId||movie.id}/>
       <p>
         {movie.releaseYear || "Chưa cập nhật"}
         <span>·</span>

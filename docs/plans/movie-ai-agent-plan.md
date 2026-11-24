@@ -1,11 +1,11 @@
 # Kế hoạch xây dựng AI agent cho pj-Flim
 
-Ngày: 13/11/2026. Cập nhật: 14/11/2026 — Asia/Saigon. Phiên bản: 1.6.
-Trạng thái: **COLAB_POC_IMPLEMENTED — đã có code/notebook, chờ kiểm runtime Colab thật**.
+Ngày: 13/11/2026. Cập nhật: 25/11/2026 — Asia/Saigon. Phiên bản: 1.11.
+Trạng thái: **COLAB_AGENT_IMPLEMENTED / WEBSITE_CATALOG_RUNNING — chờ inference Qwen/E5 trên Colab thật**.
 
-Người dùng chọn **Google Colab làm môi trường thử agent**, thay cho chạy model trên máy Windows. Giữ **Qwen2.5:7b qua Ollama bên trong runtime Colab**, LangChain và RAG/search. Yêu cầu mới “giúp tôi build agent” cho phép triển khai PoC. Đã tạo notebook/source/exporter/tests theo mục16. Chưa chạy Colab/Qwen/E5 thật; không cài model trên Windows hoặc tích hợp backend/UI. Bảng/API/worker và phần ngoài mục16 vẫn là thiết kế dự kiến.
+Người dùng chọn **Google Colab làm môi trường thử agent**, thay cho chạy model trên máy Windows. Giữ **Qwen2.5:7b qua Ollama bên trong runtime Colab**, LangChain và RAG/search. Yêu cầu mới “giúp tôi build agent” cho phép triển khai PoC. Đã tạo notebook/source/exporter/tests theo mục16. Chưa chạy Colab/Qwen/E5 thật, không cài model Windows. Website có CATALOG baseline/backend/UI/queue theo mục19; các nhánh model live/nguồn ngoài/cá nhân hóa vẫn dự kiến.
 
-Lộ trình tích hợp website: [12 bước build chatbot đọc dữ liệu pj-Flim](website-chatbot-implementation-plan.md). Lượt ngày14/11 này chỉ bổ sung kế hoạch, chưa code gateway/API/UI chatbot.
+Lộ trình tích hợp website: [12 bước build chatbot đọc dữ liệu pj-Flim](website-chatbot-implementation-plan.md). Đã triển khai baseline CATALOG theo mục19; lựa chọn mới nhất ưu tiên hoàn thiện notebook Colab khi chưa endpoint model.
 
 Liên quan: [plan chính](movie-streaming-platform-plan.md), [nghiên cứu nguồn review](../design/external-ratings-reviews-research.md). Agent hỗ trợ REC và EXT nhưng không thay thế các backlog đó.
 
@@ -501,7 +501,7 @@ Artifact đề xuất: notebooks/movie-agent-colab.ipynb và hướng dẫn sử
 
 ## 11. Công đoạn triển khai AG01–AG16
 
-**IN_PROGRESS:** AG01/02/04/05/08/11/12/13/15/16. **NOT_STARTED:** AG03/06/07/09/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Bảng dưới giữ điều kiện hoàn tất toàn ticket; tiến trình chi tiết tại mục16.
+**IN_PROGRESS:** AG01/02/03/04/05/06/08/09/11/12/13/15/16. **NOT_STARTED:** AG07/10/14. Chưa có ticket DONE; code PoC không hoàn tất nghiệm thu model/Colab hoặc tích hợp website. Bảng dưới giữ điều kiện hoàn tất toàn ticket; tiến trình chi tiết tại mục16.
 
 | Ticket | Công đoạn sẽ làm | Phụ thuộc | Đầu ra và điều kiện hoàn tất |
 | --- | --- | --- | --- |
@@ -608,15 +608,15 @@ Bàn giao: [notebook 10 cell](../../notebooks/movie-agent-colab.ipynb), [Python 
 | --- | --- | --- |
 | AG01 | IN_PROGRESS | Scope/catalog/tool boundary; thiếu bộ nhãn benchmark/ADR phát hành |
 | AG02 | IN_PROGRESS | Bootstrap Ollama/Qwen, direct pins/digest, tool/JSON smoke; chưa GPU/inference/Colab/transitive lock/benchmark |
-| AG03 | NOT_STARTED | Chưa migration/grants/run state/outbox/internal service |
+| AG03 | IN_PROGRESS |2bảng/run state/outbox/quorumqueue/gateway và CATALOG; chưa model host/HA/load |
 | AG04 | IN_PROGRESS | Keyword/E5/FAISS/RRF, filter trước top-K, checkpoint; chưa E5 thật/quality/sync/purge live |
 | AG05 | IN_PROGRESS | Bounded read-only tools/schema/evidence/final ID; chưa model thật/server cancel/load |
-| AG06 | NOT_STARTED | Chưa NestJS agent DTO/controller/service/API/error/Swagger |
+| AG06 | IN_PROGRESS |5RESToperations,DTO/service/error/Swagger,owner/capability; chưa model live/gate production |
 | AG07 | NOT_STARTED | Chưa agent watchlist/ownership/opt-in |
 | AG08 | IN_PROGRESS | OMDb/TMDB adapter notebook, mapping/provenance/cache/quota; chưa live/registry/worker/DB |
-| AG09 | NOT_STARTED | Chưa chatbot UI website |
+| AG09 | IN_PROGRESS |React chat/poll/cancel/source/context CATALOG; chưa Qwen/semantic live/UX benchmark |
 | AG10 | NOT_STARTED | Chưa admin draft/summary/approval/publish |
-| AG11 | IN_PROGRESS | 44 Python + 7 Node contracts, notebook static/runbook; chưa GPU/model/E2E/load/rollout |
+| AG11 | IN_PROGRESS |103Python/7exporter/160assistant gồm25CATALOG E2E,dependency import và notebook flow fixtures; chưa GPU/model/load/rollout |
 | AG12 | IN_PROGRESS | Chỉ CATALOG/HYBRID, metadata search/discovery có cờ; chưa WEB/AUTO/API router |
 | AG13 | IN_PROGRESS | URL allowlist/no article fetch, evidence/run cache/budget; chưa article fetcher/source revoke/cache liên phiên |
 | AG14 | NOT_STARTED | Chưa search modes/panels UI và benchmark thật |
@@ -645,3 +645,40 @@ Ngày14/11/2026: theo yêu cầu “dùng omdb”, thêm adapter Python trong no
 Theo yêu cầu ngày14/11/2026, bổ sung [lộ trình12bước](website-chatbot-implementation-plan.md) để chatbot đọc dữ liệu pj-Flim và trả lời người xem. Ưu tiên catalog/FAQ qua gateway read-only, run/outbox/queue riêng, retrieval có eligibility và backend revalidation, rồi REST/Swagger/React chat/follow-up. OMDb/cá nhân hóa là giai đoạn sau có quota/quyền/owner.
 
 Kế hoạch giữ POST/GET/DELETE assistant/runs đã đề xuất, không tạo API chat trùng nghiệp vụ. PoC facts-first cần mở schema cho FAQ/NEEDS_INPUT; hội thoại chỉ giữ entity/intent hữu hạn và nạp lại facts mỗi lượt. Colab tiếp tục môi trường thử; host inference website chọn sau benchmark. Chưa code API/service/migration/frontend trong lượt này; mọi trạng thái AG/EXT/REC/ENC/ST giữ nguyên.
+
+
+## 19. Baseline website và hoàn thiện notebook — phiên bản1.7
+
+Lựa chọn người dùng14/11: ưu tiên notebook Google Colab; chưa có endpoint Ollama, giữ tra cứu catalog/FAQ website. Không tự tải Qwen trên PC hoặc mở Colab thành API/worker.
+
+Website đã có run owner/session-scoped, context parent tối đa5lượt/24h, idempotency, outbox/queue riêng, Node bridge/Python CATALOG và OLLAMA adapter, tool/evidence validation/revalidate eligibility, retention7ngày, cancel/fencing, React chat và FAQ sources. Migration2bảng →52, OpenAPI97/73,81errors; [runbook](../api/assistant.md). CATALOG là keyword baseline, không E5live hoặc LLM suy luận.
+
+Notebook v0.3 tách venv/pipe khỏi kernel Colab, E5 CPU Torch2.9.1+cpu, Qwen/Ollama loopback GPU riêng, preflight/import smoke, safe errors, giữ client giữa cell, report/checkpoint đúng đường dẫn. Source/tests/cells nhúng checksum, không cần GitHub. [Hướng dẫn](../../apps/agent/README.md).
+
+[Kiểm thử notebook](../testing/colab-agent-2026-11-14.md) và [website](../testing/assistant-2026-11-14.md): phân biệt dependency imports thật,child/FAISS thật,fixtures vớiQwen/E5/Colab thật chưa đạt. AG03/06/09 IN_PROGRESS, các AG khác theo bảng hiện hành, không AGDONE; EXT/REC/ENC/ST không đổi. Gate tiếp theo: GPU Colab sạch →Qwen tool/JSON smoke →E5 thật →câu hỏi có nguồn/EMPTY/lỗi →report và reset/checkpoint; sau đó mới chọn host model website.
+
+
+## 20. Hoàn thiện luồng review — phiên bản1.8
+
+Website đã có adapter TMDB, 2bảng cache, 7API, UI quản trị và trang phim; không dùng OMDb để lấy nội dung bài. Mapping kiểm tên/năm/loại ở backend, caller chỉ gửi ID số; lượt sync có timeout/body bounds/lease/fencing/current permission/audit và TTL24h. [Runbook](../api/reviews.md).
+
+Notebook giữ review_refs khi model chỉ trích dẫn catalog, cell8 hiển thị URL kèm da_doc_bai=false; đúng lỗi DDGS không có kết quả trả rỗng, lỗi mạng vẫn báo lỗi. 107Python tests đạt với fixture model/providers; notebook build31files,10codecells,28Python AST và hash hợp lệ. Chưa chạy inference Qwen/E5/Colab thật, chưa có TMDB token hoặc live import. Website CATALOG chưa có tool đọc review cache; AG07/10/14 không được coi DONE. Bước tích hợp agent sau này cần read-only tool theo public eligibility, source/author/ratingScale và chống prompt injection/spoiler, không cấp DB/API secret cho model.
+
+
+## 21. Notebook thử Qwen v0.4 — phiên bản1.9
+
+Ưu tiên user chọn24/11: notebook Colab. Thêm panel hỏi/xóa/nguồn trong cell8 với fallback QUESTION, giới hạn hiển thị10lượt độc lập và HTML escaping; không thêm memory hội thoại hoặc endpoint model website. Cell5 xác minh digest và GPU offload qua /api/ps sau inference; cờ smoke không tồn tại sau lỗi rerun.
+
+Cell9 có3case demo qua model/encoder của phiên (exact title, series/year, yêu cầu bịa phim/điểm); báo quality riêng với contract tests. Report schema2 chỉ giữ IDs/metrics/codes, không prompt; real catalog SKIPPED do chưa có nhãn chuẩn. Generator36files/33Python sources/10codecells, validator phát hiện bundle cũ so với repo.
+
+127Python tests/real widget callbacks và generated10cell flow đạt bằng fixtures; không tải weights lên PC. Gate còn lại: chạy phiên GPUColab mới, tool/JSON/GPU smoke, E5 thật, đánh giá tiếng Việt/nguồn/latency/checkpoint với model thật. Không AG/EXT DONE và không biến bộ3case thành benchmark chất lượng đầy đủ. [Báo cáo](../testing/colab-agent-2026-11-24.md).
+
+
+## Chatbot điểm/review — 24/11/2026
+
+Đã nối get_title_feedback với OMDb ratings và cache TMDB, TITLE+FEEDBACK evidence cùng titleIds, đọc lại version/generation/expiry khi render. UI có nút Điểm và review, nguồn/thang điểm/trạng thái; review mặc định metadata, opt-in đoạn trích600ký tự phía server. Body không gửi LLM/Colab hoặc lưu vào run evidence. Website giữ CATALOG; provider/model live chưa nghiệm thu. Xem [runbook](../api/assistant-feedback.md) và [kiểm thử](../testing/assistant-feedback-2026-11-24.md). AG05/08/09/11 và EXT vẫn IN_PROGRESS theo phạm vi đầy đủ.
+
+
+## 25/11/2026 — Chuẩn bị nghiệm thu Colab
+
+Đã kiểm notebook source/hash/AST và bổ sung CLI agent:acceptance để đọc runtime-report schema2, GPU offload/digest/dependency pins/3case grounded. Report là dữ liệu tự khai, không chứng thực Colab; finalAcceptance luôn PENDING_MANUAL_REVIEW cho đến khi xác nhận report từ runtime của người vận hành, xem tiếng Việt/semantic và reset-restore. Không kết nối được phiên Colab; chưa có report thật, không tải model PC hoặc chuyển AG thànhDONE. [Biên bản](../testing/colab-acceptance-2026-11-25.md).

@@ -1,3 +1,34 @@
+import { CatalogBatchController } from "./controllers/catalog-batch.controller";
+import { CatalogBatchService } from "./services/catalog-batch.service";
+import { AdminAdvancedController } from "./controllers/admin-advanced.controller";
+import { AdminAdvancedService } from "./services/admin-advanced.service";
+import {
+  PublicViewStatsController,
+  AdminViewStatsController,
+} from "./controllers/view-stats.controller";
+import { ViewStatsService } from "./services/view-stats.service";
+import { ViewerReviewsController } from "./controllers/viewer-reviews.controller";
+import { ViewerReviewsService } from "./services/viewer-reviews.service";
+import {
+  MfaEnrollmentController,
+  PublicSiteController,
+  ExperienceAdminController,
+} from "./controllers/experience.controller";
+import { MfaEnrollmentService } from "./services/mfa-enrollment.service";
+import { RatingsController } from "./controllers/ratings.controller";
+import { RatingsService } from "./services/ratings.service";
+import {
+  PublicReviewsController,
+  AdminReviewsController,
+} from "./controllers/reviews.controller";
+import { ReviewsService } from "./services/reviews.service";
+import {
+  AssistantController,
+  AssistantInternalController,
+} from "./controllers/assistant.controller";
+import { AssistantService } from "./services/assistant.service";
+import { AssistantCatalogService } from "./services/assistant-catalog.service";
+import { AssistantDispatcher } from "./services/assistant-dispatcher.service";
 import { RecommendationsController } from "./controllers/recommendations.controller";
 import { RecommendationsService } from "./services/recommendations.service";
 import { GlobalExceptionFilter } from "./filters/global-exception.filter";
@@ -38,6 +69,19 @@ import {
 @Module({
   imports: [JwtModule.register({})],
   controllers: [
+    CatalogBatchController,
+    AdminAdvancedController,
+    PublicViewStatsController,
+    AdminViewStatsController,
+    ViewerReviewsController,
+    MfaEnrollmentController,
+    PublicSiteController,
+    ExperienceAdminController,
+    RatingsController,
+    PublicReviewsController,
+    AdminReviewsController,
+    AssistantController,
+    AssistantInternalController,
     RecommendationsController,
     PublicCatalogController,
     AccountsController,
@@ -53,6 +97,16 @@ import {
     ResourcesController,
   ],
   providers: [
+    CatalogBatchService,
+    AdminAdvancedService,
+    ViewStatsService,
+    ViewerReviewsService,
+    MfaEnrollmentService,
+    RatingsService,
+    ReviewsService,
+    AssistantService,
+    AssistantCatalogService,
+    AssistantDispatcher,
     RecommendationsService,
     GlobalExceptionFilter,
     { provide: APP_FILTER, useExisting: GlobalExceptionFilter },

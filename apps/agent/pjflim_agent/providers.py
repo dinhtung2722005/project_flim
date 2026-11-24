@@ -153,5 +153,8 @@ class ReviewDiscovery:
             return found
         except AgentError:
             raise
-        except Exception:
+        except Exception as error:
+            # ddgs 9.x reports an empty search as an exception. Do not hide transport errors.
+            if type(error).__name__ == "DDGSException" and str(error).strip() == "No results found.":
+                return []
             raise AgentError("WEB_SEARCH_UNAVAILABLE") from None

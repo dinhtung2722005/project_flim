@@ -1,190 +1,170 @@
-# Agent phim trên Google Colab
+# Agent phim pj-Flim
 
-PoC độc lập cho pj-Flim: **Qwen2.5:7b qua Ollama + LangChain + multilingual E5 + FAISS CPU**. Mã nguồn nằm trong thư mục này; [notebook](../../notebooks/movie-agent-colab.ipynb) nhúng source đã kiểm hash, không cần clone repository hoặc cài Ollama trên Windows.
+Cập nhật 25/11/2026, notebook v0.4. [Nghiệm thu Colab và kiểm report](../../docs/testing/colab-acceptance-2026-11-25.md). Theo lựa chọn mới nhất, **hoàn thiện notebook Google Colab để thử Qwen**; website giữ chế độ **CATALOG** vì chưa có endpoint model. Hai luồng độc lập:
 
-Đã có code và contract tests; **chưa nghiệm thu GPU Colab, inference Qwen/E5 hoặc nguồn ngoài thật**. Xem [báo cáo kiểm thử](../../docs/testing/colab-agent-2026-11-13.md) và [kế hoạch 1.6](../../docs/plans/movie-ai-agent-plan.md).
+| Luồng | Đã có | Chưa xác nhận |
+| --- | --- | --- |
+| Notebook Colab | Qwen2.5:7b/Ollama, LangChain, E5/FAISS, snapshot, OMDb tùy chọn, checkpoint | GPU Colab, inference Qwen/E5, chất lượng và nguồn ngoài thật |
+| Website /assistant | Catalog/FAQ, tập public, điểm OMDb/cache review TMDB, nguồn, run API, RabbitMQ/Python CATALOG, UI | Qwen thật, semantic index live, nguồn ngoài live, cá nhân hóa private context |
 
-Tích hợp vào website: xem [12 bước chatbot đọc dữ liệu pj-Flim](../../docs/plans/website-chatbot-implementation-plan.md). Notebook hiện thử bằng snapshot; gateway live/run API/Chat UI vẫn là kế hoạch.
+Website chạy local tại http://localhost:3000/assistant sau đăng nhập; xem [runbook backend](../../docs/api/assistant.md). Không cài/tải Qwen trên máy Windows hoặc dùng Colab làm API website thường trực.
 
-## 1. Chạy demo trước
+## Chạy notebook
 
-1. Tải file [movie-agent-colab.ipynb](../../notebooks/movie-agent-colab.ipynb) từ dự án về máy.
-2. Mở [Google Colab](https://colab.research.google.com/), chọn **File → Upload notebook** rồi chọn file đó.
-3. Chọn **Runtime → Change runtime type → GPU**. GPU/quota phụ thuộc tài khoản và thời điểm, không bảo đảm T4.
-4. Giữ cấu hình mặc định ở cell 1; chạy lần lượt cell 1–9. Cell 4 cài Ollama trong runtime Google và tải model nhiều GB; cell 7 tải embedding. Không tải model vào PC.
-5. Dừng tại cell báo lỗi. Cell 5 phải qua kiểm tool calling và JSON schema trước khi thử agent.
-6. Ở cell 8, sửa `QUESTION` rồi chạy lại cell đó để hỏi tiếp. Mỗi câu hỏi là một lượt độc lập.
+1. Mở [movie-agent-colab.ipynb](../../notebooks/movie-agent-colab.ipynb) bằng **Google Colab → File → Upload notebook**. Notebook nhúng source và SHA-256, không cần clone hoặc chờ push GitHub.
+2. Chọn **Runtime → Change runtime type → GPU**. GPU/quota phụ thuộc phiên Colab.
+3. Giữ **USE_DEMO=True** ở cell1 cho lần chạy đầu. Demo là bốn phim giả, không có link xem hoặc điểm thật.
+4. Chạy lần lượt cell1–9. Cell3 cài môi trường riêng, cell4 tải binary Ollama/Qwen nhiều GB trong VM Google, cell7 tải E5.
+5. Cell5 phải qua kiểm tra văn bản, tool calling và JSON schema trước khi thử hỏi.
+6. Cell8 có **ô chat → Hỏi agent → Xóa hiển thị**, chọn CATALOG/HYBRID. Tối đa10 lượt hiển thị trong RAM; mỗi câu hỏi độc lập, model/search/client cache giữ trong tiến trình riêng. Nếu không thấy widget, đặt SHOW_CHAT_PANEL=False ở cell1 và chạy lại; sửa QUESTION rồi chạy cell8 vẫn dùng được.
+7. Cell9 chạy contract tests và tạo **runtime-report.json** schema2. RUN_AGENT_EVALUATION=True thử thêm3câu demo qua model/encoder hiện tại; có thể mất vài phút. PASSED chỉ cho bộ demo nhỏ, NEEDS_REVIEW cần xem lại; catalog thật báo SKIPPED/DEMO_ONLY. Cell10 có lựa chọn tải report/checkpoint và dừng Ollama.
 
-Ví dụ:
+Ví dụ ở cell8:
 
-```python
+~~~python
 QUESTION = "Tìm phim khoa học viễn tưởng nhẹ nhàng."
 MODE = "CATALOG"
-```
+~~~
 
-Demo gồm 4 phim giả, có nhãn `demo: true`, không có điểm IMDb/Metacritic hoặc liên kết xem thật. Kết quả là JSON cards và evidence, chưa có giao diện chatbot trên website.
+Kết quả hiển thị tên/năm/thể loại/nguồn/điểm có căn cứ, cảnh báo và số tool calls. Không sinh review tự do, điểm số hoặc khả năng phát phim từ trí nhớ model. Các trạng thái/model smoke đều phải được đánh giá thực tế; notebook chưa được tác giả chạy nghiệm thu trên Colab của bạn.
 
-## 2. Dùng catalog thật của pj-Flim
+## Môi trường riêng để tránh lỗi NumPy
 
-API local phải đang chạy. Trên PowerShell:
+Cell3 tạo **/content/pj-flim-agent/venv**, không cài đè package của kernel Colab. Thư viện ML chỉ được import trong tiến trình Python mới qua **NotebookSession**. Kết nối bằng stdin/stdout pipe, không mở cổng mạng.
 
-```powershell
+- Python được hỗ trợ: Linux 3.11–3.13. Bootstrap từ chối Windows.
+- Direct dependencies pin trong requirements; pip25.3, Torch2.9.1+cpu lấy từ kho CPU chính thức.
+- Torch CPU dành cho E5. Qwen dùng Ollama và GPU riêng, không phụ thuộc CUDA của Torch.
+- Kiểm pip check và import thật NumPy/FAISS/Torch/SentenceTransformer/ChatOllama/DDGS trước khi tiếp tục.
+- Ghi phiên bản thực và dependency-freeze.txt trong workspace; đây là bản ghi môi trường, chưa phải lockfile đầy đủ được nghiệm thu trên mọi phiên Colab.
+- Không còn yêu cầu restart do NumPy của kernel khác phiên bản vừa cài. Nếu đang mở notebook cũ, mở bản mới và chạy từ đầu.
+- Bấm Interrupt làm đóng tiến trình agent. Chạy lại cell3 rồi cell4–8 để khôi phục; Ollama đúng process/version có thể tái sử dụng.
+- Thay cấu hình ở cell1: chạy lại cell1–8. Thay riêng câu hỏi/mapping: sửa biến tương ứng và chạy cell8.
+
+Bridge thực thi source notebook do người vận hành kiểm soát, không phải sandbox chạy code không tin cậy. Model chỉ dùng các tool được phép; không có tool thực thi Python/shell.
+
+## Dùng dữ liệu thật từ website
+
+API local phải đang chạy. Trên PowerShell của PC:
+
+~~~powershell
 Set-Location -LiteralPath 'E:\pj-Flim'
 npm.cmd run agent:export-catalog
-```
+~~~
 
-Exporter đọc API public loopback, không dùng tài khoản hoặc kết nối DB trực tiếp. File tạo tại **`.local/agent/catalog.snapshot.json`**; không commit file này. Trong notebook:
+Exporter dùng public API loopback, không login/đọc DB. Kết quả **.local/agent/catalog.snapshot.json** không commit. Đặt USE_DEMO=False tại cell1, chạy các cell theo thứ tự, chọn đúng một JSON ở cell6.
 
-1. Đặt `USE_DEMO = False` ở cell 1 rồi chạy các cell theo thứ tự.
-2. Tại cell 6, chọn đúng một file snapshot JSON từ PC.
-3. Cell 7 tạo vector/index; cell 8 tìm kiếm trên catalog vừa nạp.
+Snapshot tối đa 1.000 phim/5MB/hạn24giờ; chỉ metadata công khai tối thiểu, không credential/lịch sử xem/media URL. Hash kiểm tính toàn vẹn, không xác thực người xuất. Chỉ upload dữ liệu bạn được phép đưa vào Google Colab và embedding; trường rights là khai báo, không tự chứng minh giấy phép.
 
-Chỉ upload metadata mà bạn có quyền chuyển sang Google Colab và tạo embedding. Trường `rights` trong exporter là khai báo của người vận hành, **không phải bằng chứng cấp phép** và không tự kiểm được hợp đồng nguồn. Nếu chưa được phép, dùng demo.
+Notebook đọc snapshot, không truy cập ngược PC và không xác nhận eligibility hiện tại. Luôn có **live_eligibility_checked=false**. Muốn dùng kết quả để phát phim phải kiểm lại qua backend.
 
-Snapshot tối đa 1.000 phim, 5 MB, hạn 24 giờ. Chỉ có ID/tên/loại/năm/nội dung/thể loại/credits/quốc gia/ngôn ngữ; loại bỏ tài khoản, lịch sử xem, credential, asset và URL phát. Hash SHA-256 giúp phát hiện thay đổi dữ liệu; **không phải chữ ký xác thực nguồn**. Chỉ nhập file do bạn kiểm soát.
+## Cơ chế agent
 
-Catalog phản ánh thời điểm xuất. Agent không kết nối ngược PC từ Colab, không xác nhận phim còn xuất bản hoặc phát được; `live_eligibility_checked: false`. Khi đưa vào web phải kiểm eligibility lại tại backend. Snapshot hết hạn phải xuất lại; không sửa ngày để kéo dài.
+~~~text
+Câu hỏi → Qwen/LangChain → tool schema/allowlist
+                         → lọc catalog → keyword + E5/FAISS + RRF
+                         → evidence của lượt → Qwen chọn IDs
+                         → validator → cards từ facts
+~~~
 
-## 3. Cơ chế tìm kiếm và trả lời
+E5 multilingual-small, query:/passage:, 384 chiều, normalize L2; FAISS exact inner product trên tập đã lọc, RRF k60. Revision embedding được pin trong model-versions.json. Chưa có benchmark recall/ngữ nghĩa thực.
 
-```mermaid
-flowchart LR
-  Q[Câu hỏi] --> L[Qwen qua Ollama loopback]
-  L --> T[Tool allowlist và schema]
-  T --> F[Lọc loại, năm, thể loại]
-  F --> R[Keyword + E5 / FAISS + RRF]
-  R --> E[Registry evidence của lượt]
-  E --> L
-  L --> V[Kiểm title ID và evidence ID]
-  V --> C[Cards từ facts đã kiểm]
-```
+Mỗi lượt tối đa4 lần model,6 tool calls,1 lần sửa schema; output600token, context8192 (có thể thử4096 khi OOM). HTTP model timeout90s, deadline120s kiểm giữa bước, không bảo đảm hard cancellation của request đang chạy. Không lưu chain-of-thought.
 
-- Embedding `intfloat/multilingual-e5-small`, prefix `query:` và `passage:`, vector 384 chiều, chuẩn hóa L2.
-- FAISS exact inner product trên tập **đã lọc**; hợp thứ hạng semantic/keyword bằng RRF, k = 60; ưu tiên tên khớp chính xác.
-- Model chọn tool và phim. Validator chặn ID ngoài snapshot, evidence không tồn tại hoặc thuộc phim khác. Nội dung công cụ được coi là dữ liệu không tin cậy.
-- Câu trả lời dựng từ facts, không cho model xuất đoạn văn tự do. `free_text_generation: false`; chưa có tóm tắt review, giải thích suy luận dài hoặc hội thoại nhiều lượt.
-- Tool search tối đa 5 phim/lần; tối đa 4 lần gọi model, tổng 6 tool calls/lượt, 1 lần sửa lỗi schema. Cache chỉ trong lượt.
-- Context thử nghiệm 8.192 token, output 600 token; chưa có bộ đếm/prompt truncation chính xác theo tokenizer. Nếu thiếu VRAM thử 4.096 rồi kiểm lại chất lượng/tool smoke.
-- Deadline 120 giây kiểm giữa các bước; model HTTP timeout 90 giây. Đây là giới hạn best effort, không có hard cancellation giữa một request đang chạy. Chưa có benchmark latency/recall hoặc load test model thật.
+Nguồn/ID/evidence phải khớp phim trong snapshot và lượt hiện tại. Câu trả lời dựng từ facts, không chấp nhận văn bản tự do của model làm bằng chứng.
 
-Kết quả ngữ nghĩa luôn cần đánh giá với bộ câu hỏi gán nhãn; contract tests không chứng minh retrieval hoặc tiếng Việt đạt chất lượng sản phẩm.
+## OMDb cho IMDb/Metascore
 
-## 4. OMDb, TMDB và tìm link review
+Demo không gọi nguồn ngoài. Với catalog thật:
 
-Demo không gọi nguồn ngoài. Với catalog thật, OMDb được chọn mặc định cho điểm; cần API key và mapping đã xác minh. Chỉ dùng nguồn có quyền phù hợp.
+1. Thêm **OMDB_API_KEY** vào Colab Secrets và cấp quyền notebook.
+2. Giữ ENABLE_OMDB=True, USE_DEMO=False; MODE=HYBRID ở cell8.
+3. Đối chiếu IMDb ID theo tên gốc/năm/movie hoặc series rồi điền OMDB_MAPPINGS tại cell1:
 
-**OMDb (nguồn điểm được chọn):**
-
-1. Đăng ký key tại [OMDb Free](https://www.omdbapi.com/apikey.aspx), kích hoạt theo email.
-2. Trong Colab Secrets (biểu tượng chìa khóa), thêm `OMDB_API_KEY` và cấp quyền cho notebook. Không gửi key qua chat hoặc viết trong cell.
-3. Dùng catalog thật: `USE_DEMO=False`, giữ `ENABLE_OMDB=True`; upload snapshot JSON ở cell6. Cell8 mặc định HYBRID cho catalog thật. Demo vẫn CATALOG và chặn gọi ngoài.
-4. Đối chiếu IMDb ID của phim theo tên gốc/năm/loại rồi cấu hình tại cell1:
-
-```python
+~~~python
 OMDB_MAPPINGS = {
     "UUID-phim-trong-snapshot": {"imdb_id": "tt1375666", "verified": True}
 }
-```
+~~~
 
-Thay cả UUID và IMDb ID bằng dữ liệu đã kiểm; ví dụ không phải mapping của phim bất kỳ trong kho. Movie/series khác scope; chưa hỗ trợ episode/season rating.
+Ví dụ chỉ minh họa cú pháp; thay UUID/ID bằng mapping đã kiểm. Sau khi có client ở cell8, tìm candidate trong một cell riêng:
 
-Nếu chưa có IMDb ID, sau khi cell8 tạo client, chạy một cell riêng:
+~~~python
+session.execute(
+    "_omdb_client.reset(); display(_omdb_client.search(catalog, TITLE_UUID))",
+    {"TITLE_UUID": "UUID-phim-trong-snapshot"},
+)
+~~~
 
-```python
-TITLE_UUID = "UUID-phim-trong-snapshot"
-_omdb_client.reset()
-display(_omdb_client.search(catalog, TITLE_UUID))
-```
+Candidate chưa được xác minh tự động. Cập nhật mapping trong kernel rồi chạy lại cell8. Hỏi:
 
-Candidate có `mapping_verified=False`, không tự duyệt. Đối chiếu kết quả, cập nhật OMDB_MAPPINGS ở cell1, chạy lại cell1 và cell8. Đổi câu hỏi tại cell8:
-
-```python
+~~~python
 QUESTION = "Cho tôi điểm IMDb và Metascore của phim TÊN_PHIM."
 MODE = "HYBRID"
-```
+~~~
 
-Đầu ra `cards[].external_ratings` có nguồn OMDB, IMDb ID, score type, value/scale/votes và thời điểm. IMDb thang10, Metascore critic thang100; không lấy Metacritic User Score hoặc review text. Direct fields thiếu/N/A→null; định dạng/range bất thường bị từ chối. Chưa gọi API thật bằng key nên coverage/schema thực tế vẫn cần nghiệm thu.
+IMDb thang10, Metascore critic thang100; N/A→null, không đồng nghĩa Metacritic User Score. Có intermediary/source/ID/time/scale/votes, không lấy toàn văn review. Chưa dùng key thật để nghiệm thu.
 
-Cache chỉ RAM trong client Colab, mặc định1giờ, tối đa200 entries. Cell8 giữ client qua các lần hỏi; cache không chứa raw payload/key, không vào ZIP checkpoint. Mỗi lượt tối đa2 requests OMDb; tối đa900 requests trên một client để chừa ngân sách so gói free1000/ngày. Đây **không phải bộ đếm quota tài khoản theo ngày**: runtime/client khác hoặc thao tác trực tiếp cũng dùng quota provider. Cache hit vẫn kiểm mapping và TTL snapshot, không phục vụ stale khi nguồn lỗi.
+Cache RAM1giờ/LRU200,≤2HTTP calls/lượt,≤900/client. Client giữ qua lần hỏi, không lưu key/cache vào checkpoint. Đây không phải bộ đếm quota tài khoản/ngày; client/runtime mới vẫn dùng cùng quota provider. HTTP HTTPS cố định, timeout8s, không redirect, payload≤256KB, che key trong lỗi/log thông thường.
 
-Request cố định HTTPS, timeout8s, không redirect, response≤256KB. OMDb yêu cầu key query; filter che `apikey` trong log httpx/httpcore thông thường, output/error/evidence không trả request URL hoặc raw error. Không bật HTTP tracing tùy chỉnh chứa query/body. Missing key, auth/quota/mapping lỗi được trả bằng mã an toàn.
+[OMDb docs](https://www.omdbapi.com/) và [điều kiện sử dụng](https://www.omdbapi.com/legal.htm) vẫn áp dụng; adapter không tự cấp quyền phân phối thương mại/embedding/review processing.
 
-Tài liệu OMDb hiện công bố1000 request/ngày và CC BY-NC4.0; lookup PoC không tự cấp quyền lưu/hiển thị thương mại hoặc chuyển dữ liệu cho LLM. [OMDb docs](https://www.omdbapi.com/), [Terms](https://www.omdbapi.com/legal.htm).
+TMDB là tùy chọn ENABLE_TMDB/Secret TMDB_API_READ_TOKEN và TMDB_MAPPINGS verified; điểm TMDB không đổi thành IMDb. ENABLE_WEB_DISCOVERY mặc định false; DDGS chỉ tìm link HTTPS theo phim public trong allowlist, không fetch/copy/tóm tắt bài hoặc lưu snippet. Chưa có WEB/AUTO, review summary hay importer.
 
+## Checkpoint và chẩn đoán
 
+Cell10 tạo **pj-flim-agent-checkpoint.zip**: snapshot, vectors.npy, index/model manifest và runtime-report khi có. Không key/prompt/model weights. DOWNLOAD_CHECKPOINT=True để tải ZIP, DOWNLOAD_REPORT=True để tải report. STOP_OLLAMA=True chỉ dừng process notebook sở hữu và đóng tiến trình agent.
 
-**TMDB:** thêm API Read Access Token vào Colab Secrets, tên `TMDB_API_READ_TOKEN`, cấp quyền notebook. Không viết token trong cell, output hoặc chat. Đặt `ENABLE_TMDB = True` ở cell 1 và `MODE = "HYBRID"` ở cell 8.
+Sau reset: chạy từ đầu, USE_DEMO=False, nạp ZIP ở cell6. Snapshot phải còn hạn và cùng model digest/revision/hash/shape; không pickle/FAISS binary tùy ý. Không tự mount Drive.
 
-Tool metadata tìm candidate bằng tên/năm/loại, không tự xác nhận mapping. Muốn lấy điểm, đối chiếu thủ công phim/mùa/loại rồi thêm mapping tại cell 1:
-
-```python
-TMDB_MAPPINGS = {
-    "UUID-phim-trong-snapshot": {"kind": "movie", "id": 123, "verified": True}
-}
-```
-
-Đây là cú pháp minh họa; thay UUID và ID bằng dữ liệu đã kiểm, không chạy nguyên ví dụ. Series dùng `kind: "tv"`. Adapter kiểm ID/tên/năm, ghi nguồn TMDB/thang 10/số phiếu/thời điểm. Không suy điểm TMDB thành IMDb hoặc Metacritic. Tối đa 2 HTTP calls/lượt; lỗi quota/auth/mapping được trả bằng mã an toàn, không tự bịa điểm.
-
-**Review discovery:** đặt `ENABLE_WEB_DISCOVERY = True` và dùng HYBRID. DDGS chỉ tìm URL từ tên/năm phim public, mặc định giới hạn `theguardian.com`, `moveek.com`, `vnexpress.net`. Trả link HTTPS và publisher với `read_verified: false`; không fetch toàn bài, lưu snippet, tóm tắt hoặc embedding review. Allowlist chỉ giới hạn đường dẫn, không cấp phép nội dung. Chưa có registry quyền theo nguồn, safe article fetcher hoặc UI research.
-
-PoC hiện chỉ nhận **CATALOG/HYBRID**. WEB/AUTO trong plan là phần sau. Đã có adapter OMDb cho IMDb rating/Metascore; chưa licensed IMDb/Metacritic direct API, Metacritic User Score, Rotten Tomatoes hoặc bulk importer.
-
-## 5. Checkpoint, reset và kết thúc
-
-Cell 10 tạo ZIP trong runtime; đặt `DOWNLOAD_CHECKPOINT = True` để tải về PC. Đặt `STOP_OLLAMA = True` khi kết thúc để dừng đúng process notebook sở hữu.
-
-Checkpoint chỉ gồm snapshot, vector NumPy, index manifest, model manifest và runtime report khi có. Không có API key, prompt, chain-of-thought hoặc model weights. Không tự mount Drive. Notebook bạn tự lưu có thể vẫn chứa output; xóa output trước khi chia sẻ, nhất là catalog thật.
-
-Sau reset: mở lại notebook, chạy từ cell 1; đặt USE_DEMO=False rồi nạp ZIP tại cell 6. Phải còn TTL và cùng model digest/embedding revision/catalog hash. Vector được kiểm hash/shape/normalization trước khi dựng lại FAISS; không load pickle hoặc FAISS binary tùy ý. Model vẫn phải tải lại nếu runtime mất cache. Model tag đổi digest thì dừng; kiểm lại phiên bản và tạo snapshot/index mới thay vì bỏ validator.
-
-Không public cổng Ollama, tạo tunnel API hoặc chạy RabbitMQ consumer thường trực bằng Colab free. Google xử lý dữ liệu trong runtime cloud dù model suy luận local trong VM đó.
-
-## 6. Lỗi thường gặp
-
-| Mã/hiện tượng | Cách xử lý |
+| Lỗi | Xử lý |
 | --- | --- |
-| GPU_REQUIRED / runtime không có GPU | Chọn GPU rồi reconnect; nếu không được cấp, chờ hoặc chọn runtime khác. Không khẳng định CPU sẽ chạy tốt 7B. |
-| RESTART_KERNEL_REQUIRED | Restart session/kernel theo thông báo rồi chạy lại notebook từ đầu. |
-| MODEL_DOWNLOAD_FAILED | Kiểm network/disk/quota của runtime, chạy lại cell tải model; không in log có credential. |
-| MODEL_TOOL_SMOKE_FAILED / MODEL_JSON_SMOKE_FAILED | Chưa qua nghiệm thu model; kiểm version/digest/context, chạy lại smoke và lưu báo cáo. Không bỏ kiểm tra để coi thành công. |
-| MODEL_UNAVAILABLE / OOM | Kiểm runtime còn sống, giảm CONTEXT_TOKENS xuống 4096, restart nếu cần, chạy smoke lại. |
-| SNAPSHOT_EXPIRED / SNAPSHOT_HASH_INVALID | Xuất snapshot mới từ API; không sửa hash/ngày cho qua kiểm tra. |
-| MODEL_DIGEST_CHANGED / INDEX_* | Model hoặc index khác checkpoint; xác minh phiên bản, dùng snapshot còn hạn và dựng index mới. |
-| OMDB_NOT_CONFIGURED / TMDB_NOT_CONFIGURED / EXTERNAL_MAPPING_NOT_VERIFIED | Thêm Colab Secret và mapping đã đối chiếu hoặc dùng CATALOG. |
-| SOURCE_RATE_LIMITED / OMDB_SESSION_QUOTA_EXCEEDED / nguồn không trả kết quả | Chờ theo quota, thử catalog; agent không đảm bảo DDGS/TMDB luôn khả dụng. |
-| AGENT_*_BUDGET_EXCEEDED / ANSWER_EVIDENCE_INVALID | Lượt dừng có giới hạn; thử câu hỏi rõ hơn, lưu mã lỗi/report. Đây là lỗi cần theo dõi, không phải kết quả đúng. |
+| GPU_NOT_ASSIGNED | Chọn GPU rồi reconnect. CPU thử nghiệm REQUIRE_GPU=False có thể rất chậm với7B. |
+| DEPENDENCY_INSTALL_OR_IMPORT_FAILED / DEPENDENCY_TIMEOUT | Xem riêng dependency-install.log; kiểm network/disk, chạy lại cell3. Không gửi toàn bộ env/key. |
+| AGENT_PROCESS_STOPPED / AGENT_PROCESS_INTERRUPTED | Chạy lại cell3 rồi4–8, không bỏ qua state bị mất. |
+| NOTEBOOK_CELL_FAILED | Có vị trí file/dòng an toàn; kiểm thứ tự cell, báo mã/vị trí, không có traceback chứa secret. |
+| OLLAMA_* | Cell4 phân biệt lỗi apt/download/script/start/version; log riêng install-dependencies.log, install.log, ollama.log. |
+| MODEL_DOWNLOAD_FAILED | Kiểm network/disk, chạy lại cell4. |
+| MODEL_TOOL_SMOKE_FAILED / MODEL_JSON_SMOKE_FAILED | Dừng nghiệm thu, kiểm version/context/digest; không xóa smoke để coi thành công. |
+| MODEL_UNAVAILABLE / OOM | Thử context4096, chạy lại smoke; Colab không bảo đảm tài nguyên. |
+| SNAPSHOT_EXPIRED / SNAPSHOT_HASH_INVALID / INDEX_* | Xuất snapshot mới hoặc dựng lại index đúng revision, không sửa ngày/hash cho qua. |
+| OMDB_NOT_CONFIGURED / EXTERNAL_MAPPING_NOT_VERIFIED | Thêm Secret/mapping đã kiểm hoặc dùng CATALOG. |
+| AGENT_*_BUDGET_EXCEEDED / ANSWER_EVIDENCE_INVALID | Thử câu hỏi rõ hơn; lưu mã/report để đánh giá, không coi là câu trả lời đúng. |
 
-## 7. Phát triển và kiểm thử
+Không public Ollama/tunnel hoặc dùng Colab free làm RabbitMQ worker thường trực. Nguồn chính thức: [Colab FAQ](https://research.google.com/colaboratory/faq.html), [Ollama Linux](https://docs.ollama.com/linux), [PyTorch CPU wheels](https://download.pytorch.org/whl/cpu/torch/).
 
-Các dependency trực tiếp được pin trong [requirements](requirements-colab.txt); **chưa có transitive lock hoặc kiểm tương thích toàn bộ Torch/Sentence-Transformers trên Colab**. Phiên bản Ollama/model/E5 nằm trong [model-versions.json](model-versions.json). Digest model ghi sau lần pull thực đầu tiên, không giả định mutable tag bất biến.
+## Phát triển và bằng chứng
 
-Từ gốc dự án:
-
-```powershell
+~~~powershell
 npm.cmd run agent:notebook
 npm.cmd run test:agent:export
-```
+~~~
 
-Sau khi sửa module/test/requirements hoặc source cell phải build lại notebook. Builder nhúng source và hash; file bàn giao không chứa output/execution count.
+Sau thay module/cell/test/requirements phải build lại notebook. Validator kiểm AST cả code chạy trong subprocess, hash bundle, ID cell duy nhất và output/execution count sạch.
 
-Trong môi trường Python Linux cô lập:
+Bằng chứng: [Colab audit14/11](../../docs/testing/colab-agent-2026-11-14.md), [website audit](../../docs/testing/assistant-2026-11-14.md). 103 Python tests đạt trên Linux với child process thật, FAISS thật, model/encoder/provider fixtures. Flow cell4–10 được kiểm với fixtures, không phải inference Qwen/E5 hoặc Colab thật.
 
-```bash
-python -m pip install -r apps/agent/requirements-test.txt
-PYTHONPATH=apps/agent python -m unittest discover -s apps/agent/tests -p test_agent.py -v
+Trong Linux test environment đã cài requirements-test.txt:
+
+~~~bash
+PYTHONPATH=apps/agent python -m unittest discover -s apps/agent/tests -p 'test_*.py'
 python apps/agent/tools/validate_notebook.py notebooks/movie-agent-colab.ipynb
-```
+~~~
 
-Không chạy installer Ollama của notebook trên Windows. Bản kiểm thử hiện dùng Docker Python Linux, FAISS thật và fixture encoder/model/HTTP. Cell 5/7/8/9 mới là nơi thu bằng chứng Qwen/E5 trong Colab.
+Source: colab_bridge.py (venv/pipe), runtime.py (Ollama), catalog.py, retrieval.py, agent.py, omdb.py, checkpoint.py. website_agent.py/website_server.py phục vụ luồng website riêng. Xem [plan agent](../../docs/plans/movie-ai-agent-plan.md); chưa đánh dấu ticket AG hoàn tất chỉ vì build/tests đạt.
 
-Cấu trúc: `catalog.py` validation, `retrieval.py` search, `providers.py` nguồn ngoài, `agent.py` tool loop/evidence, `runtime.py` Ollama, `checkpoint.py` artifact. NestJS auth/schema/queue/UI hiện giữ nguyên; trước khi tích hợp website cần AG03/06/09/11 và các gate tương ứng trong plan.
 
-## 8. Sửa bước cài Ollama — 14/11/2026
+## Review discovery — 23/11/2026
 
-Notebook mới kiểm và cài curl/zstd còn thiếu trong Colab bằng apt-get khi runtime có quyền root. Installer giữ OLLAMA_VERSION đã pin; timeout cài binary là 15 phút. Lỗi được tách OLLAMA_DEPENDENCY_INSTALL_FAILED/TIMEOUT, OLLAMA_INSTALL_DOWNLOAD_FAILED/TIMEOUT/INVALID, OLLAMA_INSTALL_SCRIPT_FAILED/TIMEOUT và OLLAMA_NOT_INSTALLED.
+Cell8 hiện URL trong review_refs với da_doc_bai=false; giữ URL ngay cả khi finish_answer chỉ trích dẫn catalog. DDGSException đúng thông báo No results found. trả rỗng; lỗi mạng/quota vẫn báo WEB_SEARCH_UNAVAILABLE. 107Python tests đạt offline với model/providers fixtures; notebook đã rebuild. Chưa đọc bài trên web hoặc chạy Qwen/Colab thật. Website có luồng TMDB review riêng tại [runbook](../../docs/api/reviews.md), chưa đưa nội dung này vào chatbot CATALOG.
 
-Cell4 hiện code/hint và tên công cụ thiếu, không tự in log hoặc environment. Log riêng: install-dependencies.log cho apt, install.log cho installer. Ảnh OLLAMA_INSTALL_FAILED của notebook cũ chưa đủ xác nhận thiếu zstd; cần log hoặc mã lỗi bản mới.
 
-Khi đổi sang notebook mới trong cùng runtime: Restart session rồi chạy từ cell1 để tránh Python giữ module cũ. RESTART_KERNEL_REQUIRED ở cell3 là kiểm NumPy trong bộ nhớ khác phiên bản đã cài; restart session giữ môi trường đã cài, sau đó chạy lại từ đầu.
+## Notebook v0.4 — 24/11/2026
 
-Ngày14/11:52 Python contract tests đạt, gồm8 tests installer với mock package manager/download/subprocess; chưa chứng minh installer/model chạy được trên Colab. Kiểm GPU Docker thực đã được khởi động nhưng phiên bị ngắt trong bước cài dependency, chưa qua inference. Xem báo cáo ngày14.
+- Giao diện chat tùy chọn dùng ipywidgets đã có trong kernel; không pip install thư viện ML/UI vào kernel. Module notebook_ui chỉ import stdlib cho tới khi mở panel. Không có ipywidgets thì dùng QUESTION/chạy lại cell8. Nội dung/nguồn luôn escape trước khi render HTML; link discovery chỉ là văn bản, chưa đọc bài.
+- Mỗi câu độc lập, không dùng lịch sử hiển thị làm memory gửi model. Nút xóa chỉ xóa10lượt hiển thị trong RAM. Không ghi transcript vào report/checkpoint do agent tạo; việc Colab lưu output của notebook phụ thuộc cài đặt Colab.
+- Cell5 kiểm /api/ps sau inference: đúng digest và size_vram>0 khi REQUIRE_GPU=True; chỉ chứng minh có offload GPU, không khẳng định toàn bộ model nằm trên GPU. Lỗi không giữ MODEL_SMOKE thành công cũ. API tham khảo: [Ollama running models](https://docs.ollama.com/api/ps).
+- Cell9 có3case: đúng tên, phim bộ/năm và yêu cầu bịa phim/điểm. Report ghi caseId/expectedIds/selectedIds/evidence/timing/code, không câu hỏi hoặc raw model prose. Bộ nhỏ không thay đánh giá tiếng Việt/recall/latency trên catalog thực. Contract tests và agent_evaluation là hai kết quả riêng; contract pass không tự biến quality NEEDS_REVIEW thành đạt.
+- Notebook generator nhúng36files/33Python sources,10codecell; static validator kiểm source hiện hành khớp bundle, hash và output rỗng. Đổi source phải build lại. Phiên đang mở notebook cũ cần restart session và mở đúng bản mới trước khi chạy từ cell1.
+
+Lượt kiểm mới:127Python tests đạt, không skip (có FAISS/ChatOllama và ipywidgets8.1.9 thật; Qwen/encoder/provider là fixtures). Generated notebook chạy cả10cell, hỏi lặp lại qua callback, tạo widget/report/checkpoint và báo NEEDS_REVIEW trung thực cho model fixture không đạt case. Không tải Qwen/E5 lên PC, không gọi nguồn ngoài, chưa chạy trên GPU Google Colab thật. [Báo cáo](../../docs/testing/colab-agent-2026-11-24.md).

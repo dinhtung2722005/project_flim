@@ -12,7 +12,7 @@ export function mountFrontend(server: express.Express) {
       defaultSrc: ["'none'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://www.themoviedb.org/assets/2/v4/logos/v2/"],
       connectSrc: [
         "'self'",
         "https://res.cloudinary.com",

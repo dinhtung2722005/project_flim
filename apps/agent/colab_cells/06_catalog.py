@@ -4,11 +4,9 @@ CHECKPOINT_RESTORED = False
 if USE_DEMO:
     catalog = create_demo(WORKSPACE / "catalog.snapshot.json")
 else:
-    from google.colab import files
-    uploaded = files.upload()  # Chọn duy nhất catalog.snapshot.json hoặc checkpoint.zip trên PC.
-    if len(uploaded) != 1:
-        raise RuntimeError("SELECT_ONE_SNAPSHOT_OR_CHECKPOINT")
-    name, content = next(iter(uploaded.items()))
+    # Parent kernel uploads only one bounded JSON/ZIP to this fixed path.
+    name = INPUT_NAME
+    content = (WORKSPACE / "input-upload").read_bytes()
     if name.lower().endswith(".zip"):
         if len(content) > 8_000_000:
             raise RuntimeError("CHECKPOINT_TOO_LARGE")
@@ -23,6 +21,8 @@ else:
     else:
         raise RuntimeError("JSON_OR_ZIP_REQUIRED")
     catalog = Catalog.load(WORKSPACE / "catalog.snapshot.json")
+    del content
+
 display({"titles": len(catalog.by_id), "demo": catalog.snapshot.demo,
          "snapshot_at": catalog.snapshot.generated_at, "expires_at": catalog.snapshot.expires_at,
          "truncated": catalog.snapshot.truncated, "live_eligibility_checked": False})

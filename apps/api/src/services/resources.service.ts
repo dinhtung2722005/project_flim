@@ -7,6 +7,7 @@ import {
 } from "../../../../packages/database/src/database";
 import {
   Principal,
+  etag,
   assertStepUp,
   audit,
   changedFields,
@@ -29,6 +30,7 @@ import {
   UpdateBannerDto,
   SiteSettingsDto,
 } from "../dto/resources.dto";
+import { UpdateReportDto } from "../dto/experience.dto";
 import { PageDto } from "../dto/common.dto";
 import { AuditQueryDto } from "../dto/audit.dto";
 import { ReportsQueryDto } from "../dto/reports.dto";
@@ -363,7 +365,7 @@ export class ResourcesService {
   async summary() {
     return one(
       this.db,
-      "SELECT (SELECT count(*) FROM movie.titles) AS titles,(SELECT count(*) FROM movie.titles WHERE publication_status='PUBLISHED') AS published_titles,(SELECT count(*) FROM movie.episodes) AS episodes,(SELECT count(*) FROM movie.users WHERE status='ACTIVE') AS active_users,(SELECT count(*) FROM movie.content_reports WHERE status='OPEN') AS open_reports,(SELECT coalesce(sum(qualified_views),0)::text FROM movie.title_daily_stats WHERE day>=current_date-7 AND definition_version=1) AS views_last_seven_days",
+      "SELECT (SELECT count(*) FROM movie.titles) AS titles,(SELECT count(*) FROM movie.titles WHERE publication_status='PUBLISHED') AS published_titles,(SELECT count(*) FROM movie.episodes) AS episodes,(SELECT count(*) FROM movie.users WHERE status='ACTIVE') AS active_users,(SELECT count(*) FROM movie.content_reports WHERE status='OPEN') AS open_reports,(SELECT coalesce(sum(qualified_views),0)::text FROM movie.title_daily_stats WHERE day BETWEEN (clock_timestamp() AT TIME ZONE 'UTC')::date-6 AND (clock_timestamp() AT TIME ZONE 'UTC')::date AND definition_version=2) AS views_last_seven_days",
     );
   }
   async reports(actor: Principal, dto: ReportsQueryDto) {
@@ -475,4 +477,16 @@ export class ResourcesService {
     if (!row) fail("RESOURCE_NOT_FOUND");
     return row;
   }
+
+ async updateReport(actor:Principal,id:string,body:UpdateReportDto,match:string|undefined) {
+  return this.mutate(actor,"catalog.write",async tx=>{
+   await checkMutation(tx,actor,"reports.read");
+   const current=await one(tx,"SELECT * FROM movie.content_reports WHERE id=$1::uuid FOR UPDATE",[id]);
+   if(!current) fail("RESOURCE_NOT_FOUND");
+   requireMatch(match,"report",id,current.version);
+   const row=await one(tx,"UPDATE movie.content_reports SET status=$2,resolution_note=$3,handled_by=$4::uuid,version=version+1,updated_at=clock_timestamp() WHERE id=$1::uuid RETURNING id,title_id,episode_id,category,message,status,version,handled_by,resolution_note,created_at,updated_at",[id,body.status,body.resolutionNote||null,actor.id]);
+   await audit(tx,actor,"report.updated","content_report",id,{beforeStatus:current.status,afterStatus:body.status});
+   return row!;
+  });
+ }
 }

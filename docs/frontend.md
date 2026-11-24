@@ -167,8 +167,52 @@ Nghiệm thu provider/CDN/video thật có lệnh streaming:smoke riêng và c�
 
 ## Phần chưa có giao diện
 
-Email verification/reset password, MFA enrollment, subtitle/audio selection, admin preview phim nháp, gán credits, API/UI đổi trạng thái xử lý report và dashboard analytics nâng cao vẫn cần bổ sung. People/banner/settings/đọc report đã có màn hình quản trị. Trang người xem chưa đọc banner hoặc site settings để thay thương hiệu/header; ảnh vẫn nhập provider reference có sẵn. Bản này ưu tiên luồng xem và quản trị nội dung cơ bản; không coi mọi API hiện có đã có màn hình.
+Cập nhật24/11: đã có UI xác minh email/reset password/MFA enrollment tại /account và các route proof, gán đoàn phim/ngôn ngữ/quốc gia, API/UI xử lý báo lỗi và tích hợp banner/settings vào trang public. Xem [runbook](api/account-ui-and-site.md). Subtitle/audio selection, admin preview phim nháp, disable/reset MFA và dashboard analytics nâng cao vẫn chưa có. SMTP/device/provider thật vẫn cần nghiệm thu; thêm UI không thay bằng chứng production.
 
 ## Gợi ý cá nhân hóa — 13/11/2026
 
 Trang /for-you cần đăng nhập, có link Dành cho bạn trên menu. Mặc định opt-out; người dùng bật để dùng phim đã lưu/coverage hợp lệ, chọn ẩn phim đã xem hết, xem lý do, Không quan tâm/hoàn tác phản hồi gần nhất và tải thêm. Preference dùng ETag, lỗi 412 yêu cầu tải lại; feed hết hạn có nút thử lại. Request hủy khi unmount/logout và state remount theo tài khoản. Không lưu feed xuống browser storage. [API và giới hạn](api/recommendations.md), [thuật toán](design/recommendation-algorithms.md).
+
+
+## Trợ lý phim — 14/11/2026
+
+Route lazy /assistant yêu cầu đăng nhập, có nút Trợ lý phim từ giao diện người xem và truyền title context từ trang chi tiết. Có ví dụ câu hỏi, tùy chọn tránh spoiler, trạng thái chờ/đang xử lý/lỗi/hủy, polling có backoff/abort, cards/link/tập và nguồn nội bộ. Hội thoại parent giới hạn5lượt; danh sách hiển thị10lượt. Logout/đổi tài khoản xóa state; không render HTML từ model.
+
+Engine hiện CATALOG: keyword catalog + FAQ + lookup điểm OMDb/cache review TMDB; chưa Qwen/semantic search trên website. /help có9FAQ với anchor đúng nguồn chatbot. UI tránh spoiler loại synopsis theo projection backend. Kết quả không chứa signed media URL.
+
+[Kiểm thử](testing/assistant-2026-11-14.md):25E2E assistant Chrome với queue/Python thật ở390/1440px,227frontend regression checks; chưa audit WCAG đầy đủ hoặc model quality.
+
+
+## Review — 23/11/2026
+
+Trang chi tiết phim có #reviews: tác giả/điểm cá nhân thang10, ngôn ngữ/ngày, nội dung mở theo yêu cầu để tránh spoiler, link TMDB và cursor trang5bài. Admin chỉnh phim có mục Review từ TMDB: tìm ứng viên, chọn ID, xác minh/lưu mapping, tải review, xóa liên kết/đọc lại ETag và preview. Người không có catalog.write không có nút sửa; API vẫn kiểm quyền. Lỗi412 giữ lựa chọn để người dùng chủ động đọc lại, không tự ghi đè. /help#credits có nguồn/logo/disclaimer. [Cấu hình và giới hạn](api/reviews.md).
+
+
+## Điểm IMDb và Metacritic — 23/11/2026
+
+Trang chủ/catalog/thư viện/gợi ý có MovieRatingBadges trên thẻ phim (lazy fetch, request tuần tự, thiếu điểm hiện —). Trang chi tiết và trang xem video có tiêu đề Điểm đánh giá và hai ô MovieRatings; trang xem đặt trước player và dùng titleId từ episode metadata: IMDb thang10/lượt đánh giá/link gốc và Metacritic Metascore thang100 của giới phê bình; nguồn OMDb/ngày cập nhật. Desktop hai cột, mobile xếp dọc; N/A hiển thị Chưa có điểm, zero vẫn hiển thị, lỗi có Thử lại. Không chặn playback. Backend đọc qua endpoint public riêng; cần OMDB_API_KEY server để có dữ liệu thật. [Runbook](api/ratings.md).
+
+## UI tài khoản và nội dung — 24/11/2026
+
+[Luồng/API/quyền và giới hạn](api/account-ui-and-site.md). Hồi quy mới2624 bao gồm275frontend, không lỗi JS trong assertions; desktop/mobile và long-brand không tràn ngang. /account cần đăng nhập, các trang /forgot-password, /reset-password, /verify-email public. Token mail chỉ tiêu thụ khi POST; fragment được xóa khỏi URL. MFA local vẫn theo AUTH_MFA_REQUIRED=false hiện hành, UI cho biết policy này. Credits/report giữ ETag và bản nháp khi412; không tự ghi đè.
+
+
+Chatbot có AssistantFeedback hiển thị IMDb/10, Metascore/100, review TMDB tối đa3 bản ghi/đoạn trích600ký tự khi tắt tránh spoiler; không render HTML. [Hướng dẫn](api/assistant-feedback.md).
+
+
+## Đánh giá người xem — 25/11/2026
+
+ViewerReviews tại trang detail/watch: public score/count/list, login-required form1–10/nhận xét2000/spoiler, save/delete own và ETag draft conflict. State keyed theo title/account, abort khi unmount; HTML chỉ text. Review nguồn ngoài đổi heading Review từ khán giả TMDB cho rõ nguồn. [Runbook](api/viewer-reviews.md).
+
+## Lượt xem — 25/11/2026
+
+MovieCard nhận viewCount trực tiếp từ projection catalog, không gọi API thống kê cho từng thẻ. ViewCount trên detail/watch đọc GET /titles/:id/views mỗi30giây khi tab hiện; số bigint giữ chuỗi và format bằng BigInt. Mở/tải lại trang không cộng lượt. Tooltip có ngưỡng/mốc bắt đầu; lỗi thống kê không ngăn player. AdminHome thêm thẻ viewsLastSevenDays và ViewMetrics theo metrics.read; chọn7/30/90 ngày, biểu đồ có bảng dữ liệu truy cập được, top10 public và tình trạng lô chờ. Xử lý responsive với số lớn và90cột. Xem [runbook](api/view-statistics.md), [kiểm thử](testing/view-statistics-2026-11-25.md).
+
+## Admin nâng cao — 25/11/2026
+
+Hai route lazy-load /admin/viewer-reviews và /admin/catalog-health với menu/route permission. Kiểm duyệt giữ lý do khi412 và yêu cầu đọc phiên bản mới; plain text/spoiler fold, không tự lấy ETag mới để ghi đè. Người viết thấy lý do ẩn trong form của mình. usePages thêm summary tùy chọn từ cùng response, không gọi thêm cho từng dòng. ViewMetrics tải CSV qua Blob/API client chung, giữ refresh/auth/error handling và abort khi unmount. [Runbook](api/admin-advanced.md).
+
+
+## Quản lý phim hàng loạt — 25/11/2026
+
+CatalogBatchTools trong kho admin giữ tối đa20phim, form action/genres/reason, preview trước/sau và xác nhận rõ. Fields/selection đổi thì bỏ preview đang hiển thị; request abort khi tools unmount. AdminCatalogBatches thêm route/menu /admin/catalog-batches, cursor/filter/history riêng và chi tiết per-title; chỉ cho tiếp tục khi cùng session/quyền và chưa hết hạn. Không tự refresh ETag phim để ghi đè. [Runbook](api/catalog-batches.md).

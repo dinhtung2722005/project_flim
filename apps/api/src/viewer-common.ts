@@ -124,4 +124,4 @@ export const titleFields = (t = "t") =>
     "published_at",
   ]
     .map((f) => t + "." + f)
-    .join(",");
+    .join(",") + ",COALESCE((SELECT sum(vs.qualified_views) FROM movie.title_daily_stats vs WHERE vs.title_id="+t+".id AND vs.definition_version=2),0)::text AS view_count";

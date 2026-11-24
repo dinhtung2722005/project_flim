@@ -1,6 +1,6 @@
 # API người xem, admin và Swagger
 
-Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **92 operation trên 70 path OpenAPI**, chạy NestJS + Prisma 7 với PostgreSQL bằng login pj_flim_api.
+Cập nhật 25/11/2026, Asia/Saigon. Đã có **66 endpoint admin**, tổng **125 operation trên 97 path OpenAPI**, chạy NestJS + Prisma 7 với PostgreSQL bằng login pj_flim_api.
 
 [Hướng dẫn cấu hình Cloudinary và API upload](cloudinary-upload.md): 3 endpoint mới, direct/chunked upload, xác minh owner/episode/file, audit và outbox HLS.
 
@@ -13,6 +13,10 @@ Cập nhật 11/11/2026, Asia/Saigon. Đã có **49 endpoint admin**, tổng **9
 Giao diện người xem/admin đã nối API: [hướng dẫn frontend](../frontend.md). Build cả web/API rồi mở / hoặc /admin trên cổng 3000; Swagger vẫn mở trực tiếp.
 
 [Gợi ý cá nhân hóa content-v1](recommendations.md): 5 operation private mới, mặc định opt-out, TF-IDF/cosine/MMR, preferences ETag, feedback/hoàn tác và snapshot cursor. [Thuật toán](../design/recommendation-algorithms.md).
+
+[Thống kê lượt xem](view-statistics.md): ngưỡng xem hợp lệ, khử trùng theo phim/định danh/ngày UTC, RabbitMQ analytics và báo cáo admin7/30/90 ngày.
+
+[Admin nâng cao](admin-advanced.md): kiểm duyệt có quyền riêng/audit/ETag, kiểm tra chất lượng kho phim và xuất CSV lượt xem.
 
 ## Mở Swagger
 
@@ -41,7 +45,7 @@ AUTH_MFA_REQUIRED=false hiện áp dụng cho đăng nhập API local, chỉ c�
 | Audit           | Ghi cùng transaction mutation; đọc/lọc/phân trang; không có API sửa/xóa log                   |
 | Reports/metrics | Đọc báo lỗi theo scope, redaction AUDITOR, thống kê tổng quan                                 |
 | Media           | Đọc metadata asset/attempt/operation; signed upload intent và xác minh nguồn Cloudinary       |
-| Hợp đồng        | DTO validation, Problem Details, registry 74 code, ETag/If-Match, cursor HMAC, request ID     |
+| Hợp đồng        | DTO validation, Problem Details, registry 90 code, ETag/If-Match, cursor HMAC, request ID     |
 
 Khi policy yêu cầu MFA, thay role cần target staff đã có MFA verified. ADMIN chỉ khóa/mở tài khoản thuần MEMBER; SUPER_ADMIN tác động staff sau step-up khi policy MFA được bật và không được làm mất SUPER_ADMIN usable cuối cùng. Role/status mutation tăng authVersion và thu hồi session trong transaction có roster lock.
 
@@ -163,3 +167,27 @@ Local vẫn password-only/Swagger mở theo yêu cầu; production buộc MFA v�
 ## Cursor và độ chính xác timestamp — 13/11/2026
 
 Các danh sách dùng cursor thời gian giữ timestamp PostgreSQL đầy đủ trong cursor ký HMAC, không chuyển khóa so sánh qua Date JavaScript gây mất microsecond. Query dùng trường nội bộ __cursor_time; helper loại khỏi data JSON, các trường thời gian trả cho client vẫn theo hợp đồng cũ. Cursor cũ còn được nhận; tải lại danh sách từ đầu để lấy cursor mới. [Hồi quy 64 assertion và kiểm thử admin](../testing/admin-ui-2026-11-13.md) xác nhận không bỏ sót/trùng các bản ghi cùng thời điểm. Không thay schema/route/DTO.
+
+
+## Assistant — 14/11/2026
+
+[Runbook assistant](assistant.md):5RESToperations có đăng nhập/ownership cho capabilities, tạo/list/đọc/hủy run. Thêm10DTO,7errorcode và internal gateway riêng không xuất Swagger. EngineCATALOG đang dùng, Qwen adapter chưa nghiệm thu inference. Migration2bảng, queue quorum AI riêng, Python loopback và frontend /assistant; không đổi49adminoperations.
+
+
+[Luồng review TMDB](reviews.md):7operation mới, mapping xác minh, cache PostgreSQL, ETag/generation, lease/fencing, RBAC/audit, API public chỉ đọc phim đủ điều kiện. Cần token TMDB thật để nhập nguồn; đã kiểm thử với provider giả lập.
+
+
+[Điểm IMDb/Metacritic](ratings.md): GET public /titles/:id/ratings, thang10/100 độc lập, nguồn OMDb, đối chiếu tên/năm/loại và cache có giới hạn. Không có key hoặc thiếu dữ liệu thì score=null. Không thêm bảng hoặc tăng quyền admin.
+
+## Bổ sung24/11: UI tài khoản và site
+
+OpenAPI hiện110operation/84path/56admin,90errorcodes,54bảng không đổi. GET /me/mfa, POST enrollment/verification, GET /site và PATCH admin report; [runbook](account-ui-and-site.md). Không thêm API credits trùng, dùng PATCH title hiện có. API email cũ có UI và mail proof link mới.
+
+
+[Chatbot đọc điểm/review](assistant-feedback.md): tool nội bộ get_title_feedback, output feedback trong run result và capabilities scope mở rộng; không thêm REST operation hoặc quyền. Mặc định ẩn body, opt-in đoạn trích server-side, không review AI summary.
+
+
+[Đánh giá người xem pj-Flim](viewer-reviews.md):4operation public list/summary + owner GET/PUT/DELETE, ETag và DTO riêng.55bảng/114ops/86paths/56admin,90codes; điểm/review nguồn ngoài giữ riêng.
+
+
+Quản lý phim hàng loạt: [preview/xác nhận/lịch sử và tiếp tục](catalog-batches.md),4endpoint mới. Quyền thể loại/xuất bản tách theo thao tác, cùng phiên và ETag; không tự áp dụng trùng khi gửi lại.

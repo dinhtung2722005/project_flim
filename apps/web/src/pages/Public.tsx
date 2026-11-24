@@ -1,3 +1,9 @@
+import {ViewCount} from "../components/ViewCount";
+import {HomeBanners} from "../components/HomeBanners";
+import {MovieRatings} from "../components/MovieRatings";
+import {Reviews} from "../components/Reviews";
+import {ViewerReviews} from "../components/ViewerReviews";
+import { HELP_ARTICLES } from "../../../../packages/assistant/src/help";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Link,
@@ -75,6 +81,7 @@ export function Catalog() {
   }
   return (
     <>
+      {!filtered&&<HomeBanners/>}
       <section
         className={"hero catalog-hero " + (filtered ? "compact" : "")}
         style={
@@ -399,6 +406,7 @@ export function TitleDetail() {
               <span>{movie.originalLanguage.toUpperCase()}</span>
             )}
           </div>
+          <ViewCount key={"views-"+movie.id} titleId={movie.id}/><MovieRatings key={movie.id} titleId={movie.id}/>
           <div className="genre-list">
             {movie.genres?.map((g: Row) => (
               <Link key={g.id} to={"/?genre=" + g.slug}>
@@ -506,6 +514,8 @@ export function TitleDetail() {
           </div>
         )}
       </section>
+      <ViewerReviews titleId={movie.id}/>
+      <Reviews titleId={movie.id}/>
       {!!related.data?.data.length && (
         <section className="content-section">
           <SectionHeading title="Có thể bạn cũng thích" />
@@ -805,6 +815,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
             <ArrowRight size={17} />
           </button>
         </form>
+        {!register&&!pending&&<p><Link to="/forgot-password">Quên mật khẩu?</Link></p>}
         <p className="auth-switch">
           {register ? "Đã có tài khoản?" : "Chưa có tài khoản?"}{" "}
           <Link
@@ -854,6 +865,21 @@ export function Help() {
           </article>
         ))}
       </div>
+      <section className="help-faq" aria-label="Câu hỏi thường gặp">
+        <h2>Câu hỏi thường gặp</h2>
+        {HELP_ARTICLES.map((article) => (
+          <article className="panel" id={article.id} key={article.id}>
+            <h3>{article.heading}</h3>
+            <p>{article.text}</p>
+          </article>
+        ))}
+      </section>
+      <section className="panel content-section" id="credits">
+        <h2>Nguồn dữ liệu review</h2>
+        <a className="review-credit" href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" width="90" height="65" loading="lazy" /></a>
+        <p>Review từ khán giả được cung cấp qua TMDB API, kèm tác giả và liên kết bài gốc. Điểm review riêng của tác giả dùng thang 10.</p>
+        <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      </section>
       <Link className="button" to="/">
         Khám phá ngay <ArrowRight size={17} />
       </Link>

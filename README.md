@@ -1,5 +1,19 @@
 # pj-Flim
 
+Mới25/11: [quản lý phim hàng loạt](docs/api/catalog-batches.md) tại /admin/titles: chọn tối đa20phim, gắn/thay thể loại, xuất bản/ẩn với preview và xác nhận; lịch sử riêng tại /admin/catalog-batches có kết quả từng phim và tiếp tục sau lỗi. Kiểm quyền/phiên bản/HLS/backup ở backend. [Kiểm thử](docs/testing/catalog-batches-2026-11-25.md).
+
+Admin nâng cao25/11: [kiểm duyệt đánh giá, kiểm tra kho phim và xuất CSV](docs/api/admin-advanced.md). Mở /admin/viewer-reviews, /admin/catalog-health hoặc nút Xuất CSV ở trang tổng quan; quyền được kiểm ở cả UI/API.
+
+Mới25/11: [thống kê lượt xem](docs/api/view-statistics.md) trên thẻ phim/detail/watch và báo cáo admin7/30/90 ngày. Chỉ cộng khi xem đủ ngưỡng, khử trùng theo phim/định danh/ngày UTC, xử lý qua RabbitMQ riêng. Cần chạy analytics worker; số liệu bắt đầu từ khi bật tính năng.
+
+Mới25/11: [đánh giá người xem pj-Flim](docs/api/viewer-reviews.md) trên trang phim/trang xem: chấm1–10, viết/sửa/xóa nhận xét của mình, điểm trung bình cộng đồng và thu gọn spoiler. Không cần key nguồn ngoài.
+
+Nghiệm thu Colab25/11: [hướng dẫn chạy GPU và kiểm runtime-report](docs/testing/colab-acceptance-2026-11-25.md). Có lệnh agent:acceptance; hiện chờ báo cáo từ Colab thật, chưa xác nhận Qwen/E5 live.
+
+Cập nhật24/11: chatbot đọc [điểm IMDb/Metacritic và review TMDB](docs/api/assistant-feedback.md); chọn **Điểm và review** trong cuộc trò chuyện. Review mặc định ẩn nội dung, có đoạn trích khi tắt tránh spoiler; thiếu key/cache sẽ báo chưa có dữ liệu.
+
+Cập nhật24/11: [UI tài khoản/bảo mật, đoàn phim, banner và xử lý báo lỗi](docs/api/account-ui-and-site.md); [benchmark gợi ý và18phép đo chất lượng nén](docs/testing/quality-baseline-2026-11-24.md). Hồi quy2624kiểm tra (275frontend) đạt; API110operation/84path.
+
 Nền tảng xem phim theo yêu cầu (VOD), gồm giao diện React/Vite cho người xem và admin, backend Node.js/NestJS, PostgreSQL, Cloudinary và RabbitMQ.
 
 Repository: [dinhtung2722005/project_flim](https://github.com/dinhtung2722005/project_flim). Cập nhật ngày **13/11/2026**.
@@ -45,9 +59,9 @@ Giao diện cập nhật 13/11/2026: chữ và nút lớn hơn, tìm kiếm/lọ
 | Gợi ý              | Trang Dành cho bạn: TF-IDF/multi-hot/cosine + MMR, opt-in, feedback/hoàn tác và snapshot cursor riêng tư |
 | Cá nhân            | Yêu thích, lịch sử, xem tiếp, progress chống ghi đè và báo lỗi có kiểm ownership                                       |
 | Telemetry          | Nhận batch sự kiện, chống trùng và ghi outbox bền; chưa có consumer tổng hợp analytics                                 |
-| Hợp đồng API       | DTO validation toàn cục, Swagger/OpenAPI, global exception handler, requestId và 74 mã lỗi                             |
+| Hợp đồng API       | DTO validation toàn cục, Swagger/OpenAPI, global exception handler, requestId và 81 mã lỗi                             |
 
-Quy mô hợp đồng hiện tại: **92 operation trên 70 path OpenAPI**, gồm **49 operation admin**. Số liệu mô tả API hiện có, không có nghĩa toàn bộ kế hoạch sản phẩm đã hoàn tất.
+Quy mô hợp đồng hiện tại: **97 operation trên 73 path OpenAPI**, gồm **49 operation admin**. Số liệu mô tả API hiện có, không có nghĩa toàn bộ kế hoạch sản phẩm đã hoàn tất.
 
 Đã có [mã hóa/nén đa độ phân giải H.264/AAC](docs/api/encoding.md): admin chọn Tiết kiệm dữ liệu, Cân bằng 720p hoặc Full HD 1080p khi upload. Các mức được giới hạn theo nguồn và kiểm trước READY; video cũ giữ nguyên. [Kiểm thử mới](docs/testing/encoding-2026-11-13.md) gồm Cloudinary/Chrome thật tới 1080p; chưa có VMAF/per-title/HDR/đa codec.
 
@@ -214,6 +228,9 @@ Email mặc định là `admin@pj-flim.local`; mật khẩu, thông tin thiết 
 
 ## Chạy dự án
 
+Thống kê lượt xem cần worker riêng sau khi cấu hình/migration theo [runbook](docs/api/view-statistics.md): chạy thêm `npm.cmd run analytics:worker` trong terminal riêng, hoặc dùng `Start-LocalProcess.ps1 -Service analytics` sau build. API vẫn phục vụ video khi analytics tạm ngừng; số liệu chờ xử lý sẽ cập nhật sau.
+
+
 ### Giao diện người dùng và admin
 
 ```powershell
@@ -283,7 +300,7 @@ Swagger local **không yêu cầu đăng nhập**. GET `/api/docs-login` cũ ch�
 | Thành phần      | Mặc định                              |
 | --------------- | ------------------------------------- |
 | Database/schema | `pj_flim` / `movie`                   |
-| Số bảng         | 50                                    |
+| Số bảng         | 52                                    |
 | Owner           | `pj_flim_owner`                       |
 | API runtime     | `pj_flim_api`, nhóm `movie_api`       |
 | Worker runtime  | `pj_flim_worker`, nhóm `movie_worker` |
@@ -343,7 +360,7 @@ Ví dụ lỗi:
 }
 ```
 
-Registry có 74 mã lỗi; xem [exception handling](docs/api/exception-handling.md) và [OpenAPI](docs/api/openapi.json). `retryable` không đồng nghĩa được retry POST tùy ý.
+Registry có 81 mã lỗi; xem [exception handling](docs/api/exception-handling.md) và [OpenAPI](docs/api/openapi.json). `retryable` không đồng nghĩa được retry POST tùy ý.
 
 ## Kiểm thử
 
@@ -428,7 +445,7 @@ Log/process record ở `.local/api` và `.local/worker`; backup/email local khô
 
 Thanh tìm phim đã có [live search](docs/testing/live-search-2026-11-13.md): gõ từ 2 ký tự hiện tối đa 6 gợi ý sau 300 ms, chọn bằng chuột/bàn phím, có loading/lỗi/thử lại và giữ bộ lọc. Bản mới đã build và phục vụ ở localhost:3000; frontend-only 202 kiểm tra đạt (54 live search), không đổi API/database.
 
-Đã có [nghiên cứu nguồn điểm/review IMDb, Metacritic, TMDB và các web khác](docs/design/external-ratings-reviews-research.md), dùng ba agent; plan 9.6/14.7 và EXT01–EXT08 đều chưa triển khai. Có endpoints/license gates, matching phim/mùa/tập, worker/agent và attribution/purge. Chưa nhập dataset/review, đăng ký dịch vụ hoặc có quyền feed trả phí.
+Đã có [nghiên cứu nguồn điểm/review IMDb, Metacritic, TMDB và các web khác](docs/design/external-ratings-reviews-research.md), dùng ba agent; EXT02/03/05/07/08 đã có phần triển khai OMDb/TMDB; nguồn/policy/worker đầy đủ còn IN_PROGRESS hoặc NOT_STARTED theo plan hiện hành. Có endpoints/license gates, matching phim/mùa/tập, worker/agent và attribution/purge. Chưa nghiệm thu nguồn live, đăng ký dịch vụ hoặc có quyền feed trả phí.
 
 Đã bổ sung [nghiên cứu mã hóa, nén và đa độ phân giải](docs/plans/movie-streaming-platform-plan.md#67-nghiên-cứu-mã-hóa-nén-và-tạo-nhiều-độ-phân-giải): H.264/HLS trước, rate control và per-title ladder, GOP/segment, VMAF/review, chi phí và ENC01–ENC09. Hiện chỉ có bằng chứng các mức 180–720p; 1080p/HDR/HEVC/AV1 và thuật toán tối ưu mới chưa nghiệm thu. Lượt nghiên cứu không thay profile hoặc chuyển mã lại video.
 
@@ -465,10 +482,10 @@ Admin đã có hồ sơ diễn viên/đạo diễn, banner, cấu hình website 
 | [Media worker](docs/api/media-worker.md)                                                        | RabbitMQ, webhook, HLS, backup và vận hành              |
 | [Exception handling](docs/api/exception-handling.md)                                            | Problem Details, log và registry lỗi                    |
 | [Database runbook](database/README.md)                                                          | Bootstrap, kết nối, grants và kiểm SQL                  |
-| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 bảng baseline + 3 bảng gợi ý, ERD, ràng buộc                                 |
+| [Thiết kế database](docs/design/movie-database-design.md)                                       | 47 baseline + 3 gợi ý + 2 assistant, ERD, ràng buộc                                 |
 | [Thuật toán stream chi tiết](docs/design/streaming-algorithms.md)                               | HLS/CDN, worker, phiên phát, ABR/buffer/tua và progress |
 | [Thiết kế backend](docs/design/movie-backend-design.md)                                         | Kiến trúc và thuật toán mục tiêu                        |
-| [Kế hoạch AI agent](docs/plans/movie-ai-agent-plan.md) | Plan1.6: PoC Colab/OMDb có code, lộ trình chatbot web; AG01–AG16 có trạng thái, chờ model thật |
+| [Kế hoạch AI agent](docs/plans/movie-ai-agent-plan.md) | Plan1.7: PoC Colab/OMDb có code, lộ trình chatbot web; AG01–AG16 có trạng thái, chờ model thật |
 | [Các bước build chatbot website](docs/plans/website-chatbot-implementation-plan.md) | 12 bước đọc catalog/FAQ, gateway/tool, API/UI, memory và nghiệm thu; kế hoạch |
 | [Plan hiện hành](docs/plans/movie-streaming-platform-plan.md)                                   | Tính năng, công đoạn và backlog                         |
 | [DTO](apps/api/src/dto/README.md)                                                               | Tổ chức và validation                                   |
@@ -483,7 +500,7 @@ Chỉ commit source, SQL, cấu hình mẫu và tài liệu. Các file `.env*.lo
 
 Repository không chứa dữ liệu phim, backup, hộp thư local hoặc tài khoản Cloudinary/PostgreSQL đang sử dụng. Muốn chạy trên máy khác, thực hiện bootstrap và cấu hình lại bằng thông tin của môi trường đó.
 
-Rà soát nguồn điểm/review ngày 13/11/2026 bằng ba agent: [báo cáo1.1](docs/design/external-ratings-reviews-research.md#9-kết-quả-rà-soát-bổ-sung-phiên-bản-11) có IMDb/OMDb, Metacritic và RT qua Origin, TMDB/Trakt/publisher, nguồn Việt Nam và quyền xử lý trên Colab. [Plan2.29](docs/plans/movie-streaming-platform-plan.md) và [agent plan1.6](docs/plans/movie-ai-agent-plan.md) đã đồng bộ; chưa có importer hoặc external API/UI.
+Rà soát nguồn điểm/review ngày 13/11/2026 bằng ba agent: [báo cáo1.1](docs/design/external-ratings-reviews-research.md#9-kết-quả-rà-soát-bổ-sung-phiên-bản-11) có IMDb/OMDb, Metacritic và RT qua Origin, TMDB/Trakt/publisher, nguồn Việt Nam và quyền xử lý trên Colab. [Plan2.30](docs/plans/movie-streaming-platform-plan.md) và [agent plan1.7](docs/plans/movie-ai-agent-plan.md) đã đồng bộ; chưa có importer hoặc external API/UI.
 
 
 ## Agent phim trên Google Colab
@@ -492,4 +509,53 @@ Rà soát nguồn điểm/review ngày 13/11/2026 bằng ba agent: [báo cáo1.1
 
 Dùng catalog thật: khi API local chạy, dùng `npm.cmd run agent:export-catalog`, đặt `USE_DEMO=False`, upload `.local/agent/catalog.snapshot.json` ở cell6. Chỉ metadata được phép cloud/embedding. OMDb lấy IMDb/Metascore khi có OMDB_API_KEY trong Colab Secrets và mapping verified; TMDB/DDGS link-only vẫn tùy chọn, mặc định tắt.
 
-[Bằng chứng lượt OMDb14/11](docs/testing/omdb-2026-11-14.md):74Python contracts với fixtures và static notebook đã đạt; chưa Qwen/E5/GPU Colab hoặc chatbot website/benchmark model thật. [Kế hoạch tích hợp web](docs/plans/website-chatbot-implementation-plan.md) có12bước; chưa triển khai trong lượt lập kế hoạch.
+[Bằng chứng lượt OMDb14/11](docs/testing/omdb-2026-11-14.md):74Python contracts với fixtures và static notebook đã đạt; chưa Qwen/E5/GPU Colab hoặc benchmark model thật. Website CATALOG đã bổ sung theo bản cập nhật bên dưới. [Kế hoạch tích hợp web](docs/plans/website-chatbot-implementation-plan.md) có12bước và trạng thái triển khai CATALOG hiện hành.
+
+
+## Chatbot catalog/FAQ và notebook — 14/11/2026
+
+Website http://localhost:3000/assistant đã có tìm phim, thông tin/tập công khai, FAQ, nguồn và hội thoại có giới hạn. Cần đăng nhập, mỗi tài khoản chỉ đọc/hủy run của mình. Chế độ hiện tại **CATALOG** không gọi LLM; theo lựa chọn của người dùng, Qwen tiếp tục thử trong **Google Colab** khi chưa có endpoint model.
+
+[Hướng dẫn notebook](apps/agent/README.md): upload [notebook](notebooks/movie-agent-colab.ipynb) lên Colab, chọn GPU, chạy cell1–9, sửa QUESTION ở cell8. Môi trường venv/tiến trình riêng tránh cài đè NumPy kernel, có tool/schema smoke, E5/FAISS, OMDb tùy chọn, report và checkpoint. Chưa nghiệm thu Qwen/E5 hoặc GPU Colab thật.
+
+Website dùng NestJS run/outbox → RabbitMQ queue riêng → Node worker → Python CATALOG → tool gateway và backend kiểm lại eligibility/evidence. Không đưa JWT browser/DB credential/media URL vào Python hoặc queue. [API và cách khởi động](docs/api/assistant.md); migration thêm2bảng, tổng52. OpenAPI97operation/73path,49admin,81errorcode.
+
+~~~powershell
+npm.cmd run assistant:configure
+npm.cmd run db:assistant
+npm.cmd run db:introspect
+npm.cmd run db:generate
+powershell -ExecutionPolicy Bypass -File scripts/Start-AssistantLocal.ps1
+~~~
+
+Cần API/database/RabbitMQ local, Docker và Linux dependency cache theo runbook. Script không tải Qwen trên PC.
+
+[Báo cáo website](docs/testing/assistant-2026-11-14.md): backend/worker2.309, frontend227, assistant160gồm25E2E thật với CATALOG, Python103tests và exporter7tests. [Báo cáo notebook](docs/testing/colab-agent-2026-11-14.md) phân biệt contract/flow fixtures, dependency import thật và các gate inference còn mở. Chưa semantic index live, OMDb website, private personalization, SSE hoặc production load/HA.
+
+
+## Dữ liệu catalog mới — 14/11/2026
+
+Đã nhập20 tựa (10 phim lẻ/10 phim bộ),20 ảnh bìaCloudinary, tóm tắt tiếng Việt,227bản ghi tập và14 thể loại từ API công khai KKPhim. Xem tại http://localhost:3000/admin/titles; toàn bộ lô ở DRAFT vì chưa có video. Database hiện23 titles/231 episodes,52 bảng; videoassets vàuploadintents giữ 4/4.
+
+Có [công cụ nhập](scripts/import-catalog-metadata.mjs) với bước fetch/prepare/apply, kiểm trùng và resume; [báo cáo/danh sách20 phim](docs/testing/catalog-metadata-2026-11-14.md). Chạy npm.cmd run test:catalog:metadata để kiểm10 nhóm chuẩn hóa/bảo vệ dữ liệu. Không tự xuất bản hoặc đưa draft vào catalog/chatbot public.
+
+
+## Review TMDB — 23/11/2026
+
+Đã có luồng tìm/liên kết TMDB → tải/lưu review → trang phim, gồm author/rating/link, cache24h, phân quyền, audit và Swagger. Database hiện54bảng. Copy biến từ [.env.reviews.example](.env.reviews.example) vào .env.api.local và điền API Read Access Token do TMDB cấp; không thể tự đặt token. Khi chưa cấu hình, API trả trạng thái rõ ràng và UI không hiển thị review giả. [Hướng dẫn đầy đủ](docs/api/reviews.md), [kiểm thử](docs/testing/reviews-2026-11-23.md). Notebook search chỉ hiển thị liên kết, chưa đọc bài; chatbot website đã đọc điểm/metadata và đoạn trích review opt-in; chưa tổng hợp review bằng AI.
+
+
+## Điểm IMDb / Metacritic
+
+Trang chủ/catalog có nhãn IMDb /10 và Metacritic Metascore /100 trên thẻ phim; trang chi tiết và trang xem video có hai ô điểm đầy đủ, nguồn OMDb, số lượt đánh giá và link IMDb. Cấu hình OMDB_API_KEY server theo [.env.ratings.example](.env.ratings.example); thiếu key/điểm thì hiện dấu — hoặc Chưa có điểm. [API, cache và kiểm thử](docs/api/ratings.md).
+
+
+## Notebook agent Colab v0.4 — 24/11/2026
+
+Mở [notebook](notebooks/movie-agent-colab.ipynb) bằng Google Colab, chọn GPU và chạy cell1–8; cell8 có ô chat, chọn CATALOG/HYBRID và nút hỏi/xóa. Cell5 kiểm Qwen dùng GPU thật sau inference; cell9 có bộ nghiệm thu demo3câu và report riêng. Dùng catalog thật theo [hướng dẫn agent](apps/agent/README.md).127Python tests và flow10cell đã đạt với model/encoder fixtures; GPU Colab/Qwen/E5 thật vẫn chờ nghiệm thu. Website /assistant giữ CATALOG hiện hành.
+
+## Công cụ đánh giá chất lượng
+
+npm.cmd run benchmark:recommendations kiểm toán metadata và đánh giá khi có file nhãn; npm.cmd run benchmark:encoding nhận file local/FFmpeg/FFprobe/seconds/CRF. Tests riêng: test:recommendations:evaluation và test:encoding:benchmark. [Kết quả/phương pháp/giới hạn](docs/testing/quality-baseline-2026-11-24.md). Nhãn gợi ý hiện PROPOSED, không phải đo sở thích hay A/B; encoding đo mẫu ngắn của1video, không tự đổi preset Cloudinary.
+
+Dùng [mẫu origin email](.env.experience.example), đặt vào .env.api.local. Truy cập /account để xem email và thiết lập factor; local vẫn giữ chính sách bỏ bước mã MFA đã chọn trước đó. Nguyên tắc/route/quyền tại [runbook](docs/api/account-ui-and-site.md).

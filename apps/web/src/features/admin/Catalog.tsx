@@ -1,3 +1,6 @@
+import { CatalogBatchTools } from "./CatalogBatches";
+import { TitleCredits } from "./Credits";
+import { AdminReviews } from "../../components/Reviews";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -32,10 +35,12 @@ import {
 } from "../../components/ui";
 import { UploadPanel } from "./UploadPanel";
 export function AdminCatalog() {
+  const [selected, setSelected] = useState<Row[]>([]);
   const auth = useAuth(),
     [term, setTerm] = useState(""),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState("");
+  useEffect(() => setSelected([]), [search, status]);
   const data = usePages(
     "/admin/titles?" + query({ q: search, status, limit: 20 }),
   );
@@ -54,6 +59,9 @@ export function AdminCatalog() {
           )
         }
       />
+      <Link className="text-link" to="/admin/catalog-batches">
+        Lịch sử xử lý hàng loạt
+      </Link>
       <div className="admin-toolbar">
         <form
           className="toolbar-search"
@@ -83,6 +91,38 @@ export function AdminCatalog() {
           <option value="ARCHIVED">Lưu trữ</option>
         </select>
       </div>
+      {(auth.can("catalog.write") || auth.can("catalog.publish")) && (
+        <div className="button-row">
+          <button
+            className="button secondary small"
+            disabled={!data.rows.length}
+            onClick={() => setSelected(data.rows.slice(0, 20))}
+          >
+            Chọn tối đa20 phim đang hiển thị
+          </button>
+          <button
+            className="button ghost small"
+            disabled={!selected.length}
+            onClick={() => setSelected([])}
+          >
+            Bỏ chọn tất cả
+          </button>
+        </div>
+      )}
+      {selected.length > 0 && (
+        <CatalogBatchTools
+          key={
+            selected
+              .map((r) => r.id)
+              .sort()
+              .join(":") +
+            ":" +
+            auth.user?.id
+          }
+          titles={selected}
+          onApplied={data.reload}
+        />
+      )}
       <ErrorBox error={data.error} onRetry={data.reload} />
       <section className="panel table-panel">
         <div
@@ -94,6 +134,9 @@ export function AdminCatalog() {
           <table>
             <thead>
               <tr>
+                {(auth.can("catalog.write") || auth.can("catalog.publish")) && (
+                  <th>Chọn</th>
+                )}
                 <th>Phim</th>
                 <th>Loại</th>
                 <th>Trạng thái</th>
@@ -104,6 +147,27 @@ export function AdminCatalog() {
             <tbody>
               {data.rows.map((row) => (
                 <tr key={row.id}>
+                  {(auth.can("catalog.write") ||
+                    auth.can("catalog.publish")) && (
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={"Chọn phim " + row.localizedTitle}
+                        checked={selected.some((t) => t.id === row.id)}
+                        disabled={
+                          !selected.some((t) => t.id === row.id) &&
+                          selected.length >= 20
+                        }
+                        onChange={(e) =>
+                          setSelected((old) =>
+                            e.target.checked
+                              ? [...old, row]
+                              : old.filter((t) => t.id !== row.id),
+                          )
+                        }
+                      />
+                    </td>
+                  )}
                   <td>
                     <Link
                       className="table-movie"
@@ -185,6 +249,8 @@ const defaults = {
   localizedTitle: "",
   slug: "",
   originalTitle: "",
+  originalLanguage: "",
+  countryCodes: [] as string[],
   synopsis: "",
   releaseYear: "",
   ageRating: "",
@@ -254,6 +320,10 @@ export function TitleEditor() {
       const body = {
         ...form,
         releaseYear: form.releaseYear ? Number(form.releaseYear) : undefined,
+        originalLanguage: form.originalLanguage || "",
+        countryCodes: [
+          ...new Set(form.countryCodes.map((v) => v.trim()).filter(Boolean)),
+        ],
       };
       const result = await api(id ? "/admin/titles/" + id : "/admin/titles", {
         method: id ? "PATCH" : "POST",
@@ -426,6 +496,30 @@ export function TitleEditor() {
                 max={2200}
               />
             </Field>
+            <Field label="Ngôn ngữ gốc" hint="Mã ngôn ngữ, ví dụ vi, en, ja.">
+              <input
+                maxLength={35}
+                value={form.originalLanguage}
+                onChange={(e) => field("originalLanguage", e.target.value)}
+              />
+            </Field>
+            <Field
+              label="Quốc gia"
+              hint="Mã hai chữ, cách nhau bằng dấu phẩy, ví dụ VN,US."
+            >
+              <input
+                value={form.countryCodes.join(",")}
+                onChange={(e) =>
+                  field(
+                    "countryCodes",
+                    e.target.value
+                      .toUpperCase()
+                      .split(",")
+                      .map((v) => v.trim()),
+                  )
+                }
+              />
+            </Field>
             <Field label="Phân loại độ tuổi">
               <input
                 value={form.ageRating}
@@ -497,6 +591,18 @@ export function TitleEditor() {
           )}
         </fieldset>
       </form>
+      {id && loaded && (
+        <TitleCredits
+          key={"credits:" + id}
+          titleId={id}
+          onSaved={() =>
+            notice(
+              "Đã lưu đoàn phim. Nếu đang sửa thông tin phim ở trên, hãy giữ bản nháp khi có xung đột phiên bản.",
+            )
+          }
+        />
+      )}
+      {id && loaded && <AdminReviews key={"reviews:" + id} titleId={id} />}
       {id && loaded && <TitleEpisodes key={id} title={loaded} />}
     </>
   );

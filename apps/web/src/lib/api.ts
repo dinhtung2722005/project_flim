@@ -1,5 +1,6 @@
 export type Row = Record<string, any>;
 export type Page = {
+  summary?:Row;
   data: Row[];
   page: { hasMore: boolean; nextCursor: string | null; limit: number };
 };
@@ -22,6 +23,15 @@ export function setSession(value: Session | null) {
   } catch {}
 }
 const messages: Record<string, string> = {
+ REVIEW_PROVIDER_NOT_CONFIGURED:"Chưa cấu hình nguồn review TMDB.",
+ REVIEW_PROVIDER_AUTH_FAILED:"Token TMDB bị từ chối. Kiểm tra cấu hình nguồn.",
+ REVIEW_PROVIDER_RATE_LIMITED:"Nguồn review giới hạn lượt truy cập. Vui lòng thử lại sau.",
+ REVIEW_PROVIDER_UNAVAILABLE:"Chưa kết nối được nguồn review. Vui lòng thử lại sau.",
+ REVIEW_PROVIDER_INVALID_RESPONSE:"Dữ liệu nguồn review chưa hợp lệ. Chưa lưu thay đổi.",
+ REVIEW_MAPPING_MISMATCH:"TMDB ID không khớp tên, năm hoặc loại phim.",
+ REVIEW_SOURCE_NOT_MAPPED:"Hãy liên kết phim với TMDB trước khi tải review.",
+ REVIEW_SYNC_IN_PROGRESS:"Phim này đang được cập nhật review.",
+ REVIEW_CONTEXT_CHANGED:"Thông tin phim hoặc liên kết đã thay đổi. Hãy tải lại.",
   RECOMMENDATION_FEED_EXPIRED:
     "Danh sách gợi ý đã hết hạn hoặc tùy chọn vừa thay đổi. Hãy làm mới gợi ý.",
   CATALOG_NO_PLAYABLE_EPISODE:
@@ -76,6 +86,11 @@ const messages: Record<string, string> = {
   CATALOG_SLUG_CONFLICT: "Đường dẫn phim đã tồn tại. Hãy chọn đường dẫn khác.",
   ACCOUNT_CONFLICT: "Email này đã được đăng ký.",
   SERVICE_UNAVAILABLE: "Dịch vụ tạm thời gián đoạn. Hãy thử lại sau.",
+  AGENT_DISABLED:
+    "Trợ lý chưa được bật. Bạn có thể tiếp tục tìm phim trong kho.",
+  AGENT_CONTEXT_CHANGED: "Ngữ cảnh đã thay đổi. Hãy bắt đầu câu hỏi mới.",
+  AGENT_TOOL_BUDGET_EXCEEDED:
+    "Câu hỏi cần quá nhiều bước. Hãy diễn đạt ngắn và rõ hơn.",
 };
 export class ApiError extends Error {
   constructor(
@@ -93,6 +108,7 @@ export class ApiError extends Error {
   }
 }
 type Options = {
+  responseType?:"json"|"blob";
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
@@ -155,6 +171,7 @@ export async function api<T = Row>(
     }
     if (
       res.status === 401 &&
+      (await res.clone().json().catch(()=>({}))).code !== "AUTH_INVALID_CREDENTIALS" &&
       retry &&
       options.auth !== false &&
       session?.refreshToken &&
@@ -173,7 +190,7 @@ export async function api<T = Row>(
       }
     }
     const data =
-      res.status === 204 ? undefined : await res.json().catch(() => ({}));
+      res.status === 204 ? undefined : options.responseType==="blob"&&res.ok?await res.blob():await res.json().catch(() => ({}));
     if (!res.ok)
       throw new ApiError(
         data?.code || "REQUEST_FAILED",
@@ -181,6 +198,7 @@ export async function api<T = Row>(
         data?.errors || [],
         data?.requestId || "",
       );
+    if(["POST","PUT","PATCH"].includes(options.method||"GET")&&/^\/api\/v1\/admin\/(?:banners(?:\/|$)|settings\/site$)/.test(url))window.dispatchEvent(new Event("pj-flim:site-refresh"));
     return { data, etag: res.headers.get("etag") || "", status: res.status };
   }
   return run(true);

@@ -169,11 +169,17 @@ export async function runAdminPagesChecks(c: {
   await c.fixtures.query(
     "INSERT INTO movie.people(name,normalized_name) SELECT 'Hồ sơ thử '||n,'ho so thu '||n FROM generate_series(1,22) n",
   );
+  const peopleCount = Number(
+    (await c.fixtures.query("SELECT count(*)::int AS n FROM movie.people"))
+      .rows[0].n,
+  );
   await goto("/admin/people");
   await page.getByRole("button", { name: "Tải thêm", exact: true }).click();
   await check(() =>
     expect(
-      page.getByText("23 / 23 hồ sơ đã tải", { exact: true }),
+      page.getByText(peopleCount + " / " + peopleCount + " hồ sơ đã tải", {
+        exact: true,
+      }),
     ).toBeVisible(),
   );
   await page
@@ -181,6 +187,13 @@ export async function runAdminPagesChecks(c: {
     .fill("nguyen an");
   await check(() => expect(page.locator(".person-card")).toHaveCount(1));
 
+  const bannersBefore = Number(
+    (
+      await c.fixtures.query(
+        "SELECT count(*)::int AS n FROM movie.homepage_banners",
+      )
+    ).rows[0].n,
+  );
   await goto("/admin/banners");
   await page.getByRole("button", { name: "Thêm banner", exact: true }).click();
   await page
@@ -212,7 +225,7 @@ export async function runAdminPagesChecks(c: {
         "SELECT count(*)::int AS n FROM movie.homepage_banners",
       )
     ).rows[0].n,
-    0,
+    bannersBefore,
   );
   await page.getByLabel("Kết thúc", { exact: true }).fill("2030-01-04T10:00");
   const banner = await response("/admin/banners", "POST", () =>
@@ -222,6 +235,8 @@ export async function runAdminPagesChecks(c: {
     expect(page.getByText("Đã lên lịch", { exact: true })).toBeVisible(),
   );
   await page
+    .locator(".banner-card")
+    .filter({ hasText: "Bộ phim nổi bật" })
     .getByRole("button", { name: "Chỉnh sửa banner", exact: true })
     .click();
   await page.getByLabel("Bật banner", { exact: true }).uncheck();

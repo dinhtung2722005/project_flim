@@ -1427,3 +1427,262 @@ tbody tr:hover {
     overflow-x: auto;
   }
 }
+
+.container.narrow {
+  max-width: 760px;
+}
+.recovery-codes {
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+  margin-bottom: 20px;
+}
+.enrollment-secret {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  background: var(--surface);
+}
+.homepage-banners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.homepage-banner {
+  position: relative;
+  min-height: 140px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #18322a;
+  display: flex;
+  align-items: end;
+  padding: 20px;
+}
+.homepage-banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+}
+.homepage-banner span {
+  position: relative;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.credits-editor {
+  display: grid;
+  gap: 20px;
+}
+.report-triage {
+  margin: 20px 0;
+}
+.narrow form {
+  display: grid;
+  gap: 16px;
+}
+.narrow form + form {
+  margin-top: 28px;
+}
+
+.brand > span:last-child {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-footer > p {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .site-header .brand > span:last-child {
+    max-width: 80px;
+  }
+}
+
+.view-count {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted, #aab4c5);
+  font-size: 0.9rem;
+}
+.card-views {
+  margin-top: 0.6rem;
+}
+.view-metrics {
+  margin-block: 1.25rem;
+  padding: 1.25rem;
+}
+.view-metrics .section-heading {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.view-metrics-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.view-metrics-controls select {
+  margin-left: 0.5rem;
+  padding: 0.5rem;
+}
+.view-chart {
+  height: 150px;
+  display: flex;
+  gap: 3px;
+  align-items: stretch;
+  border-bottom: 1px solid #354050;
+  margin: 1.5rem 0;
+}
+.view-chart > div {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  min-width: 1px;
+}
+.view-chart span {
+  width: 100%;
+  background: #72b7fa;
+  border-radius: 3px 3px 0 0;
+}
+.view-metrics details {
+  margin-block: 1rem;
+}
+.view-metrics summary {
+  cursor: pointer;
+}
+.view-metrics table {
+  width: 100%;
+  text-align: left;
+}
+.view-metrics th,
+.view-metrics td {
+  padding: 0.65rem;
+  border-bottom: 1px solid #354050;
+}
+.view-metrics .table-scroll {
+  overflow-x: auto;
+}
+
+.stat-card strong {
+  overflow-wrap: anywhere;
+}
+.view-metrics p {
+  overflow-wrap: anywhere;
+}
+.view-chart {
+  gap: clamp(0px, 0.1vw, 2px);
+}
+
+.view-count {
+  flex-wrap: wrap;
+}
+.view-count strong {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.card-views {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.moderation-list {
+  display: grid;
+  gap: 1rem;
+}
+.moderation-card {
+  padding: 1.25rem;
+  min-width: 0;
+}
+.moderation-card .section-heading {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.moderation-card h2,
+.moderation-content,
+.moderation-reason {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.moderation-card form {
+  margin-top: 1rem;
+}
+.moderation-card fieldset {
+  display: grid;
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.health-issues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.health-blocking {
+  background: #5e2028;
+  color: #ffdce0;
+}
+.review-moderation-notice {
+  padding: 1rem;
+  border-left: 3px solid #f5bf62;
+  overflow-wrap: anywhere;
+}
+
+.moderation-card .section-heading > div {
+  min-width: 0;
+}
+.moderation-card p {
+  overflow-wrap: anywhere;
+}
+
+.catalog-batch-tools {
+  margin-block: 1rem;
+  padding: 1.25rem;
+  min-width: 0;
+}
+.catalog-batch-tools fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+}
+.catalog-batch-tools fieldset fieldset {
+  border: 1px solid var(--line);
+  padding: 1rem;
+}
+.batch-genre-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.batch-genre-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.batch-warning {
+  color: #f8ce84;
+}
+.batch-receipt {
+  margin-block: 1rem;
+}
+.batch-receipt p,
+.batch-receipt td {
+  overflow-wrap: anywhere;
+}
+.batch-receipt table {
+  width: 100%;
+}
+.batch-receipt th,
+.batch-receipt td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}

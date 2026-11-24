@@ -493,3 +493,12 @@ Các bài concurrency/failure bắt buộc dùng PostgreSQL/RabbitMQ thật ở 
 - Chốt same-origin routing/cookie names, auth signing/encryption keys, email provider và chính sách recovery; secrets được cấp qua môi trường, không tài liệu/source.
 - Refresh race window, staff session/step-up TTL, telemetry retention và rate limits là cấu hình thử cần đo, không hard-code như thông số chuẩn quốc tế.
 - Backend design không thay việc chạy migration, xuất OpenAPI, tạo tài nguyên Cloudinary, triển khai hay kiểm thử. Bàn giao code sau này phải có bằng chứng theo plan.
+
+## Analytics lượt xem — 25/11/2026
+
+ViewStatsService và2controller public/admin thêm2GET; ViewMetricsDto validation7/30/90, permission metrics.read, Swagger116ops/88paths/57admin, giữ90errorcodes. apps/analytics-worker/src/{config,store,main}.ts cùng packages/analytics/src/{views,broker}.ts xử lý playback.events.accepted từ outbox qua queue riêng. API chỉ đọc aggregate; worker transaction facts/daily HMAC key/counter/batch receipt, lease+confirm+reconciliation. Migration thêm3table →58; không ghép vào media/assistant consumer. Định nghĩa và giới hạn tại [view-statistics.md](../api/view-statistics.md); QoE/raw retention/production HA vẫn còn mở.
+
+
+## Quản lý phim hàng loạt — 25/11/2026
+
+CatalogBatchController → DTO riêng → CatalogBatchService, dùng CatalogService với transaction có sẵn cho từng phim. Mỗi item khóa đợt, kiểm quyền/phiên bản/readiness rồi commit dữ liệu/audit/outbox/biên nhận cùng nhau. PREVIEW/RUNNING/COMPLETED có hạn5/15phút, owner/session riêng, đọc history cursor-bound; replay không lặp side effect. Không tự retry phim FAILED với ETag mới. 21services,26controllers trong15files,65DTO trong19nhóm;125operations/97paths/66admin/90codes,59bảng. [Chi tiết](../api/catalog-batches.md).

@@ -1,3 +1,4 @@
+import {runExperienceChecks} from "./experience.browser";
 import { runRecommendationBrowserChecks } from "./recommendations.browser";
 import { runLiveSearchChecks } from "./live-search.browser";
 import { runAdminPagesChecks } from "./admin-pages.browser";
@@ -396,6 +397,7 @@ export async function runFrontendChecks(c: {
       titleName: name,
       seed: c.seed,
     });
+    checks += await runExperienceChecks({browser,origin,fixtures:c.fixtures,titleId:title.id,seed:c.seed});
     await goto("/admin/users");
     await check(() =>
       expect(

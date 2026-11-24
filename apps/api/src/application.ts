@@ -1,3 +1,9 @@
+import { configureCatalogBatchesOpenApi } from "./catalog-batches.openapi";
+import { configureAdminAdvancedOpenApi } from "./admin-advanced.openapi";
+import { configureViewStatsOpenApi } from "./view-stats.openapi";
+import { configureViewerReviewsOpenApi } from "./viewer-reviews.openapi";
+import { configureReviewsOpenApi } from "./reviews.openapi";
+import { configureAssistantOpenApi } from "./assistant.openapi";
 import { mountFrontend } from "./frontend";
 import { GlobalExceptionFilter } from "./filters/global-exception.filter";
 import { configureViewerOpenApi } from "./viewer.openapi";
@@ -205,6 +211,12 @@ export async function createApplication() {
   document.components ??= {};
   document.components.schemas ??= {};
   configureViewerOpenApi(document);
+  configureAssistantOpenApi(document);
+  configureReviewsOpenApi(document);
+  configureViewerReviewsOpenApi(document);
+  configureViewStatsOpenApi(document);
+  configureAdminAdvancedOpenApi(document);
+  configureCatalogBatchesOpenApi(document);
   document.components.schemas.ProblemDetails = {
     type: "object",
     required: [

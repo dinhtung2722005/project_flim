@@ -1,3 +1,8 @@
+import "./ratings.css";
+import { AccountPage, EmailActionPage } from "./pages/Account";
+import { useSite } from "./lib/site";
+import "./reviews.css";
+import "./assistant.css";
 import { ForYou } from "./pages/ForYou";
 import { useEffect, useRef, lazy, Suspense, type ReactNode } from "react";
 import {
@@ -10,6 +15,7 @@ import {
 } from "react-router-dom";
 import {
   Bookmark,
+  Bot,
   LayoutDashboard,
   LogIn,
   LogOut,
@@ -21,6 +27,24 @@ import {
 import { useAuth } from "./lib/state";
 import { Brand, Empty, Spinner } from "./components/ui";
 import { Catalog, TitleDetail, Library, AuthPage, Help } from "./pages/Public";
+const AdminModeration = lazy(() =>
+  import("./features/admin/Moderation").then((m) => ({
+    default: m.AdminModeration,
+  })),
+);
+const AdminCatalogHealth = lazy(() =>
+  import("./features/admin/CatalogHealth").then((m) => ({
+    default: m.AdminCatalogHealth,
+  })),
+);
+const AdminCatalogBatches = lazy(() =>
+  import("./features/admin/CatalogBatches").then((m) => ({
+    default: m.AdminCatalogBatches,
+  })),
+);
+const AssistantPage = lazy(() =>
+  import("./pages/Assistant").then((m) => ({ default: m.AssistantPage })),
+);
 const WatchPage = lazy(() =>
   import("./pages/Watch").then((m) => ({ default: m.WatchPage })),
 );
@@ -97,6 +121,7 @@ export function RequireAuth({
   return <>{children}</>;
 }
 export default function App() {
+  const site = useSite();
   const auth = useAuth(),
     location = useLocation(),
     admin = location.pathname.startsWith("/admin");
@@ -135,9 +160,9 @@ export default function App() {
       .forEach((el) => (el.open = false));
     if (!location.hash) window.scrollTo(0, 0);
     document.title = admin
-      ? "Quản trị — pj-Flim"
-      : "pj-Flim — Phim hay, thật gần.";
-  }, [location.pathname, location.hash, admin]);
+      ? "Quản trị — " + site.name
+      : site.name + " — " + site.description;
+  }, [location.pathname, location.hash, admin, site.name, site.description]);
   return (
     <>
       <a className="skip-link" href="#main-content">
@@ -211,6 +236,10 @@ export default function App() {
                 <div className="dropdown">
                   <strong>{auth.user.displayName}</strong>
                   <small>{auth.user.emailNormalized}</small>
+                  <Link to="/account">
+                    <UserRound size={16} />
+                    Tài khoản và bảo mật
+                  </Link>
                   <Link to="/library">
                     <Bookmark size={16} />
                     Thư viện của tôi
@@ -245,6 +274,26 @@ export default function App() {
             <Route path="/login" element={<AuthPage />} />
             <Route path="/register" element={<AuthPage register />} />
             <Route
+              path="/forgot-password"
+              element={<EmailActionPage kind="forgot" />}
+            />
+            <Route
+              path="/reset-password"
+              element={<EmailActionPage key="reset" kind="reset" />}
+            />
+            <Route
+              path="/verify-email"
+              element={<EmailActionPage key="verify" kind="verify" />}
+            />
+            <Route
+              path="/account"
+              element={
+                <RequireAuth>
+                  <AccountPage />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/library"
               element={
                 <RequireAuth>
@@ -262,6 +311,14 @@ export default function App() {
             />
             <Route path="/help" element={<Help />} />
             <Route
+              path="/assistant"
+              element={
+                <RequireAuth>
+                  <AssistantPage />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <RequireAuth>
@@ -270,6 +327,30 @@ export default function App() {
               }
             >
               <Route index element={<AdminHome />} />
+              <Route
+                path="catalog-batches"
+                element={
+                  <RequireAuth permission="catalog.read_drafts">
+                    <AdminCatalogBatches />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="viewer-reviews"
+                element={
+                  <RequireAuth permission="reviews.moderate">
+                    <AdminModeration />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="catalog-health"
+                element={
+                  <RequireAuth permission="catalog.read_drafts">
+                    <AdminCatalogHealth />
+                  </RequireAuth>
+                }
+              />
               <Route
                 path="titles"
                 element={
@@ -376,10 +457,28 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+      {!admin && location.pathname !== "/assistant" && (
+        <Link
+          className="assistant-floating"
+          to={
+            "/assistant" +
+            (/^\/titles\/[a-f0-9-]{36}$/i.test(location.pathname)
+              ? "?titleId=" + location.pathname.split("/").at(-1)
+              : "")
+          }
+          aria-label="Mở trợ lý phim"
+        >
+          <Bot size={20} />
+          <span>Trợ lý phim</span>
+        </Link>
+      )}
       {!admin && (
         <footer className="site-footer">
           <Brand />
-          <p>Phim hay, thật gần.</p>
+          <p>{site.description}</p>
+          {site.supportEmail && (
+            <a href={"mailto:" + site.supportEmail}>Liên hệ hỗ trợ</a>
+          )}
           <div>
             <Link to="/help">Hướng dẫn sử dụng</Link>
             {staff && (
@@ -388,7 +487,9 @@ export default function App() {
               </Link>
             )}
           </div>
-          <small>© {new Date().getFullYear()} pj-Flim</small>
+          <small>
+            © {new Date().getFullYear()} {site.name}
+          </small>
         </footer>
       )}
     </>

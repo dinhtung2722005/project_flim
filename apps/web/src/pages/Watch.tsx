@@ -1,3 +1,6 @@
+import {ViewCount} from "../components/ViewCount";
+import {MovieRatings} from "../components/MovieRatings";
+import {ViewerReviews} from "../components/ViewerReviews";
 import {
   useEffect,
   useRef,
@@ -651,6 +654,8 @@ export function WatchPage() {
               Báo lỗi
             </button>
           </div>
+          {episode.data?.titleId&&<ViewCount key={"views-"+episode.data.titleId} titleId={episode.data.titleId}/>}
+          {episode.data?.titleId&&<MovieRatings key={episode.data.titleId} titleId={episode.data.titleId}/>}
           <div
             className={
               "watch-layout" +
@@ -770,6 +775,7 @@ export function WatchPage() {
               </aside>
             )}
           </div>
+          {episode.data?.titleId && <ViewerReviews titleId={episode.data.titleId}/>}
         </>
       )}
     </div>
