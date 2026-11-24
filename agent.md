@@ -4,6 +4,9 @@ Cập nhật ngữ cảnh: 25/11/2026, múi giờ Asia/Saigon. Tiến trình tha
 
 ## Dự án và phạm vi thư mục
 
+- GitHub cập nhật 25/11/2026: source commit [853f658](https://github.com/dinhtung2722005/project_flim/commit/853f6581f9de69b014d9fa11076f814b7c778505) đã push lên origin/main, kiểm tra refs/heads/main khớp. Gồm chatbot/catalog/Colab notebook, điểm/review, UI tài khoản/đoàn phim, lượt xem và admin moderation/health/CSV/bulk; migration/schema/API/README/plan/test đi cùng. Chỉ source, cấu hình mẫu, kiểm thử và tài liệu phim; không đưa credential, runtime, video, tài liệu cá nhân hay sơ đồ đánh giá năng lực lên repo. Đây là cập nhật source, không deploy hoặc nghiệm thu Colab/provider/production.
+
+
 - Dự án web xem phim VOD sử dụng backend Node.js, trải nghiệm xem quen thuộc như Netflix và các web phim phổ biến.
 - Git remote: https://github.com/dinhtung2722005/project_flim, nhánh main; Git được khởi tạo và source được push theo yêu cầu ngày 11/11/2026. Chỉ commit source/cấu hình mẫu, không commit local credential hoặc dữ liệu runtime.
 - GitHub source update 13/11/2026: source commit 4d45989 pushed to origin/main and verified. Includes viewer/admin UI, live search, streaming/security/pagination fixes and research docs. Local secrets/runtime data and unrelated personal documents remain excluded.

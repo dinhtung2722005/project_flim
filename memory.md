@@ -1036,3 +1036,12 @@ Migration movie-catalog-batches-v1.sql đã áp dụng và rerun applied=false; 
 Kiểm thử: feature170 (6Chrome assertions), fullregression2782 (275frontend/1099authsecurity/40Swagger/341viewer/64pagination,78.445s, media worker excluded), database61rollbackassertions+8runtime denials; build/typecheck/export đạt. Fullregression chạy trước chỉnh metadata HttpCode200, sau đó feature170 và export/smoke xác nhận response đúng200/không201. Đã kiểm audit failure rollback, ngắt sau phim đầu commit và resume phim thứ hai, concurrent replay, quyền bị thu hồi, stale film, media mất READY, expiry/owner/session/cursor/DTO và mobile. API được restart qua script sở hữu process; localhost3000 history200/0jobs, bulktools hiện/0Chromeerrors; smoke không tạo preview hoặc thay phim thật. Không commit/push. [Runbook](docs/api/catalog-batches.md), [báo cáo](docs/testing/catalog-batches-2026-11-25.md).
 
 Còn mở: lịch xuất bản, server cancellation, retention history, bulk lớn qua worker, report/kháng nghị/AI/review bulk và SMTP. Không thay trạng thái nghiệm thu Colab/Qwen/E5/ST/REC/ENC/EXT.
+
+
+## 25/11/2026 — Đã cập nhật GitHub theo yêu cầu
+
+Đã commit207file thuộc pj-Flim và push origin/main: [853f658](https://github.com/dinhtung2722005/project_flim/commit/853f6581f9de69b014d9fa11076f814b7c778505). git ls-remote xác nhận refs/heads/main đúng SHA này sau push. Remote trước push khớp HEAD; không force push hoặc thay lịch sử. Phạm vi: chatbot/catalog/Colab, điểm/review IMDb/Metacritic/TMDB và đánh giá nội bộ, UI tài khoản, analytics lượt xem, admin moderation/health/CSV/bulk, SQL/Prisma/DTO/controller/service/OpenAPI, tài liệu và kiểm thử.
+
+Rà soát phạm vi bằng manifest; không phát hiện token/key ở207file theo mẫu phổ biến hoặc trùng27giá trị cấu hình local đã kiểm (chỉ lưu số lượng/kết quả, không log giá trị). Loại1006file ngoài phạm vi gồm các sơ đồ/tài liệu đánh giá năng lực ở root. .env.local/.local/video/backup/node_modules/dist không đưa vào index; file mẫu provider không chứa key thật. Không sửa/xóa các file ngoài dự án phim.
+
+Kiểm trước push: git diff --cached --check đạt; notebook static chạy trong python:3.12-slim hiện có, mạng tắt và source mount read-only:10codecells/33Python sources/36bundlefiles, hash và source khớp, outputs sạch. Không chạy model hoặc notebook cells. Kế thừa build/backend/frontend,2782hồi quy và170feature vừa xác minh ở lượt bulk trước; không tuyên bố chạy lại toàn bộ test khi push. Không deploy, không thay database/service hay nghiệm thu Colab/Cloudinary/TMDB/OMDb live trong lượt xuất bản này.
